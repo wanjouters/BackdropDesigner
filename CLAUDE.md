@@ -1,126 +1,178 @@
-# Gridzilla Web App — Project Context
+# BackdropDesigner — Project Context voor Claude
 
-## Wat is Gridzilla?
+## Wat is BackdropDesigner?
 
-Gridzilla is een workflow-tool voor het automatisch genereren van sponsor-backdrops voor wielerwedstrijden (o.a. Flanders Classics evenementen). De naam "Gridzilla" verwijst naar het Illustrator-script dat een grid-backdrop genereert op basis van een CSV-inputbestand.
+BackdropDesigner is een React-webapp (Vite + Tailwind CSS v4) voor het visueel ontwerpen van sponsor-backdrops voor Flanders Classics wielerwedstrijden. De gebruiker wijst sponsors toe aan gridslots, bekijkt een live preview, en exporteert het resultaat als CSV voor het Gridzilla Illustrator-script, of als JPEG.
 
-## Huidige workflow (Excel-gebaseerd)
+---
+
+## Stack & Omgeving
+
+| | |
+|---|---|
+| Framework | React 19 + Vite |
+| Styling | Tailwind CSS v4 |
+| State | `useState` + `localStorage` (geen backend) |
+| Taal | JSX (geen TypeScript) |
+| Dev server | `npm run dev` → `http://localhost:5173` |
+| Locatie | `apps/BackdropDesigner/dev/backdrop-designer/` |
+
+---
+
+## Projectstructuur
 
 ```
-Flanders Classics vult Excel in
-        ↓
-Export tab → CSV (handmatig kopiëren/exporteren)
-        ↓
-Jan importeert CSV in Gridzilla (ExtendScript/JSX in Adobe Illustrator)
-        ↓
-Illustrator genereert backdrop-bestand met sponsorgrid
+apps/BackdropDesigner/
+  dev/backdrop-designer/
+    src/
+      App.jsx                  — Hoofdcomponent, state-beheer, layout
+      components/
+        LogoLibrary.jsx        — Rechterpaneel: sponsorbibliotheek, filters, instellingen
+        GridCanvas.jsx         — Rasterweergave met klikbare slots
+        PreviewCanvas.jsx      — Schaalbare JPEG-achtige preview
+        GridTypeSelector.jsx   — Linkerpaneel: formatenlijst + filters
+        GridToolbar.jsx        — Kolommen/rijen/cel-instellingen boven het grid
+        SponsorEditModal.jsx   — Popup voor per-sponsor event/categorie-instellingen
+        SlotCell.jsx           — Individueel gridvak
+        FrequencyPanel.jsx     — Frequentietelling sponsors
+        ExportButton.jsx       — CSV-export knop
+        CustomFormatModal.jsx  — Modal voor nieuw aangepast formaat
+      utils/
+        sponsorTags.js         — Alle localStorage load/save functies
+        exportJpeg.js          — JPEG-export logica
+      data/
+        sponsors.json          — Sponsordatabase (~180 sponsors)
+        formats.json           — Alle gridformaten
 ```
 
-## Doel van de webapp
+---
 
-De webapp vervangt de Excel-input en maakt de workflow sneller, foutlozer en toegankelijker voor niet-technische gebruikers (Flanders Classics collega's). De CSV-output blijft hetzelfde — Gridzilla (Illustrator script) hoeft niet te veranderen.
+## State & Persistentie (localStorage)
+
+Alle state wordt opgeslagen in `localStorage` via `src/utils/sponsorTags.js`.
+
+| Key | Inhoud |
+|---|---|
+| `backdropDesigner_tags` | `{ [sponsorName]: string[] }` — welke events een sponsor heeft |
+| `backdropDesigner_sponsorCategories` | `{ [sponsorName]: { [event]: categoryName } }` |
+| `backdropDesigner_categoryList` | `string[]` — volgorde van categorieën (prioriteit) |
+| `backdropDesigner_events` | `string[]` — lijst van events (AGR, BCC, ROAD…) |
+| `backdropDesigner_eventGroups` | `{ [koepelName]: string[] }` — welke events onder een koepel vallen |
+| `backdropDesigner_sponsorGroups` | `{ [sponsorName]: { [koepelName]: categoryName } }` — koepelpartner-assignments |
+| `backdropDesigner_customLogos` | `{ [sponsorName]: dataUrl }` — custom geüploade logo's |
+| `backdropDesigner_savedDesigns` | `[{ id, name, formatCode, format, slots, savedAt }]` |
+| `backdropDesigner_advanceDir` | `'r' \| 'l' \| 'd' \| 'u' \| 'dr' \| 'dl' \| 'ur' \| 'ul' \| 'none'` |
 
 ---
 
-## Datastructuur
+## Kernconcepten
 
-### Logo database
+### Sponsors & Slots
 
-Elke sponsor heeft drie velden:
+- `slots`: `string[]` — platte array van sponsornamen (lengte = cols × rows)
+- `BLANK` = leeg slot (speciale ingebouwde sponsor)
+- Sponsors worden toegewezen via klikken of drag-and-drop
 
-| Veld         | Voorbeeld                                               |
-|--------------|---------------------------------------------------------|
-| Partner      | `A WARE`                                                |
-| Bestandsnaam | `A_WARE`                                                |
-| Link         | `https://flcs-upload.com/content/SPONSORS/A_WARE.png`  |
+### Events & Koepels
 
-Huidige database: ~180 sponsors. Opgeslagen in het Excel-tabblad "Logo database". De bestandsnaam is de partnernaam met spaties vervangen door underscores. Lege/BLANK sponsor = placeholder (geen logo).
+- **Events**: codes zoals AGR, BCC, CXWC, ROAD, TSP
+- **Koepels**: groeperingen van events (bv. "Grote Rondes")
+- Een sponsor kan getagd worden op event-niveau (directe tag) of koepel-niveau (via `sponsorGroups`)
+- Elke event kan maar aan 1 koepel worden toegewezen
 
-### Gridformaten
+### Categorieën
 
-Er zijn momenteel twee gridtypes:
+- Eén gedeelde `categoryList` voor zowel event- als koepel-niveau
+- Volgorde bepaalt de prioriteit bij het groeperen van logo's
+- Categorieën zijn zichtbaar als headers boven de logo's wanneer een event-filter actief is
 
-#### 1. Interview Backdrop
-- Doel: Achtergrond voor persconferenties / mixed zone interviews
-- Grid: 8 rijen × 4 kolommen = **32 sponsorslots**
-- Sponsors herhalen zich over de rijen (roterende volgorde)
-- Teller rechts toont hoe vaak elke sponsor voorkomt
+### Filterlogica (`buildGroups`)
 
-#### 2. MIXEDZONE_ROAD_10x8
-- Formaat: 400 × 220 cm
-- Grid: 8 rijen × 10 kolommen = **80 sponsorslots**
-- Export tab: C1–C10 (kolommen), R1–R8 (rijen)
+Wanneer een eventfilter actief is, groepeert `buildGroups()` sponsors per categorie:
+1. Koepelpartners (via `sponsorGroups` + `eventGroups`) komen eerst
+2. Dan directe event-partners (via `tags`)
+3. `categoryList` bepaalt de volgorde van categoriegroepen
+4. Sponsors zonder categorie komen onderaan als "Zonder categorie"
 
-### CSV-exportformaat (uit Export tab)
+### Auto-advance richting
 
-Het huidige exportformaat is een raster van sponsor-namen:
-
-```
-C1,C2,C3,C4,C5,C6,C7,C8,C9,C10
-PAUWELS SAUZEN,VELUX,VIESSMANN,...
-...
-```
-
-Lege of niet-ingevulde slots bevatten de waarde `BLANK`.
+Na het toewijzen van een logo aan een slot springt de selectie automatisch naar het volgende slot. De richting is instelbaar via een 3×3 pijltjeskiezer in het logo-paneel:
+- `r` (rechts, standaard), `l`, `d`, `u`, `dr`, `dl`, `ur`, `ul`, `none`
 
 ---
 
-## Gewenste functionaliteiten webapp
+## Componentoverzicht
 
-### Must-have
-- [ ] Selecteer een gridtype (Interview / MixedZone / andere formaten later)
-- [ ] Sponsorlijst laden vanuit de logo database (CSV of hardcoded JSON)
-- [ ] Sponsors toewijzen aan gridslots (manueel of automatisch verdeeld)
-- [ ] Live frequentietelling per sponsor (zoals in Excel)
-- [ ] Validatie: sponsor-naam moet bestaan in logo database
-- [ ] CSV-export in het formaat dat Gridzilla verwacht
+### `App.jsx`
+- Beheert alle hoofd-state: `slots`, `selectedFormat`, `editedFormat`, `selectedSlots`, `view`, `savedDesigns`, `advanceDir`
+- `handleAssignFromLibrary`: wijst sponsor toe + berekent volgend slot op basis van `advanceDir` en grid-dimensies
+- `handleFormatChange`: herberekent slots bij wijziging kolommen/rijen (behoudt bestaande waarden)
+- `SavedDesignsPanel`: ingebouwde component voor opslaan/laden/hernoemen/verwijderen van ontwerpen
 
-### Nice-to-have
-- [ ] Drag-and-drop interface voor slots
-- [ ] Logo-preview per sponsor (via de URL in de database)
-- [ ] Automatische verdeling op basis van prioriteit/categorie
-- [ ] Opslaan en laden van configuraties (per evenement)
-- [ ] Meerdere gridformaten in één sessie beheren
-- [ ] Spelfout-detectie (bv. STIHLL vs STIHL)
+### `LogoLibrary.jsx`
+- Rechterpaneel: zoekbalk (met × wis-knop), event-filter dropdown, richtingskiezer
+- `ManageList`: herbruikbare component voor CRUD + drag-and-drop herordening van lijsten
+  - Props: `title`, `color`, `items`, `onRename`, `onDelete`, `onAdd`, `onReorder`, `defaultCollapsed`
+  - Kleuren: `orange`, `purple`, `indigo`, `teal`
+  - Drag-handle: 6-dots grip SVG, drop-target highlight
+  - Collapse/expand per sectie via interne state
+- Beheerpaneel (tandwiel): toont Koepels / Events / Categorieën als inklappende secties
+  - Koepels: standaard ingeklapt
+  - Events: standaard uitgeklapt
+  - Categorieën: standaard ingeklapt
+- Events-sectie heeft koepelfilter-chips + per-event koepeldropdown (alleen in edit-mode)
+- `buildGroups()`: groepeert gefilterde sponsors per categorie
+- Wanneer beheerpaneel open is, verbergt het logo-grid (mutueel exclusief)
+
+### `SponsorEditModal.jsx`
+- Popup voor per-sponsor instellingen
+- Toont event-checkboxes + categorie-dropdown per event
+- Scroll-safe: `maxHeight: calc(100vh - 48px)`
+- Ontvangt `groupCategories` (= `categoryList`)
+
+### `GridTypeSelector.jsx`
+- Lijst van alle gridformaten uit `formats.json`
+- Filters: categorie (dropdown) + event (dropdown)
+
+### `GridToolbar.jsx`
+- Inline-bewerkbare velden: kolommen, rijen, celbreedte, aspect ratio, celhoogte, gutter horiz/vert
 
 ---
 
-## Bekende issues in huidige Excel-template
+## Ontwerpbeslissingen
 
-- `STIHLL` (dubbele L) in tabbladen "Interview Tabor" en "Interview Sardinië" — correcte naam is `STIHL`
-- Logo database tabblad heeft 1M+ lege rijen (Excel-artifact, geen data)
-- Export tab is altijd leeg bij oplevering — collega's vullen dit manueel in vanuit de grid-tabbladen
-
----
-
-## Technische aanbevelingen
-
-- **Frontend:** React (Vite) — simpel te hosten, geen backend nodig voor basisfunctionaliteit
-- **Styling:** Tailwind CSS
-- **Data:** Logo database als JSON-bestand inladen (gegenereerd uit Excel)
-- **CSV export:** Client-side genereren met `Blob` + download link
-- **Geen backend vereist** voor MVP — alles client-side
+- **Geen backend**: alles client-side, persistentie via `localStorage`
+- **Geen TypeScript**: bewuste keuze voor snelheid en leesbaarheid
+- **Één `categoryList`**: vroeger waren er twee aparte lijsten (per-event en per-koepel) — samengevoegd tot één
+- **ManageList defaultCollapsed**: nieuw toegevoegde prop zodat elk blok een eigen standaardtoestand heeft
+- **`editingKoepelEvent` state**: koepeldropdown per event is alleen zichtbaar na klikken op een icoon (edit-mode), nooit inline
+- **`advanceDir` in localStorage**: de gekozen richting blijft bewaard tussen sessies
 
 ---
 
-## Bestaande bestanden
+## Nog te doen / Ideeën
 
-- `FLCS_Template_MIXEDZONE_ROAD_10x8.xlsx` — het originele Excel inputbestand
-  - Tabbladen: Interview Tabor, Interview Sardinië, Interview Namen, MIXEDZONE_ROAD_10x8, MIXEDZONE_ROAD_10x8 Export, Logo database
+- Exporteren naar Gridzilla CSV-formaat (deels al aanwezig via `ExportButton`)
+- Undo/redo
+- Meerdere tabs/sessies gelijktijdig
+- Importeren vanuit bestaand CSV
+- Koepels visueel anders weergeven in het grid (kleurcode?)
+- Mobiele ondersteuning (niet prioritair)
 
 ---
 
 ## Conventies
 
-- Sponsor-namen altijd in UPPERCASE (zoals in de bestaande data)
-- Bestandsnamen: spaties → underscores (bv. `A WARE` → `A_WARE`)
-- Lege slots altijd als `BLANK` exporteren, nooit leeg laten
-- Grid-indexering: kolommen als C1–Cn, rijen als R1–Rn
+- Sponsornamen altijd in UPPERCASE
+- Bestandsnamen: spaties → underscores (`A WARE` → `A_WARE`)
+- Lege slots exporteren als `BLANK`
+- Grid-indexering: kolommen C1–Cn, rijen R1–Rn
+- Componenten: PascalCase, utils: camelCase, bestanden: kebab-case
 
 ---
 
-## Contactpersoon / eigenaar
+## Eigenaar / Context
 
-- **Jan** — freelance grafisch designer, werkt dagelijks met Adobe Illustrator, InDesign, ExtendScript/JSX
-- Bouwt en beheert het Gridzilla Illustrator-script
-- Flanders Classics zijn de eindgebruikers van de webapp (input-kant)
+- **Jan Wouters** — freelance grafisch ontwerper, Flanders Classics
+- Eindgebruikers: collega's van Flanders Classics (niet-technisch)
+- Downstream: Gridzilla Illustrator-script (JSX/ExtendScript) dat de CSV omzet naar een Illustrator-backdrop
