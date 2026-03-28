@@ -23,9 +23,10 @@ BackdropDesigner is een React-webapp (Vite + Tailwind CSS v4) voor het visueel o
 
 ```
 apps/BackdropDesigner/
-  dev/backdrop-designer/
-    src/
-      App.jsx                  — Hoofdcomponent, state-beheer, layout
+  dev/
+    backdrop-designer/           — de Vite/React webapp
+      src/
+        App.jsx                  — Hoofdcomponent, state-beheer, layout
       components/
         LogoLibrary.jsx        — Rechterpaneel: sponsorbibliotheek, filters, instellingen
         GridCanvas.jsx         — Rasterweergave met klikbare slots
@@ -41,9 +42,21 @@ apps/BackdropDesigner/
         sponsorTags.js         — Alle localStorage load/save functies
         exportJpeg.js          — JPEG-export logica
       data/
-        sponsors.json          — Sponsordatabase (~180 sponsors)
+        sponsors.json          — Sponsordatabase (~188 sponsors, velden: partner + filename)
         formats.json           — Alle gridformaten
+    batch_export_logos_v1_DEV.jsx  — ExtendScript: batch export vanuit Illustrator
 ```
+
+### sponsors.json formaat
+
+```json
+{ "partner": "A WARE", "filename": "A_WARE" }
+```
+
+- `partner`: weergavenaam (met spaties), sleutel voor alle tags/data in localStorage
+- `filename`: bestandsnaam zonder extensie → `public/logos/FILENAME.png`
+- Geen `url`-veld meer (was FTP-pad uit oude Excel-workflow, niet meer nodig)
+- `BLANK` staat **niet** in de JSON — die is hardcoded in `App.jsx`
 
 ---
 
@@ -150,14 +163,50 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 
 ---
 
+## Batch Export Script (Illustrator → App)
+
+**Locatie:** `dev/batch_export_logos_v1_DEV.jsx`
+**Runnen:** Illustrator → File > Scripts > Other Script...
+
+### Wat het doet
+1. Itereert alle artboards in het actieve AI-document
+2. Exporteert elk artboard als PNG of SVG naar `public/logos/`
+3. Gebruikt de artboard-naam exact als bestandsnaam (= zelfde naam als Gridzilla verwacht)
+4. Leest `sponsors.json` en voegt ontbrekende sponsors toe
+5. Bestaande entries worden **nooit** gewijzigd — tags en event-data blijven intact
+
+### Regels
+- Artboard `BLANK` wordt altijd overgeslagen (hardcoded in app)
+- Bestandsnaam = artboard-naam → `A_WARE.png`
+- Partner-naam = artboard-naam met underscores → spaties → `A WARE`
+- Prefs worden opgeslagen in `~/Library/Application Support/BackdropDesigner/batch_export.prefs`
+
+### Logo-update workflow
+```
+Logo aanpassen in Illustrator
+        ↓
+Batch export script runnen (1 klik)
+        ↓
+public/logos/NAAM.png overschreven
+App toont direct nieuw logo
+Alle tags/events/categorieën intact
+```
+
+### SVG vs PNG
+- Huidig formaat: **PNG**
+- SVG is ondersteund in het script (aanbevolen voor toekomstige overstap)
+- Overstap = enkel andere radiobutton aanvinken in het dialoogvenster
+
+---
+
 ## Nog te doen / Ideeën
 
 - Exporteren naar Gridzilla CSV-formaat (deels al aanwezig via `ExportButton`)
 - Undo/redo
-- Meerdere tabs/sessies gelijktijdig
 - Importeren vanuit bestaand CSV
 - Koepels visueel anders weergeven in het grid (kleurcode?)
 - Mobiele ondersteuning (niet prioritair)
+- Overstap van PNG naar SVG voor logo's
 
 ---
 
