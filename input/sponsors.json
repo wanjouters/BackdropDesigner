@@ -1,0 +1,902 @@
+[
+  {
+    "partner": "226ERS",
+    "filename": "226ERS",
+    "url": "https://flcs-upload.com/content/SPONSORS/226ERS.png"
+  },
+  {
+    "partner": "A WARE",
+    "filename": "A_WARE",
+    "url": "https://flcs-upload.com/content/SPONSORS/A_WARE.png"
+  },
+  {
+    "partner": "AARS",
+    "filename": "AARS",
+    "url": "https://flcs-upload.com/content/SPONSORS/AARS.png"
+  },
+  {
+    "partner": "ACEG",
+    "filename": "ACEG",
+    "url": "https://flcs-upload.com/content/SPONSORS/ACEG.png"
+  },
+  {
+    "partner": "AD GARAGE",
+    "filename": "AD_GARAGE",
+    "url": "https://flcs-upload.com/content/SPONSORS/AD_GARAGE.png"
+  },
+  {
+    "partner": "ADEPS PRO",
+    "filename": "ADEPS_PRO",
+    "url": "https://flcs-upload.com/content/SPONSORS/ADEPS_PRO.png"
+  },
+  {
+    "partner": "ALICANTE",
+    "filename": "ALICANTE",
+    "url": "https://flcs-upload.com/content/SPONSORS/ALICANTE.png"
+  },
+  {
+    "partner": "ANTARGAZ",
+    "filename": "ANTARGAZ",
+    "url": "https://flcs-upload.com/content/SPONSORS/ANTARGAZ.png"
+  },
+  {
+    "partner": "ANTWERPEN",
+    "filename": "ANTWERPEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/ANTWERPEN.png"
+  },
+  {
+    "partner": "ASSA ABLOY",
+    "filename": "ASSA_ABLOY",
+    "url": "https://flcs-upload.com/content/SPONSORS/ASSA_ABLOY.png"
+  },
+  {
+    "partner": "BELORTA",
+    "filename": "BELORTA",
+    "url": "https://flcs-upload.com/content/SPONSORS/BELORTA.png"
+  },
+  {
+    "partner": "BENIDORM",
+    "filename": "BENIDORM",
+    "url": "https://flcs-upload.com/content/SPONSORS/BENIDORM.png"
+  },
+  {
+    "partner": "BINGOAL FUN",
+    "filename": "BINGOAL_FUN",
+    "url": "https://flcs-upload.com/content/SPONSORS/BINGOAL_FUN.png"
+  },
+  {
+    "partner": "BOB DEFRAEYE",
+    "filename": "BOB_DEFRAEYE",
+    "url": "https://flcs-upload.com/content/SPONSORS/BOB_DEFRAEYE.png"
+  },
+  {
+    "partner": "BRANDHOUT GIGANT",
+    "filename": "BRANDHOUT_GIGANT",
+    "url": "https://flcs-upload.com/content/SPONSORS/BRANDHOUT_GIGANT.png"
+  },
+  {
+    "partner": "CAENEN",
+    "filename": "CAENEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/CAENEN.png"
+  },
+  {
+    "partner": "CDSCA OCASC",
+    "filename": "CDSCA_OCASC",
+    "url": "https://flcs-upload.com/content/SPONSORS/CDSCA_OCASC.png"
+  },
+  {
+    "partner": "CCEC",
+    "filename": "CCEC",
+    "url": "https://flcs-upload.com/content/SPONSORS/CCEC.png"
+  },
+  {
+    "partner": "CIRCUIT ZOLDER",
+    "filename": "CIRCUIT_ZOLDER",
+    "url": "https://flcs-upload.com/content/SPONSORS/CIRCUIT_ZOLDER.png"
+  },
+  {
+    "partner": "COCA COLA",
+    "filename": "COCA_COLA",
+    "url": "https://flcs-upload.com/content/SPONSORS/COCA_COLA.png"
+  },
+  {
+    "partner": "COFIDIS",
+    "filename": "COFIDIS",
+    "url": "https://flcs-upload.com/content/SPONSORS/COFIDIS.png"
+  },
+  {
+    "partner": "COUREUR",
+    "filename": "COUREUR",
+    "url": "https://flcs-upload.com/content/SPONSORS/COUREUR.png"
+  },
+  {
+    "partner": "CRAZY WHEELS",
+    "filename": "CRAZY_WHEELS",
+    "url": "https://flcs-upload.com/content/SPONSORS/CRAZY_WHEELS.png"
+  },
+  {
+    "partner": "CREDIT MUTUEL",
+    "filename": "CREDIT_MUTUEL",
+    "url": "https://flcs-upload.com/content/SPONSORS/CREDIT_MUTUEL.png"
+  },
+  {
+    "partner": "CSC",
+    "filename": "CSC",
+    "url": "https://flcs-upload.com/content/SPONSORS/CSC.png"
+  },
+  {
+    "partner": "DE CEUSTER",
+    "filename": "DE_CEUSTER",
+    "url": "https://flcs-upload.com/content/SPONSORS/DE_CEUSTER.png"
+  },
+  {
+    "partner": "DELRUE",
+    "filename": "DELRUE",
+    "url": "https://flcs-upload.com/content/SPONSORS/DELRUE.png"
+  },
+  {
+    "partner": "DIEGEM",
+    "filename": "DIEGEM",
+    "url": "https://flcs-upload.com/content/SPONSORS/DIEGEM.png"
+  },
+  {
+    "partner": "DOB",
+    "filename": "DOB",
+    "url": "https://flcs-upload.com/content/SPONSORS/DOB.png"
+  },
+  {
+    "partner": "DEFENSIE",
+    "filename": "DEFENSIE",
+    "url": "https://flcs-upload.com/content/SPONSORS/DEFENSIE.png"
+  },
+  {
+    "partner": "EBEM",
+    "filename": "EBEM",
+    "url": "https://flcs-upload.com/content/SPONSORS/EBEM.png"
+  },
+  {
+    "partner": "ELECTRO DEPOT",
+    "filename": "ELECTRO_DEPOT",
+    "url": "https://flcs-upload.com/content/SPONSORS/ELECTRO_DEPOT.png"
+  },
+  {
+    "partner": "ESPRIT ICT",
+    "filename": "ESPRIT_ICT",
+    "url": "https://flcs-upload.com/content/SPONSORS/ESPRIT_ICT.png"
+  },
+  {
+    "partner": "ETHIAS",
+    "filename": "ETHIAS",
+    "url": "https://flcs-upload.com/content/SPONSORS/ETHIAS.png"
+  },
+  {
+    "partner": "EXACT",
+    "filename": "EXACT",
+    "url": "https://flcs-upload.com/content/SPONSORS/EXACT.png"
+  },
+  {
+    "partner": "FERO GROUP",
+    "filename": "FERO_GROUP",
+    "url": "https://flcs-upload.com/content/SPONSORS/FERO_GROUP.png"
+  },
+  {
+    "partner": "FLAMANVILLE",
+    "filename": "FLAMANVILLE",
+    "url": "https://flcs-upload.com/content/SPONSORS/FLAMANVILLE.png"
+  },
+  {
+    "partner": "FLOREAL HOLIDAYS",
+    "filename": "FLOREAL_HOLIDAYS",
+    "url": "https://flcs-upload.com/content/SPONSORS/FLOREAL_HOLIDAYS.png"
+  },
+  {
+    "partner": "FRIESLAND CAMPINA",
+    "filename": "FRIESLAND_CAMPINA",
+    "url": "https://flcs-upload.com/content/SPONSORS/FRIESLAND_CAMPINA.png"
+  },
+  {
+    "partner": "GARAGE MERCKX",
+    "filename": "GARAGE_MERCKX",
+    "url": "https://flcs-upload.com/content/SPONSORS/GARAGE_MERCKX.png"
+  },
+  {
+    "partner": "GAVERE",
+    "filename": "GAVERE",
+    "url": "https://flcs-upload.com/content/SPONSORS/GAVERE.png"
+  },
+  {
+    "partner": "GROUP BRS",
+    "filename": "GROUP_BRS",
+    "url": "https://flcs-upload.com/content/SPONSORS/GROUP_BRS.png"
+  },
+  {
+    "partner": "HAROL",
+    "filename": "HAROL",
+    "url": "https://flcs-upload.com/content/SPONSORS/HAROL.png"
+  },
+  {
+    "partner": "HEUSDEN ZOLDER",
+    "filename": "HEUSDEN_ZOLDER",
+    "url": "https://flcs-upload.com/content/SPONSORS/HEUSDEN_ZOLDER.png"
+  },
+  {
+    "partner": "HEYLEN VASTGOED",
+    "filename": "HEYLEN_VASTGOED",
+    "url": "https://flcs-upload.com/content/SPONSORS/HEYLEN_VASTGOED.png"
+  },
+  {
+    "partner": "HITEC",
+    "filename": "HITEC",
+    "url": "https://flcs-upload.com/content/SPONSORS/HITEC.png"
+  },
+  {
+    "partner": "HOOGSTRATEN",
+    "filename": "HOOGSTRATEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/HOOGSTRATEN.png"
+  },
+  {
+    "partner": "INFRASPORTS",
+    "filename": "INFRASPORTS",
+    "url": "https://flcs-upload.com/content/SPONSORS/INFRASPORTS.png"
+  },
+  {
+    "partner": "INTERMARCHE",
+    "filename": "INTERMARCHE",
+    "url": "https://flcs-upload.com/content/SPONSORS/INTERMARCHE.png"
+  },
+  {
+    "partner": "ISOLATIE STOCK",
+    "filename": "ISOLATIE_STOCK",
+    "url": "https://flcs-upload.com/content/SPONSORS/ISOLATIE_STOCK.png"
+  },
+  {
+    "partner": "JANEV",
+    "filename": "JANEV",
+    "url": "https://flcs-upload.com/content/SPONSORS/JANEV.png"
+  },
+  {
+    "partner": "JIHOCESKY KRAJ",
+    "filename": "JIHOCESKY_KRAJ",
+    "url": "https://flcs-upload.com/content/SPONSORS/JIHOCESKY_KRAJ.png"
+  },
+  {
+    "partner": "KARCHER",
+    "filename": "KARCHER",
+    "url": "https://flcs-upload.com/content/SPONSORS/KARCHER.png"
+  },
+  {
+    "partner": "KOKSIJDE",
+    "filename": "KOKSIJDE",
+    "url": "https://flcs-upload.com/content/SPONSORS/KOKSIJDE.png"
+  },
+  {
+    "partner": "KW",
+    "filename": "KW",
+    "url": "https://flcs-upload.com/content/SPONSORS/KW.png"
+  },
+  {
+    "partner": "LA MANCHE",
+    "filename": "LA_MANCHE",
+    "url": "https://flcs-upload.com/content/SPONSORS/LA_MANCHE.png"
+  },
+  {
+    "partner": "LE COTENTIN",
+    "filename": "LE_COTENTIN",
+    "url": "https://flcs-upload.com/content/SPONSORS/LE_COTENTIN.png"
+  },
+  {
+    "partner": "LSO",
+    "filename": "LSO",
+    "url": "https://flcs-upload.com/content/SPONSORS/LSO.png"
+  },
+  {
+    "partner": "MAASMECHELEN",
+    "filename": "MAASMECHELEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/MAASMECHELEN.png"
+  },
+  {
+    "partner": "MAES 00",
+    "filename": "MAES_00",
+    "url": "https://flcs-upload.com/content/SPONSORS/MAES_00.png"
+  },
+  {
+    "partner": "MAES",
+    "filename": "MAES",
+    "url": "https://flcs-upload.com/content/SPONSORS/MAES.png"
+  },
+  {
+    "partner": "MERCEDES VANS",
+    "filename": "MERCEDES_VANS",
+    "url": "https://flcs-upload.com/content/SPONSORS/MERCEDES_VANS.png"
+  },
+  {
+    "partner": "MERKSPLAS",
+    "filename": "MERKSPLAS",
+    "url": "https://flcs-upload.com/content/SPONSORS/MERKSPLAS.png"
+  },
+  {
+    "partner": "MGH",
+    "filename": "MGH",
+    "url": "https://flcs-upload.com/content/SPONSORS/MGH.png"
+  },
+  {
+    "partner": "NAMUR",
+    "filename": "NAMUR",
+    "url": "https://flcs-upload.com/content/SPONSORS/NAMUR.png"
+  },
+  {
+    "partner": "NCM",
+    "filename": "NCM",
+    "url": "https://flcs-upload.com/content/SPONSORS/NCM.png"
+  },
+  {
+    "partner": "NIEL",
+    "filename": "NIEL",
+    "url": "https://flcs-upload.com/content/SPONSORS/NIEL.png"
+  },
+  {
+    "partner": "NSA",
+    "filename": "NSA",
+    "url": "https://flcs-upload.com/content/SPONSORS/NSA.png"
+  },
+  {
+    "partner": "OMNICOL",
+    "filename": "OMNICOL",
+    "url": "https://flcs-upload.com/content/SPONSORS/OMNICOL.png"
+  },
+  {
+    "partner": "OOSTKAMP",
+    "filename": "OOSTKAMP",
+    "url": "https://flcs-upload.com/content/SPONSORS/OOSTKAMP.png"
+  },
+  {
+    "partner": "ORISTANO",
+    "filename": "ORISTANO",
+    "url": "https://flcs-upload.com/content/SPONSORS/ORISTANO.png"
+  },
+  {
+    "partner": "OVERIJSE",
+    "filename": "OVERIJSE",
+    "url": "https://flcs-upload.com/content/SPONSORS/OVERIJSE.png"
+  },
+  {
+    "partner": "PAUWELS SAUZEN",
+    "filename": "PAUWELS_SAUZEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/PAUWELS_SAUZEN.png"
+  },
+  {
+    "partner": "PGS",
+    "filename": "PGS",
+    "url": "https://flcs-upload.com/content/SPONSORS/PGS.png"
+  },
+  {
+    "partner": "PISSEI",
+    "filename": "PISSEI",
+    "url": "https://flcs-upload.com/content/SPONSORS/PISSEI.png"
+  },
+  {
+    "partner": "POLYDAK",
+    "filename": "POLYDAK",
+    "url": "https://flcs-upload.com/content/SPONSORS/POLYDAK.png"
+  },
+  {
+    "partner": "PRIK EN TIK",
+    "filename": "PRIK_EN_TIK",
+    "url": "https://flcs-upload.com/content/SPONSORS/PRIK_EN_TIK.png"
+  },
+  {
+    "partner": "RAS",
+    "filename": "RAS",
+    "url": "https://flcs-upload.com/content/SPONSORS/RAS.png"
+  },
+  {
+    "partner": "REGION NORMANDIE",
+    "filename": "REGION_NORMANDIE",
+    "url": "https://flcs-upload.com/content/SPONSORS/REGION_NORMANDIE.png"
+  },
+  {
+    "partner": "RENOTRAP",
+    "filename": "RENOTRAP",
+    "url": "https://flcs-upload.com/content/SPONSORS/RENOTRAP.png"
+  },
+  {
+    "partner": "RODE KRUIS",
+    "filename": "RODE_KRUIS",
+    "url": "https://flcs-upload.com/content/SPONSORS/RODE_KRUIS.png"
+  },
+  {
+    "partner": "SARDEGNA",
+    "filename": "SARDEGNA",
+    "url": "https://flcs-upload.com/content/SPONSORS/SARDEGNA.png"
+  },
+  {
+    "partner": "SIMAC",
+    "filename": "SIMAC",
+    "url": "https://flcs-upload.com/content/SPONSORS/SIMAC.png"
+  },
+  {
+    "partner": "SKODA",
+    "filename": "SKODA",
+    "url": "https://flcs-upload.com/content/SPONSORS/SKODA.png"
+  },
+  {
+    "partner": "SKUPINA CEZ",
+    "filename": "SKUPINA_CEZ",
+    "url": "https://flcs-upload.com/content/SPONSORS/SKUPINA_CEZ.png"
+  },
+  {
+    "partner": "SPORT VLAANDEREN",
+    "filename": "SPORT_VLAANDEREN",
+    "url": "https://flcs-upload.com/content/SPONSORS/SPORT_VLAANDEREN.png"
+  },
+  {
+    "partner": "SPORTLED",
+    "filename": "SPORTLED",
+    "url": "https://flcs-upload.com/content/SPONSORS/SPORTLED.png"
+  },
+  {
+    "partner": "STIHL",
+    "filename": "STIHL",
+    "url": "https://flcs-upload.com/content/SPONSORS/STIHL.png"
+  },
+  {
+    "partner": "SUNSEEKER",
+    "filename": "SUNSEEKER",
+    "url": "https://flcs-upload.com/content/SPONSORS/SUNSEEKER.png"
+  },
+  {
+    "partner": "TABOR",
+    "filename": "TABOR",
+    "url": "https://flcs-upload.com/content/SPONSORS/TABOR.png"
+  },
+  {
+    "partner": "TELENET",
+    "filename": "TELENET",
+    "url": "https://flcs-upload.com/content/SPONSORS/TELENET.png"
+  },
+  {
+    "partner": "TERRALBA",
+    "filename": "TERRALBA",
+    "url": "https://flcs-upload.com/content/SPONSORS/TERRALBA.png"
+  },
+  {
+    "partner": "TKF",
+    "filename": "TKF",
+    "url": "https://flcs-upload.com/content/SPONSORS/TKF.png"
+  },
+  {
+    "partner": "TOI TOI",
+    "filename": "TOI_TOI",
+    "url": "https://flcs-upload.com/content/SPONSORS/TOI_TOI.png"
+  },
+  {
+    "partner": "UCI CXWC TERRALBA",
+    "filename": "UCI_CXWC_TERRALBA",
+    "url": "https://flcs-upload.com/content/SPONSORS/UCI_CXWC_TERRALBA.png"
+  },
+  {
+    "partner": "VALENCIA",
+    "filename": "VALENCIA",
+    "url": "https://flcs-upload.com/content/SPONSORS/VALENCIA.png"
+  },
+  {
+    "partner": "VANDAELE",
+    "filename": "VANDAELE",
+    "url": "https://flcs-upload.com/content/SPONSORS/VANDAELE.png"
+  },
+  {
+    "partner": "VARTA",
+    "filename": "VARTA",
+    "url": "https://flcs-upload.com/content/SPONSORS/VARTA.png"
+  },
+  {
+    "partner": "VELUX",
+    "filename": "VELUX",
+    "url": "https://flcs-upload.com/content/SPONSORS/VELUX.png"
+  },
+  {
+    "partner": "VIESSMANN",
+    "filename": "VIESSMANN",
+    "url": "https://flcs-upload.com/content/SPONSORS/VIESSMANN.png"
+  },
+  {
+    "partner": "WERKKLEDIJ",
+    "filename": "WERKKLEDIJ",
+    "url": "https://flcs-upload.com/content/SPONSORS/WERKKLEDIJ.png"
+  },
+  {
+    "partner": "WHIM",
+    "filename": "WHIM",
+    "url": "https://flcs-upload.com/content/SPONSORS/WHIM.png"
+  },
+  {
+    "partner": "WILLY NAESSENS",
+    "filename": "WILLY_NAESSENS",
+    "url": "https://flcs-upload.com/content/SPONSORS/WILLY_NAESSENS.png"
+  },
+  {
+    "partner": "X2O",
+    "filename": "X2O",
+    "url": "https://flcs-upload.com/content/SPONSORS/X2O.png"
+  },
+  {
+    "partner": "YDES BOMENVERVOER",
+    "filename": "YDES_BOMENVERVOER",
+    "url": "https://flcs-upload.com/content/SPONSORS/YDES_BOMENVERVOER.png"
+  },
+  {
+    "partner": "ZONHOVEN",
+    "filename": "ZONHOVEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/ZONHOVEN.png"
+  },
+  {
+    "partner": "TEST",
+    "filename": "TEST",
+    "url": "https://flcs-upload.com/content/SPONSORS/TEST.png"
+  },
+  {
+    "partner": "LIMAR",
+    "filename": "LIMAR",
+    "url": "https://flcs-upload.com/content/SPONSORS/LIMAR.png"
+  },
+  {
+    "partner": "BIGMAT",
+    "filename": "BIGMAT",
+    "url": "https://flcs-upload.com/content/SPONSORS/BIGMAT.png"
+  },
+  {
+    "partner": "CAPELLE",
+    "filename": "CAPELLE",
+    "url": "https://flcs-upload.com/content/SPONSORS/CAPELLE.png"
+  },
+  {
+    "partner": "LIBIEZ",
+    "filename": "LIBIEZ",
+    "url": "https://flcs-upload.com/content/SPONSORS/LIBIEZ.png"
+  },
+  {
+    "partner": "JAMOTTE",
+    "filename": "JAMOTTE",
+    "url": "https://flcs-upload.com/content/SPONSORS/JAMOTTE.png"
+  },
+  {
+    "partner": "LUCY",
+    "filename": "LUCY",
+    "url": "https://flcs-upload.com/content/SPONSORS/LUCY.png"
+  },
+  {
+    "partner": "PIERRET",
+    "filename": "PIERRET",
+    "url": "https://flcs-upload.com/content/SPONSORS/PIERRET.png"
+  },
+  {
+    "partner": "CIBEL",
+    "filename": "CIBEL",
+    "url": "https://flcs-upload.com/content/SPONSORS/CIBEL.png"
+  },
+  {
+    "partner": "JOMA",
+    "filename": "JOMA",
+    "url": "https://flcs-upload.com/content/SPONSORS/JOMA.png"
+  },
+  {
+    "partner": "DENDERMONDE",
+    "filename": "DENDERMONDE",
+    "url": "https://flcs-upload.com/content/SPONSORS/DENDERMONDE.png"
+  },
+  {
+    "partner": "KONTRIMO",
+    "filename": "KONTRIMO",
+    "url": "https://flcs-upload.com/content/SPONSORS/KONTRIMO.png"
+  },
+  {
+    "partner": "MEUBELEN DE MAN",
+    "filename": "MEUBELEN_DE_MAN",
+    "url": "https://flcs-upload.com/content/SPONSORS/MEUBELEN_DE_MAN.png"
+  },
+  {
+    "partner": "PEPSI",
+    "filename": "PEPSI",
+    "url": "https://flcs-upload.com/content/SPONSORS/PEPSI.png"
+  },
+  {
+    "partner": "R2 PROJECTS",
+    "filename": "R2_PROJECTS",
+    "url": "https://flcs-upload.com/content/SPONSORS/R2_PROJECTS.png"
+  },
+  {
+    "partner": "WALLONIE",
+    "filename": "WALLONIE",
+    "url": "https://flcs-upload.com/content/SPONSORS/WALLONIE.png"
+  },
+  {
+    "partner": "VELOFOLIES",
+    "filename": "VELOFOLIES",
+    "url": "https://flcs-upload.com/content/SPONSORS/VELOFOLIES.png"
+  },
+  {
+    "partner": "SUPRABAZAR",
+    "filename": "SUPRABAZAR",
+    "url": "https://flcs-upload.com/content/SPONSORS/SUPRABAZAR.png"
+  },
+  {
+    "partner": "WEVELGEM",
+    "filename": "WEVELGEM",
+    "url": "https://flcs-upload.com/content/SPONSORS/WEVELGEM.png"
+  },
+  {
+    "partner": "GROWEBO",
+    "filename": "GROWEBO",
+    "url": "https://flcs-upload.com/content/SPONSORS/GROWEBO.png"
+  },
+  {
+    "partner": "TURISME VALENCIA",
+    "filename": "TURISME_VALENCIA",
+    "url": "https://flcs-upload.com/content/SPONSORS/TURISME_VALENCIA.png"
+  },
+  {
+    "partner": "FRISTADS",
+    "filename": "FRISTADS",
+    "url": "https://flcs-upload.com/content/SPONSORS/FRISTADS.png"
+  },
+  {
+    "partner": "FLANDRIEN SUPER8",
+    "filename": "FLANDRIEN_SUPER8",
+    "url": "https://flcs-upload.com/content/SPONSORS/FLANDRIEN_SUPER8.png"
+  },
+  {
+    "partner": "IKO",
+    "filename": "IKO",
+    "url": "https://flcs-upload.com/content/SPONSORS/IKO.png"
+  },
+  {
+    "partner": "RABOBANK",
+    "filename": "RABOBANK",
+    "url": "https://flcs-upload.com/content/SPONSORS/RABOBANK.png"
+  },
+  {
+    "partner": "TOVERTUIN",
+    "filename": "TOVERTUIN",
+    "url": "https://flcs-upload.com/content/SPONSORS/TOVERTUIN.png"
+  },
+  {
+    "partner": "WOENSDRECHT",
+    "filename": "WOENSDRECHT",
+    "url": "https://flcs-upload.com/content/SPONSORS/WOENSDRECHT.png"
+  },
+  {
+    "partner": "BRABANT SPORT",
+    "filename": "BRABANT_SPORT",
+    "url": "https://flcs-upload.com/content/SPONSORS/BRABANT_SPORT.png"
+  },
+  {
+    "partner": "FRISIA",
+    "filename": "FRISIA",
+    "url": "https://flcs-upload.com/content/SPONSORS/FRISIA.png"
+  },
+  {
+    "partner": "TUMMERS",
+    "filename": "TUMMERS",
+    "url": "https://flcs-upload.com/content/SPONSORS/TUMMERS.png"
+  },
+  {
+    "partner": "REO",
+    "filename": "REO",
+    "url": "https://flcs-upload.com/content/SPONSORS/REO.png"
+  },
+  {
+    "partner": "BILZEN HOESELT",
+    "filename": "BILZEN_HOESELT",
+    "url": "https://flcs-upload.com/content/SPONSORS/BILZEN_HOESELT.png"
+  },
+  {
+    "partner": "BE BRUSSELS",
+    "filename": "BE_BRUSSELS",
+    "url": "https://flcs-upload.com/content/SPONSORS/BE_BRUSSELS.png"
+  },
+  {
+    "partner": "ENECO",
+    "filename": "ENECO",
+    "url": "https://flcs-upload.com/content/SPONSORS/ENECO.png"
+  },
+  {
+    "partner": "AMSTEL",
+    "filename": "AMSTEL",
+    "url": "https://flcs-upload.com/content/SPONSORS/AMSTEL.png"
+  },
+  {
+    "partner": "BOELS",
+    "filename": "BOELS",
+    "url": "https://flcs-upload.com/content/SPONSORS/BOELS.png"
+  },
+  {
+    "partner": "BRUSSEL",
+    "filename": "BRUSSEL",
+    "url": "https://flcs-upload.com/content/SPONSORS/BRUSSEL.png"
+  },
+  {
+    "partner": "CYCLING IN FLANDERS",
+    "filename": "CYCLING_IN_FLANDERS",
+    "url": "https://flcs-upload.com/content/SPONSORS/CYCLING_IN_FLANDERS.png"
+  },
+  {
+    "partner": "HASSELT",
+    "filename": "HASSELT",
+    "url": "https://flcs-upload.com/content/SPONSORS/HASSELT.png"
+  },
+  {
+    "partner": "IEPER",
+    "filename": "IEPER",
+    "url": "https://flcs-upload.com/content/SPONSORS/IEPER.png"
+  },
+  {
+    "partner": "DOLMANS",
+    "filename": "DOLMANS",
+    "url": "https://flcs-upload.com/content/SPONSORS/DOLMANS.png"
+  },
+  {
+    "partner": "GENT",
+    "filename": "GENT",
+    "url": "https://flcs-upload.com/content/SPONSORS/GENT.png"
+  },
+  {
+    "partner": "IMMOWEB NEG",
+    "filename": "IMMOWEB_NEG",
+    "url": "https://flcs-upload.com/content/SPONSORS/IMMOWEB_NEG.png"
+  },
+  {
+    "partner": "IMMOWEB POS",
+    "filename": "IMMOWEB_POS",
+    "url": "https://flcs-upload.com/content/SPONSORS/IMMOWEB_POS.png"
+  },
+  {
+    "partner": "KBC",
+    "filename": "KBC",
+    "url": "https://flcs-upload.com/content/SPONSORS/KBC.png"
+  },
+  {
+    "partner": "KPMG",
+    "filename": "KPMG",
+    "url": "https://flcs-upload.com/content/SPONSORS/KPMG.png"
+  },
+  {
+    "partner": "KWAREMONT",
+    "filename": "KWAREMONT",
+    "url": "https://flcs-upload.com/content/SPONSORS/KWAREMONT.png"
+  },
+  {
+    "partner": "LA DERNIERE HEURE",
+    "filename": "LA_DERNIERE_HEURE",
+    "url": "https://flcs-upload.com/content/SPONSORS/LA_DERNIERE_HEURE.png"
+  },
+  {
+    "partner": "LA LORAINE",
+    "filename": "LA_LORAINE",
+    "url": "https://flcs-upload.com/content/SPONSORS/LA_LORAINE.png"
+  },
+  {
+    "partner": "LENNIK",
+    "filename": "LENNIK",
+    "url": "https://flcs-upload.com/content/SPONSORS/LENNIK.png"
+  },
+  {
+    "partner": "LIDL",
+    "filename": "LIDL",
+    "url": "https://flcs-upload.com/content/SPONSORS/LIDL.png"
+  },
+  {
+    "partner": "LIMBURG CYCLING",
+    "filename": "LIMBURG_CYCLING",
+    "url": "https://flcs-upload.com/content/SPONSORS/LIMBURG_CYCLING.png"
+  },
+  {
+    "partner": "LOCAL",
+    "filename": "LOCAL",
+    "url": "https://flcs-upload.com/content/SPONSORS/LOCAL.png"
+  },
+  {
+    "partner": "LOTTO",
+    "filename": "LOTTO",
+    "url": "https://flcs-upload.com/content/SPONSORS/LOTTO.png"
+  },
+  {
+    "partner": "MAASTRICHT",
+    "filename": "MAASTRICHT",
+    "url": "https://flcs-upload.com/content/SPONSORS/MAASTRICHT.png"
+  },
+  {
+    "partner": "MIDDELKERKE",
+    "filename": "MIDDELKERKE",
+    "url": "https://flcs-upload.com/content/SPONSORS/MIDDELKERKE.png"
+  },
+  {
+    "partner": "NIEUWSBLAD",
+    "filename": "NIEUWSBLAD",
+    "url": "https://flcs-upload.com/content/SPONSORS/NIEUWSBLAD.png"
+  },
+  {
+    "partner": "NINOVE",
+    "filename": "NINOVE",
+    "url": "https://flcs-upload.com/content/SPONSORS/NINOVE.png"
+  },
+  {
+    "partner": "OOST VLAANDEREN",
+    "filename": "OOST_VLAANDEREN",
+    "url": "https://flcs-upload.com/content/SPONSORS/OOST_VLAANDEREN.png"
+  },
+  {
+    "partner": "OUDENAARDE",
+    "filename": "OUDENAARDE",
+    "url": "https://flcs-upload.com/content/SPONSORS/OUDENAARDE.png"
+  },
+  {
+    "partner": "POSTNL",
+    "filename": "POSTNL",
+    "url": "https://flcs-upload.com/content/SPONSORS/POSTNL.png"
+  },
+  {
+    "partner": "PROXIMUS",
+    "filename": "PROXIMUS",
+    "url": "https://flcs-upload.com/content/SPONSORS/PROXIMUS.png"
+  },
+  {
+    "partner": "ROESELARE",
+    "filename": "ROESELARE",
+    "url": "https://flcs-upload.com/content/SPONSORS/ROESELARE.png"
+  },
+  {
+    "partner": "SCHOTEN",
+    "filename": "SCHOTEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/SCHOTEN.png"
+  },
+  {
+    "partner": "SHIMANO",
+    "filename": "SHIMANO",
+    "url": "https://flcs-upload.com/content/SPONSORS/SHIMANO.png"
+  },
+  {
+    "partner": "SHIMANO EXPERIENCE CENTER",
+    "filename": "SHIMANO_EXPERIENCE_CENTER",
+    "url": "https://flcs-upload.com/content/SPONSORS/SHIMANO_EXPERIENCE_CENTER.png"
+  },
+  {
+    "partner": "STAATSLOTERIJ",
+    "filename": "STAATSLOTERIJ",
+    "url": "https://flcs-upload.com/content/SPONSORS/STAATSLOTERIJ.png"
+  },
+  {
+    "partner": "TERNEUZEN",
+    "filename": "TERNEUZEN",
+    "url": "https://flcs-upload.com/content/SPONSORS/TERNEUZEN.png"
+  },
+  {
+    "partner": "TONGEREN BORGLOON",
+    "filename": "TONGEREN_BORGLOON",
+    "url": "https://flcs-upload.com/content/SPONSORS/TONGEREN_BORGLOON.png"
+  },
+  {
+    "partner": "TUDOR",
+    "filename": "TUDOR",
+    "url": "https://flcs-upload.com/content/SPONSORS/TUDOR.png"
+  },
+  {
+    "partner": "VALKENBURG",
+    "filename": "VALKENBURG",
+    "url": "https://flcs-upload.com/content/SPONSORS/VALKENBURG.png"
+  },
+  {
+    "partner": "VLAAMS BRABANT",
+    "filename": "VLAAMS_BRABANT",
+    "url": "https://flcs-upload.com/content/SPONSORS/VLAAMS_BRABANT.png"
+  },
+  {
+    "partner": "WAREGEM",
+    "filename": "WAREGEM",
+    "url": "https://flcs-upload.com/content/SPONSORS/WAREGEM.png"
+  },
+  {
+    "partner": "ZEELAND",
+    "filename": "ZEELAND",
+    "url": "https://flcs-upload.com/content/SPONSORS/ZEELAND.png"
+  }
+]
