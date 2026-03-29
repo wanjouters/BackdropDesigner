@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 // Helper: parse DefaultBarPosition string → { type, row }
 function parseBarPosition(val) {
   if (!val || val === 'NONE') return { type: 'NONE', row: '' }
@@ -51,7 +53,11 @@ function IntInput({ label, value, onChange, min = 1, max }) {
         min={min}
         max={max}
         step={1}
-        onChange={e => onChange(parseInt(e.target.value) || min)}
+        onChange={e => {
+          const v = parseInt(e.target.value) || min
+          const clamped = max !== undefined ? Math.min(v, max) : v
+          onChange(Math.max(min, clamped))
+        }}
         className="w-12 text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right tabular-nums"
       />
     </label>
@@ -71,6 +77,35 @@ function SelectInput({ label, value, options, onChange }) {
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </label>
+  )
+}
+
+// Link toggle button — chain icon
+function LinkBtn({ linked, onToggle, title }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={title}
+      className={`self-end mb-1 p-1 rounded transition-colors ${
+        linked
+          ? 'text-blue-500 bg-blue-50 hover:bg-blue-100'
+          : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
+      }`}
+    >
+      {linked ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 17H7A5 5 0 0 1 7 7h2"/>
+          <path d="M15 7h2a5 5 0 1 1 0 10h-2"/>
+          <line x1="2" y1="2" x2="22" y2="22"/>
+        </svg>
+      )}
+    </button>
   )
 }
 
@@ -115,14 +150,115 @@ const PLACE_EMPTY_OPTIONS = [
   { value: 'skip', label: 'Overslaan' },
 ]
 
-export default function GridToolbar({ format, onChange }) {
-  const barPos = parseBarPosition(format.DefaultBarPosition)
+// ─── withFittedCells ─────────────────────────────────────────────────────────
+// Margins are ABSOLUTE — they never change automatically.
+// If cols/rows/gutter would push cells outside the available space,
+// cell size shrinks to fit (aspect ratio preserved). Gutters stay the same.
+// When cols/rows decrease, cells stay at their current size; the extra space
+// becomes visual margin but the margin values in the toolbar stay unchanged.
+function withFittedAndCentered(fmt) {
+  if (!fmt.CanvasWidth_mm || !fmt.CanvasHeight_mm) return fmt
+
+  const cols   = fmt.Cols || 1
+  const rows   = fmt.Rows || 1
+  const gx     = fmt.GutterX_mm || 0
+  const gy     = fmt.GutterY_mm || 0
+  const aspect = fmt.CellAspect || 1.667
+  const ml     = fmt.MarginLeft_mm   || 0
+  const mr     = fmt.MarginRight_mm  || 0
+  const mt     = fmt.MarginTop_mm    || 0
+  const mb     = fmt.MarginBottom_mm || 0
+
+  const availW = fmt.CanvasWidth_mm  - ml - mr
+  const availH = fmt.CanvasHeight_mm - mt - mb
+  if (availW <= 0 || availH <= 0) return fmt
+
+  const maxCellW = (availW - (cols - 1) * gx) / cols
+  const maxCellH = (availH - (rows - 1) * gy) / rows
+
+  // Use TargetCellW_mm as the intended size so cells spring back when space allows
+  let cw = fmt.TargetCellW_mm ?? fmt.CellW_mm ?? 0
+  let ch = cw / aspect
+
+  if (maxCellW > 0 && cw > maxCellW) { cw = maxCellW; ch = cw / aspect }
+  if (maxCellH > 0 && ch > maxCellH) { ch = maxCellH; cw = ch * aspect }
+
+  const result = { ...fmt }
+  result.TargetCellW_mm = fmt.TargetCellW_mm ?? fmt.CellW_mm ?? 0  // lock in target on first call
+  result.CellW_mm = Math.round(cw * 100) / 100
+  result.CellH_mm = Math.round(ch * 1000) / 1000
+  // Margins are not touched — they remain as the user set them
+  return result
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+export default function GridToolbar({ format, onChange, cellPresets = [] }) {
+  const [gutterLinked, setGutterLinked] = useState(true)
+  const [lastChangedGutter, setLastChangedGutter] = useState('x')
+  const [marginLinkedH, setMarginLinkedH] = useState(true)  // Left ↔ Right
+  const [marginLinkedV, setMarginLinkedV] = useState(true)  // Top ↔ Bottom
+  const [lastChangedMarginH, setLastChangedMarginH] = useState('l')
+  const [lastChangedMarginV, setLastChangedMarginV] = useState('t')
+
+  const barPos    = parseBarPosition(format.DefaultBarPosition)
   const hasHeader = format.HeaderType && format.HeaderType !== 'NONE'
-  const hasBar = format.DefaultBarType && format.DefaultBarType !== 'NONE'
+  const hasBar    = format.DefaultBarType && format.DefaultBarType !== 'NONE'
+
+  // Cell height always derived from CellW / CellAspect
   const cellH = format.CellW_mm && format.CellAspect
     ? Math.round((format.CellW_mm / format.CellAspect) * 1000) / 1000
     : format.CellH_mm
 
+  const canvasW = format.CanvasWidth_mm || 0
+
+  // No hard max on cols/rows — cells shrink automatically to fit
+
+  // ─── Preset matching ───────────────────────────────────────────────────────
+  function findMatchingPreset() {
+    if (!cellPresets || cellPresets.length === 0) return ''
+    for (const p of cellPresets) {
+      const cellMatch =
+        Math.abs((p.CellW_mm || 0) - (format.CellW_mm || 0)) < 0.5 &&
+        Math.abs((p.CellAspect || 0) - (format.CellAspect || 0)) < 0.005
+      const gutterMatch =
+        (p.GutterX_mm == null || Math.abs(p.GutterX_mm - (format.GutterX_mm || 0)) < 0.5) &&
+        (p.GutterY_mm == null || Math.abs(p.GutterY_mm - (format.GutterY_mm || 0)) < 0.5)
+      if (cellMatch && gutterMatch) return p.id
+    }
+    return ''
+  }
+
+  // Apply preset: restore preset cell size + gutter, recalculate max cols/rows that fit
+  function applyPreset(presetId) {
+    const preset = cellPresets.find(p => p.id === presetId)
+    if (!preset) return
+    const cw = preset.CellW_mm
+    const ch = Math.round(cw / preset.CellAspect * 1000) / 1000
+    const gx = preset.GutterX_mm ?? format.GutterX_mm ?? 0
+    const gy = preset.GutterY_mm ?? format.GutterY_mm ?? 0
+    const ml = format.MarginLeft_mm  || 0
+    const mr = format.MarginRight_mm || 0
+    const mt = format.MarginTop_mm   || 0
+    const mb = format.MarginBottom_mm || 0
+    const availW = (format.CanvasWidth_mm  || 0) - ml - mr
+    const availH = (format.CanvasHeight_mm || 0) - mt - mb
+    const maxCols = Math.max(1, Math.floor((availW + gx) / (cw + gx)))
+    const maxRows = Math.max(1, Math.floor((availH + gy) / (ch + gy)))
+    const updated = {
+      ...format,
+      CellW_mm: cw,
+      CellAspect: preset.CellAspect,
+      CellH_mm: ch,
+      TargetCellW_mm: cw,
+      Cols: maxCols,
+      Rows: maxRows,
+      ...(preset.GutterX_mm != null && { GutterX_mm: preset.GutterX_mm }),
+      ...(preset.GutterY_mm != null && { GutterY_mm: preset.GutterY_mm }),
+    }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  // ─── Set helper ────────────────────────────────────────────────────────────
   function set(key, value) {
     onChange({ ...format, [key]: value })
   }
@@ -135,14 +271,127 @@ export default function GridToolbar({ format, onChange }) {
     onChange({ ...format, DefaultBarPosition: serializeBarPosition('AFTER_ROW', row) })
   }
 
+  // ─── Grid ──────────────────────────────────────────────────────────────────
+  function handleColsChange(newCols) {
+    onChange(withFittedAndCentered({ ...format, Cols: Math.max(1, newCols) }))
+  }
+
+  function handleRowsChange(newRows) {
+    onChange(withFittedAndCentered({ ...format, Rows: Math.max(1, newRows) }))
+  }
+
+  // ─── Cel ───────────────────────────────────────────────────────────────────
+  function handleCellWChange(v) {
+    const newH = Math.round(v / (format.CellAspect || 1.667) * 1000) / 1000
+    onChange(withFittedAndCentered({ ...format, CellW_mm: v, CellH_mm: newH, TargetCellW_mm: v }))
+  }
+
+  // ─── Gutter ────────────────────────────────────────────────────────────────
+  function handleGutterXChange(v) {
+    setLastChangedGutter('x')
+    const updated = gutterLinked
+      ? { ...format, GutterX_mm: v, GutterY_mm: v }
+      : { ...format, GutterX_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleGutterYChange(v) {
+    setLastChangedGutter('y')
+    const updated = gutterLinked
+      ? { ...format, GutterY_mm: v, GutterX_mm: v }
+      : { ...format, GutterY_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleGutterLinkToggle() {
+    if (!gutterLinked) {
+      const updated = lastChangedGutter === 'y'
+        ? { ...format, GutterX_mm: format.GutterY_mm }
+        : { ...format, GutterY_mm: format.GutterX_mm }
+      onChange(withFittedAndCentered(updated))
+    }
+    setGutterLinked(v => !v)
+  }
+
+  // ─── Marges ────────────────────────────────────────────────────────────────
+  function handleMarginLChange(v) {
+    setLastChangedMarginH('l')
+    const updated = marginLinkedH
+      ? { ...format, MarginLeft_mm: v, MarginRight_mm: v }
+      : { ...format, MarginLeft_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleMarginRChange(v) {
+    setLastChangedMarginH('r')
+    const updated = marginLinkedH
+      ? { ...format, MarginRight_mm: v, MarginLeft_mm: v }
+      : { ...format, MarginRight_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleMarginTChange(v) {
+    setLastChangedMarginV('t')
+    const updated = marginLinkedV
+      ? { ...format, MarginTop_mm: v, MarginBottom_mm: v }
+      : { ...format, MarginTop_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleMarginBChange(v) {
+    setLastChangedMarginV('b')
+    const updated = marginLinkedV
+      ? { ...format, MarginBottom_mm: v, MarginTop_mm: v }
+      : { ...format, MarginBottom_mm: v }
+    onChange(withFittedAndCentered(updated))
+  }
+
+  function handleMarginLinkHToggle() {
+    if (!marginLinkedH) {
+      const updated = lastChangedMarginH === 'r'
+        ? { ...format, MarginLeft_mm: format.MarginRight_mm }
+        : { ...format, MarginRight_mm: format.MarginLeft_mm }
+      onChange(withFittedAndCentered(updated))
+    }
+    setMarginLinkedH(v => !v)
+  }
+
+  function handleMarginLinkVToggle() {
+    if (!marginLinkedV) {
+      const updated = lastChangedMarginV === 'b'
+        ? { ...format, MarginTop_mm: format.MarginBottom_mm }
+        : { ...format, MarginBottom_mm: format.MarginTop_mm }
+      onChange(withFittedAndCentered(updated))
+    }
+    setMarginLinkedV(v => !v)
+  }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 overflow-x-auto flex-shrink-0">
       <div className="flex items-end gap-3 min-w-max">
 
-        {/* Grid */}
+        {/* Grid + Preset */}
         <Group label="Grid">
-          <IntInput label="Kolommen" value={format.Cols} min={1} max={30} onChange={v => set('Cols', v)} />
-          <IntInput label="Rijen" value={format.Rows} min={1} max={30} onChange={v => set('Rows', v)} />
+          {cellPresets && cellPresets.length > 0 && (
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">Preset</span>
+              <select
+                value={findMatchingPreset()}
+                onChange={e => applyPreset(e.target.value)}
+                className="text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 max-w-[120px]"
+              >
+                <option value="">— Aangepast —</option>
+                {cellPresets.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <IntInput label="Kolommen" value={format.Cols} min={1}
+            onChange={handleColsChange} />
+          <IntInput label="Rijen" value={format.Rows} min={1}
+            onChange={handleRowsChange} />
         </Group>
 
         <Sep />
@@ -150,9 +399,7 @@ export default function GridToolbar({ format, onChange }) {
         {/* Cel */}
         <Group label="Cel">
           <NumInput label="Breedte" value={format.CellW_mm} step={0.1}
-            onChange={v => onChange({ ...format, CellW_mm: v, CellH_mm: Math.round(v / (format.CellAspect || 1.667) * 1000) / 1000 })} />
-          <NumInput label="Aspect" value={format.CellAspect} unit="" step={0.001}
-            onChange={v => onChange({ ...format, CellAspect: v, CellH_mm: Math.round((format.CellW_mm || 0) / v * 1000) / 1000 })} />
+            onChange={handleCellWChange} />
           <NumInput label="Hoogte" value={cellH} unit="mm" readOnly />
         </Group>
 
@@ -160,18 +407,38 @@ export default function GridToolbar({ format, onChange }) {
 
         {/* Gutter */}
         <Group label="Gutter">
-          <NumInput label="Horiz" value={format.GutterX_mm} step={0.5} onChange={v => set('GutterX_mm', v)} />
-          <NumInput label="Vert" value={format.GutterY_mm} step={0.5} onChange={v => set('GutterY_mm', v)} />
+          <NumInput label="Horiz" value={format.GutterX_mm} step={0.5}
+            onChange={handleGutterXChange} />
+          <LinkBtn
+            linked={gutterLinked}
+            onToggle={handleGutterLinkToggle}
+            title={gutterLinked
+              ? 'Horiz en Vert zijn gelinkt — klik om los te koppelen'
+              : 'Horiz en Vert zijn los — klik om te linken'}
+          />
+          <NumInput label="Vert" value={format.GutterY_mm} step={0.5}
+            onChange={handleGutterYChange} />
         </Group>
 
         <Sep />
 
         {/* Marges */}
         <Group label="Marges">
-          <NumInput label="Links" value={format.MarginLeft_mm} step={0.5} onChange={v => set('MarginLeft_mm', v)} />
-          <NumInput label="Boven" value={format.MarginTop_mm} step={0.5} onChange={v => set('MarginTop_mm', v)} />
-          <NumInput label="Rechts" value={format.MarginRight_mm} step={0.5} onChange={v => set('MarginRight_mm', v)} />
-          <NumInput label="Onder" value={format.MarginBottom_mm} step={0.5} onChange={v => set('MarginBottom_mm', v)} />
+          <NumInput label="Links" value={format.MarginLeft_mm} step={0.5} onChange={handleMarginLChange} />
+          <LinkBtn
+            linked={marginLinkedH}
+            onToggle={handleMarginLinkHToggle}
+            title={marginLinkedH ? 'Links en Rechts gelinkt — klik om los te koppelen' : 'Links en Rechts los — klik om te linken'}
+          />
+          <NumInput label="Rechts" value={format.MarginRight_mm} step={0.5} onChange={handleMarginRChange} />
+          <Sep />
+          <NumInput label="Boven" value={format.MarginTop_mm} step={0.5} onChange={handleMarginTChange} />
+          <LinkBtn
+            linked={marginLinkedV}
+            onToggle={handleMarginLinkVToggle}
+            title={marginLinkedV ? 'Boven en Onder gelinkt — klik om los te koppelen' : 'Boven en Onder los — klik om te linken'}
+          />
+          <NumInput label="Onder" value={format.MarginBottom_mm} step={0.5} onChange={handleMarginBChange} />
         </Group>
 
         <Sep />
@@ -203,17 +470,6 @@ export default function GridToolbar({ format, onChange }) {
             <NumInput label="Gap ↑" value={format.DefaultBarGapTop_mm} step={0.5} onChange={v => set('DefaultBarGapTop_mm', v)} />
             <NumInput label="Gap ↓" value={format.DefaultBarGapBottom_mm} step={0.5} onChange={v => set('DefaultBarGapBottom_mm', v)} />
           </>}
-        </Group>
-
-        <Sep />
-
-        {/* Canvas */}
-        <Group label="Canvas">
-          <NumInput label="Breedte" value={format.CanvasWidth_mm} step={10} onChange={v => set('CanvasWidth_mm', v)} />
-          <NumInput label="Hoogte" value={format.CanvasHeight_mm} step={10} onChange={v => set('CanvasHeight_mm', v)} />
-          <NumInput label="Bleed" value={format.Bleed_mm} step={1} onChange={v => set('Bleed_mm', v)} />
-          <NumInput label="Schaal" value={format.Scale} unit="×" step={0.1}
-            onChange={v => set('Scale', v)} />
         </Group>
 
         <Sep />

@@ -95,7 +95,7 @@ export function saveSponsorGroups(data) {
 }
 
 // --- Saved designs ---
-// Structure: [{ id, name, formatCode, format, slots, savedAt }]
+// Structure: [{ id, name, formatCode, format, slots, savedAt, folder?: string }]
 const SAVED_DESIGNS_KEY = 'backdropDesigner_savedDesigns'
 
 export function loadSavedDesigns() {
@@ -103,4 +103,52 @@ export function loadSavedDesigns() {
 }
 export function saveDesignsList(list) {
   localStorage.setItem(SAVED_DESIGNS_KEY, JSON.stringify(list))
+}
+
+// --- Design folders ---
+// Structure: string[]
+const DESIGN_FOLDERS_KEY = 'backdropDesigner_designFolders'
+
+export function loadDesignFolders() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(DESIGN_FOLDERS_KEY))
+    if (Array.isArray(stored)) return stored
+  } catch {}
+  return []
+}
+export function saveDesignFolders(list) {
+  localStorage.setItem(DESIGN_FOLDERS_KEY, JSON.stringify(list))
+}
+
+// --- Cell size presets ---
+// Structure: [{ id, name, CellW_mm, CellAspect }]
+const CELL_PRESETS_KEY = 'backdropDesigner_cellPresets'
+
+const DEFAULT_CELL_PRESETS = [
+  { id: 'default_1', name: 'Mixed Zone', CellW_mm: 356, CellAspect: 1.667, GutterX_mm: 80, GutterY_mm: 80 },
+  { id: 'default_2', name: 'Flash Interview', CellW_mm: 200, CellAspect: 1.667, GutterX_mm: 40, GutterY_mm: 40 },
+]
+
+export function loadCellPresets() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CELL_PRESETS_KEY))
+    if (Array.isArray(stored)) return stored
+  } catch {}
+  return [...DEFAULT_CELL_PRESETS]
+}
+
+export function saveCellPresets(list) {
+  localStorage.setItem(CELL_PRESETS_KEY, JSON.stringify(list))
+}
+
+// --- Default aspect ratio ---
+const DEFAULT_ASPECT_KEY = 'backdropDesigner_defaultAspect'
+
+export function loadDefaultAspect() {
+  const v = parseFloat(localStorage.getItem(DEFAULT_ASPECT_KEY))
+  return isNaN(v) ? 1.667 : v
+}
+
+export function saveDefaultAspect(val) {
+  localStorage.setItem(DEFAULT_ASPECT_KEY, String(val))
 }

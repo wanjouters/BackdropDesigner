@@ -6,10 +6,21 @@ import FrequencyPanel from './components/FrequencyPanel'
 import ExportButton from './components/ExportButton'
 import CustomFormatModal from './components/CustomFormatModal'
 import LogoLibrary from './components/LogoLibrary'
+import SettingsModal from './components/SettingsModal'
 import GridToolbar from './components/GridToolbar'
 import PreviewCanvas from './components/PreviewCanvas'
 import { exportJpeg } from './utils/exportJpeg'
-import { loadCustomLogos, saveCustomLogos, loadSavedDesigns, saveDesignsList } from './utils/sponsorTags'
+import {
+  loadCustomLogos, saveCustomLogos, loadSavedDesigns, saveDesignsList,
+  loadDesignFolders, saveDesignFolders,
+  loadTags, saveTags, loadEvents, saveEvents,
+  loadSponsorCategories, saveSponsorCategories,
+  loadCategoryList, saveCategoryList,
+  loadEventGroups, saveEventGroups,
+  loadSponsorGroups, saveSponsorGroups,
+  loadCellPresets, saveCellPresets,
+  loadDefaultAspect, saveDefaultAspect,
+} from './utils/sponsorTags'
 
 function makeEmptySlots(cols, rows) {
   return Array(cols * rows).fill('BLANK')
@@ -27,24 +38,279 @@ function resizeSlots(oldSlots, oldCols, newCols, newRows) {
   return next
 }
 
-function SavedDesignsPanel({ designs, currentFormatCode, renamingDesign, onLoad, onDelete, onRename, onStartRename }) {
-  const [collapsed, setCollapsed] = useState(designs.length === 0)
-  const renameRef = useState(null)
+// Build tree from flat path list: [{ path, name, children }]
+function buildFolderTree(folders) {
+  const nodes = {}
+  folders.forEach(path => { nodes[path] = { path, name: path.split('/').pop(), children: [] } })
+  const roots = []
+  folders.forEach(path => {
+    const parts = path.split('/')
+    if (parts.length === 1) { roots.push(nodes[path]); return }
+    const parentPath = parts.slice(0, -1).join('/')
+    if (nodes[parentPath]) nodes[parentPath].children.push(nodes[path])
+    else roots.push(nodes[path]) // orphan — show as root
+  })
+  return roots
+}
+
+function DesignRow({ d, renamingDesign, folders, onLoad, onDelete, onRename, onStartRename, onMoveToFolder, indent = 0 }) {
+  const [folderMenuOpen, setFolderMenuOpen] = useState(false)
   const inputRef = { current: null }
 
   return (
+    <div className="hover:bg-gray-50 transition-colors group relative" style={{ paddingLeft: 12 + indent * 12 }}>
+      <div className="px-3 py-2">
+        {renamingDesign === d.id ? (
+          <div className="flex items-center gap-1">
+            <input
+              ref={el => { inputRef.current = el }}
+              autoFocus
+              defaultValue={d.name}
+              onKeyDown={e => {
+                if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
+                if (e.key === 'Escape') onStartRename(null)
+              }}
+              className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+            />
+            <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+            <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
+              <p className="text-xs font-semibold text-gray-800 truncate">{d.name}</p>
+              <p className="text-[10px] text-gray-400">{d.formatCode} · {new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
+            </button>
+            {folders.length > 0 && (
+              <div className="relative flex-shrink-0">
+                <button onClick={() => setFolderMenuOpen(v => !v)} title="Verplaats naar map"
+                  className="text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 3.5h4l1 1.5h5v5.5H1z"/>
+                  </svg>
+                </button>
+                {folderMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 min-w-[150px] max-h-48 overflow-y-auto">
+                    {d.folder && (
+                      <button onClick={() => { onMoveToFolder(d.id, null); setFolderMenuOpen(false) }}
+                        className="w-full text-left text-xs px-3 py-1.5 text-gray-400 hover:bg-gray-50 italic">Geen map</button>
+                    )}
+                    {folders.filter(f => f !== d.folder).map(f => {
+                      const depth = f.split('/').length - 1
+                      const label = f.split('/').pop()
+                      return (
+                        <button key={f} onClick={() => { onMoveToFolder(d.id, f); setFolderMenuOpen(false) }}
+                          className="w-full text-left text-xs py-1.5 text-gray-700 hover:bg-blue-50 hover:text-blue-700 truncate flex items-center gap-1"
+                          style={{ paddingLeft: 12 + depth * 10, paddingRight: 12 }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-gray-400">
+                            <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
+                          </svg>
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            <button onClick={() => onStartRename(d.id)} title="Hernoemen"
+              className="text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
+            </button>
+            <button onClick={() => onDelete(d.id)} title="Verwijderen"
+              className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FolderNode({ node, depth, designs, folders, renamingDesign, collapsedFolders, renamingFolder, addingSubfolderFor,
+  onLoad, onDelete, onRename, onStartRename, onMoveToFolder,
+  onToggleFolder, onStartRenameFolder, onConfirmRenameFolder, onDeleteFolder,
+  onStartAddSubfolder, onConfirmAddSubfolder, onCancelAddSubfolder, addSubfolderVal, setAddSubfolderVal,
+}) {
+  const folderRenameRef = { current: null }
+  const isCollapsed = collapsedFolders[node.path]
+  const isRenaming = renamingFolder === node.path
+  const isAddingSub = addingSubfolderFor === node.path
+
+  // Designs directly in this folder (not in subfolders)
+  const inFolder = designs.filter(d => d.folder === node.path)
+  // Count: designs in this folder + all descendant folders
+  const allPaths = new Set([node.path, ...folders.filter(f => f.startsWith(node.path + '/'))])
+  const totalCount = designs.filter(d => allPaths.has(d.folder)).length
+
+  const indent = depth * 12
+  const bgClass = depth === 0 ? 'bg-gray-50' : 'bg-gray-50/60'
+
+  return (
+    <div className="border-b border-gray-50 last:border-0">
+      {/* Folder header */}
+      <div className={`flex items-center gap-1 py-1.5 ${bgClass} group/folder`} style={{ paddingLeft: 12 + indent, paddingRight: 8 }}>
+        <button onClick={() => onToggleFolder(node.path)} className="flex items-center gap-1 flex-1 min-w-0">
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+            style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
+            <path d="M2 3.5l3 3 3-3"/>
+          </svg>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            className={depth === 0 ? 'text-blue-400' : 'text-blue-300'} style={{ flexShrink: 0 }}>
+            <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
+          </svg>
+          {isRenaming ? (
+            <input ref={el => { folderRenameRef.current = el }} autoFocus defaultValue={node.name}
+              onClick={e => e.stopPropagation()}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { onConfirmRenameFolder(node.path, folderRenameRef.current.value); }
+                if (e.key === 'Escape') onStartRenameFolder(null)
+              }}
+              className="flex-1 text-xs px-1 py-0 border-b border-blue-400 bg-transparent focus:outline-none min-w-0"
+            />
+          ) : (
+            <span className="text-xs font-semibold text-gray-600 truncate">{node.name}</span>
+          )}
+          <span className="text-[10px] text-gray-400 flex-shrink-0 ml-0.5">({totalCount})</span>
+        </button>
+        {!isRenaming && (
+          <>
+            <button onClick={() => onStartAddSubfolder(node.path)} title="Submap toevoegen"
+              className="text-gray-300 hover:text-blue-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 1v10M1 6h10"/>
+              </svg>
+            </button>
+            <button onClick={() => onStartRenameFolder(node.path)} title="Hernoemen"
+              className="text-gray-300 hover:text-gray-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
+            </button>
+            <button onClick={() => onDeleteFolder(node.path)} title="Map verwijderen"
+              className="text-gray-300 hover:text-red-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Contents */}
+      {!isCollapsed && (
+        <>
+          {/* Add subfolder input */}
+          {isAddingSub && (
+            <div className="flex items-center gap-1 py-1.5 border-b border-gray-50" style={{ paddingLeft: 24 + indent, paddingRight: 8 }}>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-300 flex-shrink-0">
+                <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
+              </svg>
+              <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') onConfirmAddSubfolder(node.path)
+                  if (e.key === 'Escape') onCancelAddSubfolder()
+                }}
+                placeholder="Submapnaam..."
+                className="flex-1 text-xs px-1 py-0.5 border-b border-blue-400 bg-transparent focus:outline-none min-w-0"
+              />
+              <button onClick={() => onConfirmAddSubfolder(node.path)} className="text-[10px] text-blue-600 font-semibold">OK</button>
+              <button onClick={onCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
+            </div>
+          )}
+
+          {/* Subfolders */}
+          {node.children.map(child => (
+            <FolderNode key={child.path} node={child} depth={depth + 1}
+              designs={designs} folders={folders} renamingDesign={renamingDesign}
+              collapsedFolders={collapsedFolders} renamingFolder={renamingFolder}
+              addingSubfolderFor={addingSubfolderFor}
+              onLoad={onLoad} onDelete={onDelete} onRename={onRename}
+              onStartRename={onStartRename} onMoveToFolder={onMoveToFolder}
+              onToggleFolder={onToggleFolder} onStartRenameFolder={onStartRenameFolder}
+              onConfirmRenameFolder={onConfirmRenameFolder} onDeleteFolder={onDeleteFolder}
+              onStartAddSubfolder={onStartAddSubfolder} onConfirmAddSubfolder={onConfirmAddSubfolder}
+              onCancelAddSubfolder={onCancelAddSubfolder}
+              addSubfolderVal={addSubfolderVal} setAddSubfolderVal={setAddSubfolderVal}
+            />
+          ))}
+
+          {/* Designs in this folder */}
+          {inFolder.length === 0 && node.children.length === 0 && !isAddingSub && (
+            <p className="text-[10px] text-gray-300 italic py-1.5" style={{ paddingLeft: 28 + indent }}>Leeg</p>
+          )}
+          {inFolder.map(d => (
+            <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
+              onLoad={onLoad} onDelete={onDelete} onRename={onRename}
+              onStartRename={onStartRename} onMoveToFolder={onMoveToFolder}
+              indent={depth + 1}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete, onRename, onStartRename, onMoveToFolder, onAddFolder, onRenameFolder, onDeleteFolder }) {
+  const [collapsed, setCollapsed] = useState(designs.length === 0 && folders.length === 0)
+  const [collapsedFolders, setCollapsedFolders] = useState({})
+  const [renamingFolder, setRenamingFolder] = useState(null)
+  const [addingSubfolderFor, setAddingSubfolderFor] = useState(null) // folder path | 'root'
+  const [addSubfolderVal, setAddSubfolderVal] = useState('')
+
+  const tree = buildFolderTree(folders)
+  const ungrouped = designs.filter(d => !d.folder)
+  const total = designs.length
+
+  function toggleFolder(path) {
+    setCollapsedFolders(prev => ({ ...prev, [path]: !prev[path] }))
+  }
+
+  function handleConfirmRenameFolder(path, newName) {
+    onRenameFolder(path, newName)
+    setRenamingFolder(null)
+  }
+
+  function handleStartAddSubfolder(parentPath) {
+    setAddingSubfolderFor(parentPath)
+    setAddSubfolderVal('')
+  }
+
+  function handleConfirmAddSubfolder(parentPath) {
+    if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), parentPath)
+    setAddingSubfolderFor(null)
+    setAddSubfolderVal('')
+  }
+
+  function handleCancelAddSubfolder() {
+    setAddingSubfolderFor(null)
+    setAddSubfolderVal('')
+  }
+
+  const sharedFolderNodeProps = {
+    designs, folders, renamingDesign, collapsedFolders, renamingFolder,
+    addingSubfolderFor,
+    onLoad, onDelete, onRename, onStartRename, onMoveToFolder,
+    onToggleFolder: toggleFolder,
+    onStartRenameFolder: setRenamingFolder,
+    onConfirmRenameFolder: handleConfirmRenameFolder,
+    onDeleteFolder,
+    onStartAddSubfolder: handleStartAddSubfolder,
+    onConfirmAddSubfolder: handleConfirmAddSubfolder,
+    onCancelAddSubfolder: handleCancelAddSubfolder,
+    addSubfolderVal, setAddSubfolderVal,
+  }
+
+  return (
     <div className="bg-white rounded-xl border border-gray-200 flex-shrink-0">
-      <button
-        onClick={() => setCollapsed(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
-      >
+      <button onClick={() => setCollapsed(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left">
         <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 1h8l2 2v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
             <path d="M9 1v4H4V1"/>
           </svg>
           Opgeslagen
-          {designs.length > 0 && <span className="text-xs text-gray-400 font-normal">({designs.length})</span>}
+          {total > 0 && <span className="text-xs text-gray-400 font-normal">({total})</span>}
         </span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
           style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
@@ -54,45 +320,49 @@ function SavedDesignsPanel({ designs, currentFormatCode, renamingDesign, onLoad,
 
       {!collapsed && (
         <div className="border-t border-gray-100">
-          {designs.length === 0 ? (
+          {total === 0 && folders.length === 0 ? (
             <p className="text-xs text-gray-400 px-4 py-3">Nog geen opgeslagen ontwerpen.</p>
           ) : (
-            <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
-              {designs.map(d => (
-                <div key={d.id} className="px-3 py-2 hover:bg-gray-50 transition-colors group">
-                  {renamingDesign === d.id ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        ref={el => { inputRef.current = el }}
-                        autoFocus
-                        defaultValue={d.name}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
-                          if (e.key === 'Escape') onStartRename(null)
-                        }}
-                        className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-                      />
-                      <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
-                      <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
-                        <p className="text-xs font-semibold text-gray-800 truncate">{d.name}</p>
-                        <p className="text-[10px] text-gray-400">{d.formatCode} · {new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
-                      </button>
-                      <button onClick={() => onStartRename(d.id)} title="Hernoemen" className="text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
-                      </button>
-                      <button onClick={() => onDelete(d.id)} title="Verwijderen" className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
+            <div className="max-h-80 overflow-y-auto">
+              {/* Folder tree */}
+              {tree.map(node => (
+                <FolderNode key={node.path} node={node} depth={0} {...sharedFolderNodeProps} />
+              ))}
+              {/* Ungrouped designs */}
+              {ungrouped.map(d => (
+                <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
+                  onLoad={onLoad} onDelete={onDelete} onRename={onRename}
+                  onStartRename={onStartRename} onMoveToFolder={onMoveToFolder} indent={0} />
               ))}
             </div>
           )}
+
+          {/* Add root folder */}
+          <div className="border-t border-gray-100 px-3 py-2">
+            {addingSubfolderFor === 'root' ? (
+              <div className="flex items-center gap-1">
+                <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }
+                    if (e.key === 'Escape') handleCancelAddSubfolder()
+                  }}
+                  placeholder="Mapnaam..."
+                  className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                />
+                <button onClick={() => { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }}
+                  className="text-[10px] text-blue-600 font-semibold">OK</button>
+                <button onClick={handleCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
+              </div>
+            ) : (
+              <button onClick={() => { setAddingSubfolderFor('root'); setAddSubfolderVal('') }}
+                className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-blue-600 transition-colors">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M6 1v10M1 6h10"/>
+                </svg>
+                Nieuwe map
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -108,10 +378,23 @@ export default function App() {
   const [view, setView] = useState('grid') // 'grid' | 'preview'
   const [customLogos, setCustomLogos] = useState(() => loadCustomLogos())
   const [savedDesigns, setSavedDesigns] = useState(() => loadSavedDesigns())
+  const [designFolders, setDesignFolders] = useState(() => loadDesignFolders())
   const [saveNameInput, setSaveNameInput] = useState('')
+  const [saveFolderInput, setSaveFolderInput] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
   const [renamingDesign, setRenamingDesign] = useState(null)
   const [advanceDir, setAdvanceDirState] = useState(() => localStorage.getItem('backdropDesigner_advanceDir') || 'r')
+
+  // Settings state (lifted from LogoLibrary)
+  const [tags, setTags] = useState(() => loadTags())
+  const [sponsorCategories, setSponsorCategories] = useState(() => loadSponsorCategories())
+  const [events, setEvents] = useState(() => loadEvents())
+  const [categoryList, setCategoryList] = useState(() => loadCategoryList())
+  const [eventGroups, setEventGroups] = useState(() => loadEventGroups())
+  const [sponsorGroups, setSponsorGroups] = useState(() => loadSponsorGroups())
+  const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
+  const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
+  const [showSettings, setShowSettings] = useState(false)
 
   function setAdvanceDir(dir) {
     setAdvanceDirState(dir)
@@ -135,12 +418,64 @@ export default function App() {
       format: { ...editedFormat },
       slots: [...slots],
       savedAt: Date.now(),
+      folder: saveFolderInput || null,
     }
     const next = [design, ...savedDesigns]
     setSavedDesigns(next)
     saveDesignsList(next)
     setSaveNameInput('')
+    setSaveFolderInput('')
     setShowSaveInput(false)
+  }
+
+  function handleMoveToFolder(id, folderName) {
+    const next = savedDesigns.map(d => d.id === id ? { ...d, folder: folderName || null } : d)
+    setSavedDesigns(next)
+    saveDesignsList(next)
+  }
+
+  function handleAddFolder(name, parentPath) {
+    const val = name.trim()
+    if (!val) return
+    const fullPath = parentPath ? `${parentPath}/${val}` : val
+    if (designFolders.includes(fullPath)) return
+    const next = [...designFolders, fullPath]
+    setDesignFolders(next)
+    saveDesignFolders(next)
+  }
+
+  function handleRenameFolder(oldPath, newName) {
+    const val = newName.trim()
+    if (!val) return
+    const parts = oldPath.split('/')
+    parts[parts.length - 1] = val
+    const newPath = parts.join('/')
+    if (newPath === oldPath || designFolders.includes(newPath)) return
+    const next = designFolders.map(f => {
+      if (f === oldPath) return newPath
+      if (f.startsWith(oldPath + '/')) return newPath + f.slice(oldPath.length)
+      return f
+    })
+    setDesignFolders(next)
+    saveDesignFolders(next)
+    const updatedDesigns = savedDesigns.map(d => {
+      if (!d.folder) return d
+      if (d.folder === oldPath) return { ...d, folder: newPath }
+      if (d.folder.startsWith(oldPath + '/')) return { ...d, folder: newPath + d.folder.slice(oldPath.length) }
+      return d
+    })
+    setSavedDesigns(updatedDesigns)
+    saveDesignsList(updatedDesigns)
+  }
+
+  function handleDeleteFolder(path) {
+    const toDelete = new Set(designFolders.filter(f => f === path || f.startsWith(path + '/')))
+    const next = designFolders.filter(f => !toDelete.has(f))
+    setDesignFolders(next)
+    saveDesignFolders(next)
+    const updatedDesigns = savedDesigns.map(d => toDelete.has(d.folder) ? { ...d, folder: null } : d)
+    setSavedDesigns(updatedDesigns)
+    saveDesignsList(updatedDesigns)
   }
 
   function handleLoadDesign(design) {
@@ -184,6 +519,143 @@ export default function App() {
     if (updated.Cols !== prevCols || updated.Rows !== prevRows) {
       setSlots(prev => resizeSlots(prev, prevCols, updated.Cols, updated.Rows))
       setSelectedSlots(new Set())
+    }
+  }
+
+  // ─── Tags & categories (for SponsorEditModal in LogoLibrary) ─────────────
+  function handleTagsChange(sponsorName, eventsArray) {
+    const newTags = { ...tags, [sponsorName]: eventsArray }
+    setTags(newTags); saveTags(newTags)
+  }
+
+  function handleCategoryChange(sponsorName, event, category) {
+    const catCopy = { ...sponsorCategories, [sponsorName]: { ...(sponsorCategories[sponsorName] || {}), [event]: category } }
+    if (category === '') delete catCopy[sponsorName][event]
+    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+  }
+
+  function handleSponsorGroupsChange(sponsorName, groupData) {
+    const next = { ...sponsorGroups, [sponsorName]: groupData }
+    setSponsorGroups(next); saveSponsorGroups(next)
+  }
+
+  // ─── Events ──────────────────────────────────────────────────────────────
+  function addEvent(val) {
+    const v = val.trim().toUpperCase()
+    if (!v || events.includes(v)) return
+    const next = [...events, v]; setEvents(next); saveEvents(next)
+  }
+
+  function deleteEvent(ev) {
+    const next = events.filter(e => e !== ev); setEvents(next); saveEvents(next)
+    const newTags = {}
+    Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.filter(e => e !== ev) })
+    setTags(newTags); saveTags(newTags)
+    const catCopy = {}
+    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+      catCopy[name] = { ...evMap }; delete catCopy[name][ev]
+    })
+    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+  }
+
+  function renameEvent(oldName, newName) {
+    const val = newName.trim().toUpperCase()
+    if (!val || val === oldName || events.includes(val)) return
+    const next = events.map(e => e === oldName ? val : e); setEvents(next); saveEvents(next)
+    const newTags = {}
+    Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.map(e => e === oldName ? val : e) })
+    setTags(newTags); saveTags(newTags)
+    const catCopy = {}
+    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+      catCopy[name] = {}
+      Object.entries(evMap).forEach(([ev, cat]) => { catCopy[name][ev === oldName ? val : ev] = cat })
+    })
+    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+  }
+
+  // ─── Categories ──────────────────────────────────────────────────────────
+  function addCategory(val) {
+    if (!val || categoryList.includes(val)) return
+    const next = [...categoryList, val]; setCategoryList(next); saveCategoryList(next)
+  }
+
+  function deleteCategory(cat) {
+    const next = categoryList.filter(c => c !== cat); setCategoryList(next); saveCategoryList(next)
+    const catCopy = {}
+    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+      catCopy[name] = {}
+      Object.entries(evMap).forEach(([ev, c]) => { if (c !== cat) catCopy[name][ev] = c })
+    })
+    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+  }
+
+  function renameCategory(oldCat, newCat) {
+    const val = newCat.trim()
+    if (!val || val === oldCat || categoryList.includes(val)) return
+    const next = categoryList.map(c => c === oldCat ? val : c); setCategoryList(next); saveCategoryList(next)
+    const catCopy = {}
+    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+      catCopy[name] = {}
+      Object.entries(evMap).forEach(([ev, c]) => { catCopy[name][ev] = c === oldCat ? val : c })
+    })
+    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+  }
+
+  function reorderCategoryList(newOrder) {
+    setCategoryList(newOrder); saveCategoryList(newOrder)
+  }
+
+  // ─── Event groups (koepels) ───────────────────────────────────────────────
+  function addEventGroup(name) {
+    const v = name.trim()
+    if (!v || v in eventGroups) return
+    const next = { ...eventGroups, [v]: [] }; setEventGroups(next); saveEventGroups(next)
+  }
+
+  function deleteEventGroup(name) {
+    const next = { ...eventGroups }; delete next[name]
+    setEventGroups(next); saveEventGroups(next)
+    const sg = {}
+    Object.entries(sponsorGroups).forEach(([sp, groups]) => { const g = { ...groups }; delete g[name]; sg[sp] = g })
+    setSponsorGroups(sg); saveSponsorGroups(sg)
+  }
+
+  function renameEventGroup(oldName, newName) {
+    const val = newName.trim()
+    if (!val || val === oldName || val in eventGroups) return
+    const next = {}
+    Object.entries(eventGroups).forEach(([k, v]) => { next[k === oldName ? val : k] = v })
+    setEventGroups(next); saveEventGroups(next)
+    const sg = {}
+    Object.entries(sponsorGroups).forEach(([sp, groups]) => {
+      const g = {}
+      Object.entries(groups).forEach(([k, v]) => { g[k === oldName ? val : k] = v })
+      sg[sp] = g
+    })
+    setSponsorGroups(sg); saveSponsorGroups(sg)
+  }
+
+  function setEventKoepelAssign(eventCode, koepelName) {
+    const next = {}
+    Object.entries(eventGroups).forEach(([grp, evs]) => { next[grp] = evs.filter(e => e !== eventCode) })
+    if (koepelName && koepelName in next) next[koepelName] = [...next[koepelName], eventCode]
+    setEventGroups(next); saveEventGroups(next)
+  }
+
+  // ─── Cell presets ─────────────────────────────────────────────────────────
+  function handleCellPresetsChange(newPresets) {
+    setCellPresets(newPresets); saveCellPresets(newPresets)
+  }
+
+  // ─── Default aspect ratio ─────────────────────────────────────────────────
+  function handleDefaultAspectChange(val) {
+    const v = parseFloat(val) || 1.667
+    setDefaultAspectState(v)
+    saveDefaultAspect(v)
+    // Apply immediately to the currently loaded format
+    if (editedFormat) {
+      const newH = Math.round((editedFormat.CellW_mm || 0) / v * 1000) / 1000
+      handleFormatChange({ ...editedFormat, CellAspect: v, CellH_mm: newH })
     }
   }
 
@@ -292,6 +764,16 @@ export default function App() {
                 )}
               </p>
             </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              title="Instellingen"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors border border-gray-200"
+            >
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="9" cy="9" r="3"/>
+                <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>
+              </svg>
+            </button>
             {showSaveInput ? (
               <div className="flex items-center gap-1.5">
                 <input
@@ -303,6 +785,16 @@ export default function App() {
                   placeholder={`${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`}
                   className="text-xs px-2.5 py-1.5 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-52"
                 />
+                {designFolders.length > 0 && (
+                  <select
+                    value={saveFolderInput}
+                    onChange={e => setSaveFolderInput(e.target.value)}
+                    className="text-xs px-2 py-1.5 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                  >
+                    <option value="">Geen map</option>
+                    {designFolders.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                )}
                 <button onClick={handleSaveDesign} className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">Opslaan</button>
                 <button onClick={() => setShowSaveInput(false)} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
               </div>
@@ -348,12 +840,16 @@ export default function App() {
           {/* Saved designs panel */}
           <SavedDesignsPanel
             designs={savedDesigns}
-            currentFormatCode={editedFormat?.Code}
+            folders={designFolders}
             renamingDesign={renamingDesign}
             onLoad={handleLoadDesign}
             onDelete={handleDeleteDesign}
             onRename={handleRenameDesign}
             onStartRename={setRenamingDesign}
+            onMoveToFolder={handleMoveToFolder}
+            onAddFolder={handleAddFolder}
+            onRenameFolder={handleRenameFolder}
+            onDeleteFolder={handleDeleteFolder}
           />
 
           <GridTypeSelector
@@ -429,7 +925,7 @@ export default function App() {
 
                 {/* Toolbar */}
                 <div className="flex-1 min-w-0">
-                  <GridToolbar format={format} onChange={handleFormatChange} />
+                  <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} />
                 </div>
               </div>
             </>
@@ -487,6 +983,16 @@ export default function App() {
             onCustomLogoChange={handleCustomLogoChange}
             advanceDir={advanceDir}
             onAdvanceDirChange={setAdvanceDir}
+            onOpenSettings={() => setShowSettings(true)}
+            tags={tags}
+            sponsorCategories={sponsorCategories}
+            events={events}
+            categoryList={categoryList}
+            eventGroups={eventGroups}
+            sponsorGroups={sponsorGroups}
+            onTagsChange={handleTagsChange}
+            onCategoryChange={handleCategoryChange}
+            onSponsorGroupsChange={handleSponsorGroupsChange}
           />
         </div>
 
@@ -496,6 +1002,30 @@ export default function App() {
         <CustomFormatModal
           onConfirm={handleCustomFormat}
           onClose={() => setShowCustomModal(false)}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          cellPresets={cellPresets}
+          onCellPresetsChange={handleCellPresetsChange}
+          defaultAspect={defaultAspect}
+          onDefaultAspectChange={handleDefaultAspectChange}
+          events={events}
+          onAddEvent={addEvent}
+          onDeleteEvent={deleteEvent}
+          onRenameEvent={renameEvent}
+          eventGroups={eventGroups}
+          onAddEventGroup={addEventGroup}
+          onDeleteEventGroup={deleteEventGroup}
+          onRenameEventGroup={renameEventGroup}
+          onSetEventKoepel={setEventKoepelAssign}
+          categoryList={categoryList}
+          onAddCategory={addCategory}
+          onDeleteCategory={deleteCategory}
+          onRenameCategory={renameCategory}
+          onReorderCategoryList={reorderCategoryList}
         />
       )}
     </div>

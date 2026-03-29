@@ -181,15 +181,29 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     setIsDragging(false)
   }, [])
 
-  // Build cell positions
+  // Build cell positions — grid is centered within the margin-bounded area
   const headerOffset = hasHeader ? (HeaderHeight_mm || 0) + (HeaderMargin_mm || 0) : 0
+
+  const ml = MarginLeft_mm || 0
+  const mr = MarginRight_mm || 0
+  const mt = MarginTop_mm  || 0
+  const mb = MarginBottom_mm || 0
+  const gx = GutterX_mm || 0
+  const gy = GutterY_mm || 0
+
+  const totalGridW = Cols * CellW_mm + (Cols - 1) * gx
+  const totalGridH = Rows * cellH   + (Rows - 1) * gy
+  const availW = (CanvasWidth_mm  || 0) - ml - mr
+  const availH = (CanvasHeight_mm || 0) - mt - mb - headerOffset
+  const gridLeft = ml + Math.max(0, (availW - totalGridW) / 2)
+  const gridTop  = mt + headerOffset + Math.max(0, (availH - totalGridH) / 2)
 
   const cellPositions = slots.map((value, i) => {
     const col = i % Cols
     const row = Math.floor(i / Cols)
 
-    const x = MarginLeft_mm + col * (CellW_mm + GutterX_mm)
-    let y = MarginTop_mm + headerOffset + row * (cellH + GutterY_mm)
+    const x = gridLeft + col * (CellW_mm + gx)
+    let y = gridTop + row * (cellH + gy)
 
     if (hasBar && barPos.type === 'AFTER_ROW' && row >= barPos.row) {
       y += (DefaultBarGapTop_mm || 0) + (DefaultBarHeight_mm || 0) + (DefaultBarGapBottom_mm || 0)
@@ -202,12 +216,12 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
   let barY = null
   if (hasBar) {
     if (barPos.type === 'TOP') {
-      barY = MarginTop_mm + headerOffset
+      barY = gridTop
     } else if (barPos.type === 'BOTTOM') {
-      barY = CanvasHeight_mm - MarginBottom_mm - (DefaultBarHeight_mm || 0)
+      barY = (CanvasHeight_mm || 0) - mb - (DefaultBarHeight_mm || 0)
     } else if (barPos.type === 'AFTER_ROW') {
-      barY = MarginTop_mm + headerOffset
-        + barPos.row * (cellH + GutterY_mm)
+      barY = gridTop
+        + barPos.row * (cellH + gy)
         + (DefaultBarGapTop_mm || 0)
     }
   }

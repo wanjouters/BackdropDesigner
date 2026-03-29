@@ -199,14 +199,68 @@ Alle tags/events/categorieën intact
 
 ---
 
-## Nog te doen / Ideeën
+## Recente wijzigingen (sessie maart 2026)
 
-- Exporteren naar Gridzilla CSV-formaat (deels al aanwezig via `ExportButton`)
-- Undo/redo
-- Importeren vanuit bestaand CSV
-- Koepels visueel anders weergeven in het grid (kleurcode?)
-- Mobiele ondersteuning (niet prioritair)
-- Overstap van PNG naar SVG voor logo's
+- **Gutterlink in SettingsModal**: chain-knop per preset om GutterX/Y gesynchroniseerd te houden
+- **Mappenstructuur voor opgeslagen ontwerpen**: mappen en submappen (path-based model), drag/rename/delete
+- **Margelinks in toolbar**: Links↔Rechts en Boven↔Onder gelinkt via chain-knoppen
+- **Absolute marges**: MarginLeft/Right/Top/Bottom zijn vaste waarden; cellen krimpen als er te weinig ruimte is (gutters blijven gelijk), maar marges worden nooit auto-aangepast
+- **Centrering**: grid wordt visueel gecentreerd binnen de beschikbare ruimte (optische marge groeit bij minder kolommen, maar toolbar-waarden blijven ongewijzigd)
+- **TargetCellW_mm**: cellen onthouden hun beoogde breedte; bij minder kolommen springen ze terug naar originele preset-grootte
+- **Preset apply**: bij toepassen van een preset worden kolommen/rijen herberekend naar het maximum dat past binnen de marges
+
+---
+
+## Plan van aanpak — Verbeteringen (2026)
+
+### Prioriteit 1 — Robuustheid & dataveiligheid
+
+| # | Punt | Beschrijving |
+|---|------|-------------|
+| 1.1 | **Auto-save werkstand** | Bij elke wijziging de huidige staat opslaan als "draft" in localStorage. Bij herladen → vragen of je wil herstellen. |
+| 1.2 | **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. Nu gaat alles direct weg zonder bevestiging. |
+| 1.3 | **Negatieve marges en ongeldige waarden blokkeren** | Min=0 op marge-inputs; CellAspect mag nooit 0 worden (deelt door nul). |
+
+### Prioriteit 2 — Gedragsproblemen / bugs
+
+| # | Punt | Beschrijving |
+|---|------|-------------|
+| 2.1 | **Pan werkt niet correct bij zoom** | In de preview: panning gebruikt ruwe muiscoördinaten zonder zoom-schaal, waardoor beweging niet klopt bij > 100%. |
+| 2.2 | **Zoeken negeert eventfilter niet** | Als eventfilter actief is, verschijnen niet-getagde sponsors niet — je kan hen niet toewijzen aan een slot. Aparte "alle sponsors"-modus nodig. |
+| 2.3 | **CSV-export escaping ontbreekt** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
+| 2.4 | **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat. Validatie bij aanmaken/hernoemen. |
+
+### Prioriteit 3 — UX & feedback
+
+| # | Punt | Beschrijving |
+|---|------|-------------|
+| 3.1 | **Toastmelding bij opslaan/verwijderen** | Korte bevestiging (2s) bij "Ontwerp opgeslagen", "Map verwijderd", etc. Nu geen feedback. |
+| 3.2 | **Markering "onopgeslagen wijzigingen"** | Kleine indicator in de header wanneer het huidige ontwerp gewijzigd is t.o.v. de opgeslagen staat. |
+| 3.3 | **Waarschuwing bij formaatwissel met ingevulde slots** | Slots worden nu stilletjes bijgeknipt bij formaatwissel. Korte bevestigingsvraag toevoegen. |
+| 3.4 | **Frequentiepaneel: toelichting bij ongeldige sponsors** | Rode markering is onduidelijk zonder uitleg dat de naam niet in sponsors.json staat. |
+
+### Prioriteit 4 — Ontbrekende functies (hoge waarde)
+
+| # | Punt | Beschrijving |
+|---|------|-------------|
+| 4.1 | **Bulk replace** | "Vervang alle slots met sponsor A door sponsor B." Handig bij late sponsorwijzigingen. |
+| 4.2 | **Ontwerp dupliceren** | Snel een kopie maken voor varianten. |
+| 4.3 | **Export/import als JSON** | Backup van ontwerp buiten localStorage; overdraagbaar tussen computers. |
+| 4.4 | **Sponsor zoeken zonder eventfilter** | Modus om ook niet-getagde sponsors te kunnen toewijzen. |
+
+### Prioriteit 5 — Code & onderhoudbaarheid
+
+| # | Punt | Beschrijving |
+|---|------|-------------|
+| 5.1 | **`parseBarPosition` dedupliceren** | Staat zowel in `GridToolbar.jsx` als `PreviewCanvas.jsx`. Verplaatsen naar `utils/`. |
+| 5.2 | **`buildGroups` memoizen** | In `LogoLibrary.jsx` wordt dit elke render opnieuw berekend. `useMemo` toevoegen. |
+| 5.3 | **Lazy loading logo's** | 188 logo's worden allemaal tegelijk geladen. `IntersectionObserver` toevoegen. |
+
+### Bewust niet oppakken
+
+- Undo/redo: zinvol maar complex zonder bugs te introduceren
+- Mobiele ondersteuning: buiten scope voor intern gebruik
+- i18n / meertaligheid: niet relevant voor interne tool
 
 ---
 
