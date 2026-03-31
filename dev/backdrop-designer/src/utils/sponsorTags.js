@@ -141,6 +141,19 @@ export function saveCellPresets(list) {
   localStorage.setItem(CELL_PRESETS_KEY, JSON.stringify(list))
 }
 
+// --- Draft (auto-save werkstand) ---
+const DRAFT_KEY = 'backdropDesigner_draft'
+
+export function saveDraft(data) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)) } catch {}
+}
+export function loadDraft() {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY)) } catch { return null }
+}
+export function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY)
+}
+
 // --- Default aspect ratio ---
 const DEFAULT_ASPECT_KEY = 'backdropDesigner_defaultAspect'
 

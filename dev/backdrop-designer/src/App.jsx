@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './index.css'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
@@ -20,6 +20,7 @@ import {
   loadSponsorGroups, saveSponsorGroups,
   loadCellPresets, saveCellPresets,
   loadDefaultAspect, saveDefaultAspect,
+  saveDraft, loadDraft, clearDraft,
 } from './utils/sponsorTags'
 
 function makeEmptySlots(cols, rows) {
@@ -369,6 +370,31 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
   )
 }
 
+// ─── Confirm modal ────────────────────────────────────────────────────────────
+function ConfirmModal({ message, confirmLabel = 'Verwijderen', variant = 'danger', onConfirm, onCancel }) {
+  const btnClass = variant === 'warning'
+    ? 'bg-orange-500 hover:bg-orange-600 text-white'
+    : 'bg-red-600 hover:bg-red-700 text-white'
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30" onClick={onCancel} />
+      <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
+        <p className="text-sm text-gray-700 mb-5 leading-relaxed">{message}</p>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel}
+            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors">
+            Annuleren
+          </button>
+          <button onClick={() => { onConfirm(); onCancel() }}
+            className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors ${btnClass}`}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [selectedFormat, setSelectedFormat] = useState(null)
   const [editedFormat, setEditedFormat] = useState(null)
@@ -395,6 +421,27 @@ export default function App() {
   const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
   const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
   const [showSettings, setShowSettings] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
+  const [draftRestoreData, setDraftRestoreData] = useState(null)
+  const hasMounted = useRef(false)
+
+  // ─── Confirm helper ───────────────────────────────────────────────────────
+  function askConfirm(message, onConfirm, confirmLabel = 'Verwijderen', variant = 'danger') {
+    setConfirmAction({ message, onConfirm, confirmLabel, variant })
+  }
+
+  // ─── Auto-save draft ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!hasMounted.current) { hasMounted.current = true; return }
+    if (!editedFormat) return
+    saveDraft({ format: editedFormat, slots, savedAt: Date.now() })
+  }, [slots, editedFormat])
+
+  // ─── Load draft on mount ─────────────────────────────────────────────────
+  useEffect(() => {
+    const draft = loadDraft()
+    if (draft && draft.format && Array.isArray(draft.slots)) setDraftRestoreData(draft)
+  }, [])
 
   function setAdvanceDir(dir) {
     setAdvanceDirState(dir)
@@ -426,6 +473,7 @@ export default function App() {
     setSaveNameInput('')
     setSaveFolderInput('')
     setShowSaveInput(false)
+    clearDraft()
   }
 
   function handleMoveToFolder(id, folderName) {
@@ -469,13 +517,23 @@ export default function App() {
   }
 
   function handleDeleteFolder(path) {
-    const toDelete = new Set(designFolders.filter(f => f === path || f.startsWith(path + '/')))
-    const next = designFolders.filter(f => !toDelete.has(f))
-    setDesignFolders(next)
-    saveDesignFolders(next)
-    const updatedDesigns = savedDesigns.map(d => toDelete.has(d.folder) ? { ...d, folder: null } : d)
-    setSavedDesigns(updatedDesigns)
-    saveDesignsList(updatedDesigns)
+    const folderName = path.split('/').pop()
+    const subCount = designFolders.filter(f => f.startsWith(path + '/')).length
+    const designCount = savedDesigns.filter(d => d.folder === path || (d.folder && d.folder.startsWith(path + '/'))).length
+    const parts = [
+      subCount > 0 && `${subCount} submap${subCount > 1 ? 'pen' : ''}`,
+      designCount > 0 && `${designCount} ontwerp${designCount > 1 ? 'en worden uit de map geplaatst' : ' wordt uit de map geplaatst'}`,
+    ].filter(Boolean).join(' en ')
+    const detail = parts ? ` ${parts}.` : ''
+    askConfirm(`Map "${folderName}" verwijderen?${detail}`, () => {
+      const toDelete = new Set(designFolders.filter(f => f === path || f.startsWith(path + '/')))
+      const next = designFolders.filter(f => !toDelete.has(f))
+      setDesignFolders(next)
+      saveDesignFolders(next)
+      const updatedDesigns = savedDesigns.map(d => toDelete.has(d.folder) ? { ...d, folder: null } : d)
+      setSavedDesigns(updatedDesigns)
+      saveDesignsList(updatedDesigns)
+    })
   }
 
   function handleLoadDesign(design) {
@@ -483,12 +541,17 @@ export default function App() {
     setSelectedFormat({ ...design.format })
     setSlots([...design.slots])
     setSelectedSlots(new Set())
+    clearDraft()
   }
 
   function handleDeleteDesign(id) {
-    const next = savedDesigns.filter(d => d.id !== id)
-    setSavedDesigns(next)
-    saveDesignsList(next)
+    const design = savedDesigns.find(d => d.id === id)
+    const name = design ? `"${design.name}"` : 'dit ontwerp'
+    askConfirm(`Ontwerp ${name} definitief verwijderen?`, () => {
+      const next = savedDesigns.filter(d => d.id !== id)
+      setSavedDesigns(next)
+      saveDesignsList(next)
+    })
   }
 
   function handleRenameDesign(id, newName) {
@@ -501,10 +564,22 @@ export default function App() {
   }
 
   function handleSelectFormat(format) {
-    setSelectedFormat(format)
-    setEditedFormat({ ...format })
-    setSlots(makeEmptySlots(format.Cols, format.Rows))
-    setSelectedSlots(new Set())
+    const doSelect = () => {
+      setSelectedFormat(format)
+      setEditedFormat({ ...format })
+      setSlots(makeEmptySlots(format.Cols, format.Rows))
+      setSelectedSlots(new Set())
+      clearDraft()
+    }
+    const filled = slots.filter(s => s !== 'BLANK').length
+    if (filled > 0) {
+      askConfirm(
+        `Het huidige ontwerp heeft ${filled} ingevulde slot${filled > 1 ? 's' : ''}. Bij het wisselen van formaat gaan deze verloren. Doorgaan?`,
+        doSelect, 'Doorgaan', 'warning'
+      )
+    } else {
+      doSelect()
+    }
   }
 
   function handleCustomFormat(format) {
@@ -547,15 +622,17 @@ export default function App() {
   }
 
   function deleteEvent(ev) {
-    const next = events.filter(e => e !== ev); setEvents(next); saveEvents(next)
-    const newTags = {}
-    Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.filter(e => e !== ev) })
-    setTags(newTags); saveTags(newTags)
-    const catCopy = {}
-    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-      catCopy[name] = { ...evMap }; delete catCopy[name][ev]
+    askConfirm(`Event "${ev}" verwijderen? Alle sponsortags voor dit event gaan verloren.`, () => {
+      const next = events.filter(e => e !== ev); setEvents(next); saveEvents(next)
+      const newTags = {}
+      Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.filter(e => e !== ev) })
+      setTags(newTags); saveTags(newTags)
+      const catCopy = {}
+      Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+        catCopy[name] = { ...evMap }; delete catCopy[name][ev]
+      })
+      setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
     })
-    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
   }
 
   function renameEvent(oldName, newName) {
@@ -580,13 +657,15 @@ export default function App() {
   }
 
   function deleteCategory(cat) {
-    const next = categoryList.filter(c => c !== cat); setCategoryList(next); saveCategoryList(next)
-    const catCopy = {}
-    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-      catCopy[name] = {}
-      Object.entries(evMap).forEach(([ev, c]) => { if (c !== cat) catCopy[name][ev] = c })
+    askConfirm(`Categorie "${cat}" verwijderen? Alle sponsortoewijzingen voor deze categorie gaan verloren.`, () => {
+      const next = categoryList.filter(c => c !== cat); setCategoryList(next); saveCategoryList(next)
+      const catCopy = {}
+      Object.entries(sponsorCategories).forEach(([name, evMap]) => {
+        catCopy[name] = {}
+        Object.entries(evMap).forEach(([ev, c]) => { if (c !== cat) catCopy[name][ev] = c })
+      })
+      setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
     })
-    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
   }
 
   function renameCategory(oldCat, newCat) {
@@ -613,11 +692,13 @@ export default function App() {
   }
 
   function deleteEventGroup(name) {
-    const next = { ...eventGroups }; delete next[name]
-    setEventGroups(next); saveEventGroups(next)
-    const sg = {}
-    Object.entries(sponsorGroups).forEach(([sp, groups]) => { const g = { ...groups }; delete g[name]; sg[sp] = g })
-    setSponsorGroups(sg); saveSponsorGroups(sg)
+    askConfirm(`Koepel "${name}" verwijderen?`, () => {
+      const next = { ...eventGroups }; delete next[name]
+      setEventGroups(next); saveEventGroups(next)
+      const sg = {}
+      Object.entries(sponsorGroups).forEach(([sp, groups]) => { const g = { ...groups }; delete g[name]; sg[sp] = g })
+      setSponsorGroups(sg); saveSponsorGroups(sg)
+    })
   }
 
   function renameEventGroup(oldName, newName) {
@@ -660,10 +741,14 @@ export default function App() {
   }
 
   function handleClearGrid() {
-    if (editedFormat) {
-      setSlots(makeEmptySlots(editedFormat.Cols, editedFormat.Rows))
-      setSelectedSlots(new Set())
-    }
+    if (!editedFormat) return
+    const filled = slots.filter(s => s !== 'BLANK').length
+    if (filled === 0) return
+    askConfirm(
+      `Alle ${filled} ingevulde slot${filled > 1 ? 's' : ''} wissen?`,
+      () => { setSlots(makeEmptySlots(editedFormat.Cols, editedFormat.Rows)); setSelectedSlots(new Set()) },
+      'Wissen'
+    )
   }
 
   useEffect(() => {
@@ -734,6 +819,50 @@ export default function App() {
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
+
+      {/* Confirm modal */}
+      {confirmAction && (
+        <ConfirmModal
+          message={confirmAction.message}
+          confirmLabel={confirmAction.confirmLabel}
+          variant={confirmAction.variant}
+          onConfirm={confirmAction.onConfirm}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+
+      {/* Draft restore banner */}
+      {draftRestoreData && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center justify-between flex-shrink-0 z-10">
+          <div className="flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="text-amber-500 flex-shrink-0">
+              <path d="M7 1v6l3 2"/><circle cx="7" cy="7" r="6"/>
+            </svg>
+            <span className="text-xs text-amber-700">
+              Niet-opgeslagen werkstand gevonden van {new Date(draftRestoreData.savedAt).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })}. Wil je verdergaan?
+            </span>
+          </div>
+          <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+            <button
+              onClick={() => {
+                setEditedFormat({ ...draftRestoreData.format })
+                setSelectedFormat({ ...draftRestoreData.format })
+                setSlots([...draftRestoreData.slots])
+                setSelectedSlots(new Set())
+                setDraftRestoreData(null)
+              }}
+              className="text-xs px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-colors">
+              Herstellen
+            </button>
+            <button
+              onClick={() => { clearDraft(); setDraftRestoreData(null) }}
+              className="text-xs px-2 py-1 text-amber-600 hover:text-amber-800 transition-colors">
+              Negeren
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">

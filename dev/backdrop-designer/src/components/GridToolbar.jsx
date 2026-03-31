@@ -424,21 +424,21 @@ export default function GridToolbar({ format, onChange, cellPresets = [] }) {
 
         {/* Marges */}
         <Group label="Marges">
-          <NumInput label="Links" value={format.MarginLeft_mm} step={0.5} onChange={handleMarginLChange} />
+          <NumInput label="Links" value={format.MarginLeft_mm} step={0.5} min={0} onChange={handleMarginLChange} />
           <LinkBtn
             linked={marginLinkedH}
             onToggle={handleMarginLinkHToggle}
             title={marginLinkedH ? 'Links en Rechts gelinkt — klik om los te koppelen' : 'Links en Rechts los — klik om te linken'}
           />
-          <NumInput label="Rechts" value={format.MarginRight_mm} step={0.5} onChange={handleMarginRChange} />
+          <NumInput label="Rechts" value={format.MarginRight_mm} step={0.5} min={0} onChange={handleMarginRChange} />
           <Sep />
-          <NumInput label="Boven" value={format.MarginTop_mm} step={0.5} onChange={handleMarginTChange} />
+          <NumInput label="Boven" value={format.MarginTop_mm} step={0.5} min={0} onChange={handleMarginTChange} />
           <LinkBtn
             linked={marginLinkedV}
             onToggle={handleMarginLinkVToggle}
             title={marginLinkedV ? 'Boven en Onder gelinkt — klik om los te koppelen' : 'Boven en Onder los — klik om te linken'}
           />
-          <NumInput label="Onder" value={format.MarginBottom_mm} step={0.5} onChange={handleMarginBChange} />
+          <NumInput label="Onder" value={format.MarginBottom_mm} step={0.5} min={0} onChange={handleMarginBChange} />
         </Group>
 
         <Sep />
