@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import sponsors from '../data/sponsors.json'
 import SponsorEditModal from './SponsorEditModal'
 
@@ -68,21 +68,23 @@ export default function LogoLibrary({
     return groups
   }
 
-  const filtered = ALL_SPONSORS.filter(s => {
-    if (!s.partner.toLowerCase().includes(query.toLowerCase())) return false
-    if (eventFilter === 'ALL') return true
+  const searchActive = query.length > 0
 
+  const filtered = useMemo(() => ALL_SPONSORS.filter(s => {
+    if (!s.partner.toLowerCase().includes(query.toLowerCase())) return false
+    if (searchActive || eventFilter === 'ALL') return true
     const evTags = tags[s.partner] || []
     const grpAssignments = sponsorGroups[s.partner] || {}
-
-    // Local partner: directly tagged to this event
     if (evTags.includes(eventFilter)) return true
-
-    // Koepelpartner: member of a group that contains this event
     return Object.keys(grpAssignments).some(groupName =>
       (eventGroups[groupName] || []).includes(eventFilter)
     )
-  })
+  }), [query, searchActive, eventFilter, tags, sponsorGroups, eventGroups])
+
+  const groups = useMemo(
+    () => (eventFilter !== 'ALL' && !searchActive) ? buildGroups(filtered) : [],
+    [filtered, eventFilter, searchActive, sponsorGroups, eventGroups, tags, sponsorCategories, categoryList]
+  )
 
   const hasSlot = selectedSlots.size > 0
   const count = selectedSlots.size
@@ -138,6 +140,9 @@ export default function LogoLibrary({
             </button>
           )}
         </div>
+        {searchActive && eventFilter !== 'ALL' && (
+          <p className="text-[10px] text-amber-600 mt-1 px-0.5">Zoekt in alle sponsors — eventfilter tijdelijk genegeerd</p>
+        )}
 
         <div className="relative mt-2" ref={filterRef}>
           <button
@@ -242,7 +247,7 @@ export default function LogoLibrary({
                   </button>
                 )}
                 {localSrc && !hasError ? (
-                  <img src={localSrc} alt={s.partner}
+                  <img src={localSrc} alt={s.partner} loading="lazy"
                     className="w-full h-10 object-contain pointer-events-none"
                     onError={() => setImgErrors(prev => ({ ...prev, [s.filename]: true }))}
                   />
@@ -256,8 +261,7 @@ export default function LogoLibrary({
             )
           }
 
-          if (eventFilter !== 'ALL') {
-            const groups = buildGroups(filtered)
+          if (eventFilter !== 'ALL' && !searchActive) {
             const headerColors = { teal: 'text-teal-700 bg-teal-50 border-teal-200', blue: 'text-blue-700 bg-blue-50 border-blue-200', gray: 'text-gray-500 bg-gray-50 border-gray-200' }
             return groups.length === 0 ? (
               <p className="text-xs text-gray-400 text-center mt-4">Geen sponsors voor dit event.</p>

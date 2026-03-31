@@ -3,7 +3,6 @@ import './index.css'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
 import FrequencyPanel from './components/FrequencyPanel'
-import ExportButton from './components/ExportButton'
 import CustomFormatModal from './components/CustomFormatModal'
 import LogoLibrary from './components/LogoLibrary'
 import SettingsModal from './components/SettingsModal'
@@ -207,6 +206,7 @@ function FolderNode({ node, depth, designs, folders, renamingDesign, collapsedFo
               </svg>
               <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
                 onKeyDown={e => {
+                  if (e.key === '/') { e.preventDefault(); return }
                   if (e.key === 'Enter') onConfirmAddSubfolder(node.path)
                   if (e.key === 'Escape') onCancelAddSubfolder()
                 }}
@@ -344,6 +344,7 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
               <div className="flex items-center gap-1">
                 <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
                   onKeyDown={e => {
+                    if (e.key === '/') { e.preventDefault(); return }
                     if (e.key === 'Enter') { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }
                     if (e.key === 'Escape') handleCancelAddSubfolder()
                   }}
@@ -364,6 +365,180 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
               </button>
             )}
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Toast notification ────────────────────────────────────────────────────────
+function Toast({ message, type = 'success', onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2500)
+    return () => clearTimeout(t)
+  }, [onDone])
+
+  const styles = {
+    success: { bg: '#16a34a', icon: <path d="M2 7l4 4 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> },
+    info:    { bg: '#2563eb', icon: <path d="M7 3v4M7 9v1" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
+    warning: { bg: '#d97706', icon: <path d="M7 3v4M7 9v1" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
+    error:   { bg: '#dc2626', icon: <path d="M3 3l8 8M11 3L3 11" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
+  }
+  const s = styles[type] || styles.success
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 28, right: 28, zIndex: 400,
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 16px', borderRadius: 10,
+      background: s.bg,
+      color: 'white', fontSize: 13, fontWeight: 600,
+      boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
+      pointerEvents: 'none',
+      animation: 'toastIn 0.18s ease',
+    }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">{s.icon}</svg>
+      {message}
+    </div>
+  )
+}
+
+// ─── Export dropdown ─────────────────────────────────────────────────────────
+function ExportMenu({ format, slots, customLogos, onImportJson }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const importRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [open])
+
+  function handleJpeg() {
+    setOpen(false)
+    exportJpeg(format, slots, customLogos)
+  }
+
+  function handleJson() {
+    setOpen(false)
+    var data = { version: 1, format: format, slots: slots, exportedAt: Date.now() }
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    var url = URL.createObjectURL(blob)
+    var a = document.createElement('a')
+    a.href = url
+    a.download = (format.Code || 'ontwerp') + '_design.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImportClick() {
+    setOpen(false)
+    if (importRef.current) importRef.current.click()
+  }
+
+  function handleImportFile(e) {
+    var file = e.target.files[0]
+    if (!file) return
+    var reader = new FileReader()
+    reader.onload = function(ev) {
+      try {
+        var data = JSON.parse(ev.target.result)
+        if (!data.format || !Array.isArray(data.slots)) throw new Error('Ongeldig formaat')
+        onImportJson(data)
+      } catch (err) {
+        alert('Kon het bestand niet laden: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  function handleCsv() {
+    setOpen(false)
+    const { Cols, Rows, Code } = format
+    function csvCell(val) {
+      var s = (val && val !== '') ? val : 'BLANK'
+      if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      return s
+    }
+    var colHeaders = Array.from({ length: Cols }, function(_, i) { return 'C' + (i + 1) })
+    var lines = [colHeaders.join(',')]
+    for (var r = 0; r < Rows; r++) {
+      var row = []
+      for (var c = 0; c < Cols; c++) row.push(csvCell(slots[r * Cols + c]))
+      lines.push(row.join(','))
+    }
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    var url = URL.createObjectURL(blob)
+    var a = document.createElement('a')
+    a.href = url
+    a.download = (Code || 'grid') + '_grid.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Exporteren"
+        className="flex items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white font-semibold text-sm px-3 py-2.5 rounded-lg transition-colors shadow-sm"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 1v8M4 6l3 3 3-3M2 11h10"/>
+        </svg>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+          <path d="M2 3.5l3 3 3-3"/>
+        </svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 50, minWidth: 160 }}
+          className="bg-white border border-gray-200 rounded-xl shadow-xl py-1">
+          <button onClick={handleJpeg}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <rect x="1" y="1" width="12" height="12" rx="2"/>
+              <path d="M1 9l3-3 2 2 3-4 4 5"/>
+            </svg>
+            <span className="font-medium">JPEG</span>
+            <span className="ml-auto text-xs text-gray-400">beeld</span>
+          </button>
+          <button onClick={handleCsv}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M2 1h7l3 3v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+              <path d="M9 1v3h3M4 8h6M4 11h4"/>
+            </svg>
+            <span className="font-medium">CSV</span>
+            <span className="ml-auto text-xs text-gray-400">Gridzilla</span>
+          </button>
+          <button onClick={handleJson}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M2 1h7l3 3v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+              <path d="M9 1v3h3"/>
+              <path d="M4 7.5c0-1 1.5-1 1.5 0s-1.5 1-1.5 2 1.5 1 1.5 0M8 7h1.5a1 1 0 010 2H8"/>
+            </svg>
+            <span className="font-medium">JSON</span>
+            <span className="ml-auto text-xs text-gray-400">backup</span>
+          </button>
+          <div className="border-t border-gray-100 my-1" />
+          <button onClick={handleImportClick}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M7 10V2M4 5l3-3 3 3M2 11h10"/>
+            </svg>
+            <span className="font-medium">JSON laden</span>
+            <span className="ml-auto text-xs text-gray-400">importeer</span>
+          </button>
+          <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportFile} />
         </div>
       )}
     </div>
@@ -423,18 +598,29 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
   const [draftRestoreData, setDraftRestoreData] = useState(null)
+  const [toast, setToast] = useState(null)          // { message, type }
+  const [isDirty, setIsDirty] = useState(false)
+  const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
   const hasMounted = useRef(false)
+  const skipNextDirtyMark = useRef(false)
 
   // ─── Confirm helper ───────────────────────────────────────────────────────
   function askConfirm(message, onConfirm, confirmLabel = 'Verwijderen', variant = 'danger') {
     setConfirmAction({ message, onConfirm, confirmLabel, variant })
   }
 
-  // ─── Auto-save draft ─────────────────────────────────────────────────────
+  // ─── Toast helper ─────────────────────────────────────────────────────────
+  function showToast(message, type = 'success') {
+    setToast({ message, type })
+  }
+
+  // ─── Auto-save draft + dirty tracking ────────────────────────────────────
   useEffect(() => {
     if (!hasMounted.current) { hasMounted.current = true; return }
     if (!editedFormat) return
     saveDraft({ format: editedFormat, slots, savedAt: Date.now() })
+    if (skipNextDirtyMark.current) { skipNextDirtyMark.current = false; return }
+    setIsDirty(true)
   }, [slots, editedFormat])
 
   // ─── Load draft on mount ─────────────────────────────────────────────────
@@ -446,6 +632,31 @@ export default function App() {
   function setAdvanceDir(dir) {
     setAdvanceDirState(dir)
     localStorage.setItem('backdropDesigner_advanceDir', dir)
+  }
+
+  function handleImportJson(data) {
+    const doImport = () => {
+      skipNextDirtyMark.current = true
+      setIsDirty(false)
+      setLoadedDesignId(null)
+      setEditedFormat({ ...data.format })
+      setSelectedFormat({ ...data.format })
+      setSlots([...data.slots])
+      setSelectedSlots(new Set())
+      clearDraft()
+      showToast('Ontwerp geladen vanuit JSON', 'info')
+    }
+    const hasFilled = slots.some(s => s && s !== 'BLANK')
+    if (hasFilled) {
+      askConfirm('Huidig ontwerp vervangen door het geïmporteerde JSON-bestand?', doImport, 'Importeren', 'warning')
+    } else {
+      doImport()
+    }
+  }
+
+  function handleBulkReplace(from, to) {
+    setSlots(slots.map(s => s === from ? to : s))
+    showToast(`Alle "${from}" vervangen door "${to}"`, 'success')
   }
 
   function handleCustomLogoChange(sponsorName, dataUrl) {
@@ -474,6 +685,23 @@ export default function App() {
     setSaveFolderInput('')
     setShowSaveInput(false)
     clearDraft()
+    setIsDirty(false)
+    showToast('Ontwerp opgeslagen', 'success')
+  }
+
+  function handleUpdateDesign() {
+    if (!loadedDesignId) return
+    const next = savedDesigns.map(d =>
+      d.id === loadedDesignId
+        ? { ...d, format: { ...editedFormat }, slots: [...slots], savedAt: Date.now() }
+        : d
+    )
+    setSavedDesigns(next)
+    saveDesignsList(next)
+    clearDraft()
+    setIsDirty(false)
+    const design = next.find(d => d.id === loadedDesignId)
+    showToast(`"${design?.name || 'Ontwerp'}" bijgewerkt`, 'success')
   }
 
   function handleMoveToFolder(id, folderName) {
@@ -484,7 +712,7 @@ export default function App() {
 
   function handleAddFolder(name, parentPath) {
     const val = name.trim()
-    if (!val) return
+    if (!val || val.includes('/')) return
     const fullPath = parentPath ? `${parentPath}/${val}` : val
     if (designFolders.includes(fullPath)) return
     const next = [...designFolders, fullPath]
@@ -494,7 +722,7 @@ export default function App() {
 
   function handleRenameFolder(oldPath, newName) {
     const val = newName.trim()
-    if (!val) return
+    if (!val || val.includes('/')) return
     const parts = oldPath.split('/')
     parts[parts.length - 1] = val
     const newPath = parts.join('/')
@@ -533,15 +761,20 @@ export default function App() {
       const updatedDesigns = savedDesigns.map(d => toDelete.has(d.folder) ? { ...d, folder: null } : d)
       setSavedDesigns(updatedDesigns)
       saveDesignsList(updatedDesigns)
+      showToast(`Map "${folderName}" verwijderd`, 'info')
     })
   }
 
   function handleLoadDesign(design) {
+    skipNextDirtyMark.current = true
+    setIsDirty(false)
+    setLoadedDesignId(design.id)
     setEditedFormat({ ...design.format })
     setSelectedFormat({ ...design.format })
     setSlots([...design.slots])
     setSelectedSlots(new Set())
     clearDraft()
+    showToast(`"${design.name}" geladen`, 'info')
   }
 
   function handleDeleteDesign(id) {
@@ -551,6 +784,8 @@ export default function App() {
       const next = savedDesigns.filter(d => d.id !== id)
       setSavedDesigns(next)
       saveDesignsList(next)
+      if (loadedDesignId === id) setLoadedDesignId(null)
+      showToast('Ontwerp verwijderd', 'info')
     })
   }
 
@@ -565,6 +800,9 @@ export default function App() {
 
   function handleSelectFormat(format) {
     const doSelect = () => {
+      skipNextDirtyMark.current = true
+      setIsDirty(false)
+      setLoadedDesignId(null)
       setSelectedFormat(format)
       setEditedFormat({ ...format })
       setSlots(makeEmptySlots(format.Cols, format.Rows))
@@ -746,7 +984,7 @@ export default function App() {
     if (filled === 0) return
     askConfirm(
       `Alle ${filled} ingevulde slot${filled > 1 ? 's' : ''} wissen?`,
-      () => { setSlots(makeEmptySlots(editedFormat.Cols, editedFormat.Rows)); setSelectedSlots(new Set()) },
+      () => { setSlots(makeEmptySlots(editedFormat.Cols, editedFormat.Rows)); setSelectedSlots(new Set()); showToast('Grid gewist', 'info') },
       'Wissen'
     )
   }
@@ -820,6 +1058,9 @@ export default function App() {
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
 
+      {/* Toast */}
+      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+
       {/* Confirm modal */}
       {confirmAction && (
         <ConfirmModal
@@ -883,7 +1124,12 @@ export default function App() {
         {format && (
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-semibold text-gray-800">{format.Code}</p>
+              <div className="flex items-center justify-end gap-1.5">
+                <p className="text-sm font-semibold text-gray-800">{format.Code}</p>
+                {isDirty && (
+                  <span title="Niet-opgeslagen wijzigingen" className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+                )}
+              </div>
               <p className="text-xs text-gray-400">
                 {format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
                 {selectionCount > 0 && (
@@ -928,16 +1174,31 @@ export default function App() {
                 <button onClick={() => setShowSaveInput(false)} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
               </div>
             ) : (
-              <button
-                onClick={() => setShowSaveInput(true)}
-                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-blue-300 transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-                  <path d="M8 1v4H4V1M4 7h4"/>
-                </svg>
-                Opslaan
-              </button>
+              <div className="flex items-center gap-1.5">
+                {loadedDesignId && isDirty && (
+                  <button
+                    onClick={handleUpdateDesign}
+                    title={`Bestaand ontwerp overschrijven`}
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+                      <path d="M8 1v4H4V1M4 7h4"/>
+                    </svg>
+                    Bijwerken
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowSaveInput(true)}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-blue-300 transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+                    <path d="M8 1v4H4V1M4 7h4"/>
+                  </svg>
+                  {loadedDesignId ? 'Kopie opslaan' : 'Opslaan'}
+                </button>
+              </div>
             )}
             <button
               onClick={handleClearGrid}
@@ -945,17 +1206,7 @@ export default function App() {
             >
               Wissen
             </button>
-            <button
-              onClick={() => exportJpeg(format, slots, customLogos)}
-              className="flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors shadow-sm"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <rect x="1" y="1" width="12" height="12" rx="2"/>
-                <path d="M1 9l3-3 2 2 3-4 4 5"/>
-              </svg>
-              JPEG
-            </button>
-            <ExportButton format={format} slots={slots} />
+            <ExportMenu format={format} slots={slots} customLogos={customLogos} onImportJson={handleImportJson} />
           </div>
         )}
       </header>
@@ -988,7 +1239,7 @@ export default function App() {
           />
           {format && (
             <>
-              <FrequencyPanel slots={slots} />
+              <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} />
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
                   Formaat info

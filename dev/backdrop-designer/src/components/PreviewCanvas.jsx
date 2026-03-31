@@ -1,16 +1,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import sponsors from '../data/sponsors.json'
 
-const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
+import { parseBarPosition } from '../utils/barPosition'
 
-function parseBarPosition(val) {
-  if (!val || val === 'NONE') return { type: 'NONE', row: 0 }
-  if (val === 'TOP') return { type: 'TOP', row: 0 }
-  if (val === 'BOTTOM') return { type: 'BOTTOM', row: 0 }
-  const m = val.match(/^AFTER_ROW=(\d+)$/)
-  if (m) return { type: 'AFTER_ROW', row: parseInt(m[1]) }
-  return { type: 'NONE', row: 0 }
-}
+const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
 
 function Cell({ x, y, width, height, value, index, isSelected, canvasBg, onSelect, onDropSponsor, customLogos }) {
   const [isDragOver, setIsDragOver] = useState(false)
@@ -97,7 +90,7 @@ const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5, 2, 3, 4]
 
 export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSlot, onDropSponsor, customLogos }) {
   const containerRef = useRef(null)
-  const [baseScale, setBaseScale] = useState(0.1)
+  const [baseScale, setBaseScale] = useState(0) // 0 = not yet measured by ResizeObserver
   const [zoomLevel, setZoomLevel] = useState(1)
 
   const {
@@ -149,17 +142,58 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     })
   }
 
+  const scrollCentered = useRef(false)
+
+  // Reset centering flag when the format (canvas size) changes
+  useEffect(() => { scrollCentered.current = false }, [CanvasWidth_mm, CanvasHeight_mm])
+
+  // Centre scroll once per format — only after ResizeObserver gives the real baseScale (> 0)
+  useEffect(() => {
+    if (scrollCentered.current || baseScale <= 0) return
+    const el = containerRef.current
+    if (!el) return
+    const s = baseScale * zoomLevel
+    const sW = (CanvasWidth_mm || 0) * s
+    const sH = (CanvasHeight_mm || 0) * s
+    const innerW = sW + 800
+    const innerH = sH + 800
+    el.scrollLeft = Math.max(0, (innerW - el.clientWidth) / 2)
+    el.scrollTop  = Math.max(0, (innerH - el.clientHeight) / 2)
+    scrollCentered.current = true
+  }, [baseScale, zoomLevel, CanvasWidth_mm, CanvasHeight_mm])
+
   function fitScreen() {
     setZoomLevel(1)
+    // Re-centre scroll on fit — use computed values, not DOM scrollWidth
+    const el = containerRef.current
+    if (!el) return
+    setTimeout(() => {
+      const s = baseScale * 1  // zoomLevel will be 1 after setZoomLevel
+      const sW = (CanvasWidth_mm || 0) * s
+      const sH = (CanvasHeight_mm || 0) * s
+      const innerW = sW + 800
+      const innerH = sH + 800
+      el.scrollLeft = Math.max(0, (innerW - el.clientWidth) / 2)
+      el.scrollTop  = Math.max(0, (innerH - el.clientHeight) / 2)
+    }, 0)
   }
 
-  // Pan (drag-to-scroll)
+  // Pan (drag-to-scroll) — only active while Cmd (Mac) / Ctrl (Win) is held
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 })
   const [isDragging, setIsDragging] = useState(false)
+  const [panModifier, setPanModifier] = useState(false)
+
+  useEffect(() => {
+    function onKey(e) { setPanModifier(e.metaKey || e.ctrlKey) }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('keyup', onKey)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey) }
+  }, [])
 
   const handleMouseDown = useCallback(e => {
     if (e.button !== 0) return
+    if (!e.metaKey && !e.ctrlKey) return   // require Cmd (Mac) or Ctrl (Win/Linux)
     const el = containerRef.current
     if (!el) return
     isPanning.current = true
@@ -233,24 +267,21 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     <div className="flex-1 rounded-xl bg-gray-400 relative" style={{ minHeight: 0 }}>
     <div
       ref={containerRef}
-      style={{ position: 'absolute', inset: 0, overflow: 'auto', cursor: isDragging ? 'grabbing' : 'grab' }}
+      style={{ position: 'absolute', inset: 0, overflow: 'auto', cursor: isDragging ? 'grabbing' : panModifier ? 'grab' : 'default' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* Scrollable inner area — centers when smaller, scrolls when larger */}
+      {/* Scrollable inner area — explicit size gives reliable scroll range in all directions */}
       <div style={{
-        minWidth: '100%',
-        minHeight: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-        boxSizing: 'border-box',
+        width: scaledW + 800,
+        height: scaledH + 800,
+        position: 'relative',
+        flexShrink: 0,
       }}>
-      {/* Outer clipping wrapper — exact scaled pixel size */}
-      <div style={{ width: scaledW, height: scaledH, position: 'relative', flexShrink: 0, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
+      {/* Outer clipping wrapper — exact scaled pixel size, offset 400px from inner edge */}
+      <div style={{ position: 'absolute', left: 400, top: 400, width: scaledW, height: scaledH, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
         {/* Canvas scaled to natural mm units */}
         <div style={{
           width: CanvasWidth_mm,
