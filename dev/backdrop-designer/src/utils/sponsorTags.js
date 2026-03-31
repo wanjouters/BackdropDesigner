@@ -141,6 +141,26 @@ export function saveCellPresets(list) {
   localStorage.setItem(CELL_PRESETS_KEY, JSON.stringify(list))
 }
 
+// --- Canvas presets ---
+const CANVAS_PRESETS_KEY = 'backdropDesigner_canvasPresets'
+
+const DEFAULT_CANVAS_PRESETS = [
+  { id: 'canvas_1', name: 'Mixed Zone (7900×2300)', CanvasWidth_mm: 7900, CanvasHeight_mm: 2300 },
+  { id: 'canvas_2', name: 'Flash (4000×2300)', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 },
+]
+
+export function loadCanvasPresets() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CANVAS_PRESETS_KEY))
+    if (Array.isArray(stored)) return stored
+  } catch {}
+  return [...DEFAULT_CANVAS_PRESETS]
+}
+
+export function saveCanvasPresets(list) {
+  localStorage.setItem(CANVAS_PRESETS_KEY, JSON.stringify(list))
+}
+
 // --- Draft (auto-save werkstand) ---
 const DRAFT_KEY = 'backdropDesigner_draft'
 

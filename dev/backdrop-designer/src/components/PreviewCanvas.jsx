@@ -103,6 +103,7 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     HeaderType, HeaderHeight_mm, HeaderMargin_mm,
     DefaultBarType, DefaultBarPosition,
     DefaultBarHeight_mm, DefaultBarGapTop_mm, DefaultBarGapBottom_mm,
+    Code,
   } = format
 
   const cellH = CellH_mm || (CellW_mm && CellAspect ? CellW_mm / CellAspect : 100)
@@ -142,25 +143,24 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     })
   }
 
-  const scrollCentered = useRef(false)
+  const needsCenter = useRef(false)
 
-  // Reset centering flag when the format (canvas size) changes
-  useEffect(() => { scrollCentered.current = false }, [CanvasWidth_mm, CanvasHeight_mm])
-
-  // Centre scroll once per format — only after ResizeObserver gives the real baseScale (> 0)
+  // Mark for re-centering on mount and whenever format or canvas size changes
   useEffect(() => {
-    if (scrollCentered.current || baseScale <= 0) return
+    needsCenter.current = true
+  }, [Code, CanvasWidth_mm, CanvasHeight_mm])
+
+  // Center once baseScale is current (ResizeObserver has caught up with new dimensions)
+  // Using baseScale here guarantees the inner div is already sized correctly
+  useEffect(() => {
+    if (!needsCenter.current || baseScale <= 0) return
+    needsCenter.current = false
     const el = containerRef.current
     if (!el) return
     const s = baseScale * zoomLevel
-    const sW = (CanvasWidth_mm || 0) * s
-    const sH = (CanvasHeight_mm || 0) * s
-    const innerW = sW + 800
-    const innerH = sH + 800
-    el.scrollLeft = Math.max(0, (innerW - el.clientWidth) / 2)
-    el.scrollTop  = Math.max(0, (innerH - el.clientHeight) / 2)
-    scrollCentered.current = true
-  }, [baseScale, zoomLevel, CanvasWidth_mm, CanvasHeight_mm])
+    el.scrollLeft = Math.max(0, ((CanvasWidth_mm || 0) * s + 800 - el.clientWidth) / 2)
+    el.scrollTop  = Math.max(0, ((CanvasHeight_mm || 0) * s + 800 - el.clientHeight) / 2)
+  }, [baseScale])
 
   function fitScreen() {
     setZoomLevel(1)

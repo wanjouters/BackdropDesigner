@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-const TABS = ['Celdimensies', 'Events & Koepels', 'Categorieën']
+const TABS = ['Celdimensies', 'Canvas', 'Events & Koepels', 'Categorieën']
 
 // ─── ManageList (shared UI component) ────────────────────────────────────────
 function ManageList({ title, color, items, onRename, onDelete, onAdd, onReorder, defaultCollapsed = false }) {
@@ -316,6 +316,70 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
         </svg>
         Nieuw preset toevoegen
       </button>
+
+    </div>
+  )
+}
+
+// ─── Tab: Canvas ──────────────────────────────────────────────────────────────
+function CanvasTab({ canvasPresets, onCanvasPresetsChange }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-400 mb-4">
+        Sla veelgebruikte canvasformaten op als preset.
+      </p>
+      {canvasPresets.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <div className="grid grid-cols-[1fr_86px_86px_28px] gap-1.5 items-center px-1">
+            <span className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Naam</span>
+            <span className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Breedte</span>
+            <span className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Hoogte</span>
+            <span></span>
+          </div>
+          {canvasPresets.map(p => (
+            <div key={p.id} className="grid grid-cols-[1fr_86px_86px_28px] gap-1.5 items-center bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+              <input
+                type="text"
+                value={p.name}
+                onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, name: e.target.value } : x))}
+                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-400 focus:outline-none w-full"
+              />
+              <div className="flex items-center gap-1">
+                <input type="number" value={p.CanvasWidth_mm} step={1} min={1}
+                  onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, CanvasWidth_mm: parseFloat(e.target.value) || 1 } : x))}
+                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                />
+                <span className="text-[10px] text-gray-400 flex-shrink-0">mm</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <input type="number" value={p.CanvasHeight_mm} step={1} min={1}
+                  onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, CanvasHeight_mm: parseFloat(e.target.value) || 1 } : x))}
+                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                />
+                <span className="text-[10px] text-gray-400 flex-shrink-0">mm</span>
+              </div>
+              <button onClick={() => onCanvasPresetsChange(canvasPresets.filter(x => x.id !== p.id))} title="Verwijderen"
+                className="text-gray-300 hover:text-red-500 transition-colors flex items-center justify-center">
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/>
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {canvasPresets.length === 0 && (
+        <p className="text-xs text-gray-400 italic mb-4">Nog geen canvas presets gedefinieerd.</p>
+      )}
+      <button
+        onClick={() => onCanvasPresetsChange([...canvasPresets, { id: `canvas_${Date.now()}`, name: 'Nieuw preset', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 }])}
+        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold border border-blue-200 hover:border-blue-400 rounded-lg px-4 py-2 transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        Nieuw canvas preset toevoegen
+      </button>
     </div>
   )
 }
@@ -572,6 +636,8 @@ export default function SettingsModal({
   onClose,
   cellPresets,
   onCellPresetsChange,
+  canvasPresets,
+  onCanvasPresetsChange,
   defaultAspect,
   onDefaultAspectChange,
   events,
@@ -633,6 +699,12 @@ export default function SettingsModal({
               onCellPresetsChange={onCellPresetsChange}
               defaultAspect={defaultAspect}
               onDefaultAspectChange={onDefaultAspectChange}
+            />
+          )}
+          {activeTab === 'Canvas' && (
+            <CanvasTab
+              canvasPresets={canvasPresets}
+              onCanvasPresetsChange={onCanvasPresetsChange}
             />
           )}
           {activeTab === 'Events & Koepels' && (

@@ -18,6 +18,7 @@ import {
   loadEventGroups, saveEventGroups,
   loadSponsorGroups, saveSponsorGroups,
   loadCellPresets, saveCellPresets,
+  loadCanvasPresets, saveCanvasPresets,
   loadDefaultAspect, saveDefaultAspect,
   saveDraft, loadDraft, clearDraft,
 } from './utils/sponsorTags'
@@ -257,6 +258,7 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
   const [renamingFolder, setRenamingFolder] = useState(null)
   const [addingSubfolderFor, setAddingSubfolderFor] = useState(null) // folder path | 'root'
   const [addSubfolderVal, setAddSubfolderVal] = useState('')
+  const [viewMode, setViewMode] = useState('folders') // 'list' | 'folders'
 
   const tree = buildFolderTree(folders)
   const ungrouped = designs.filter(d => !d.folder)
@@ -301,6 +303,8 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
     addSubfolderVal, setAddSubfolderVal,
   }
 
+  const sortedByDate = [...designs].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 flex-shrink-0">
       <button onClick={() => setCollapsed(v => !v)}
@@ -313,58 +317,90 @@ function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete,
           Opgeslagen
           {total > 0 && <span className="text-xs text-gray-400 font-normal">({total})</span>}
         </span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-          style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
-          <path d="M2 3.5l3 3 3-3"/>
-        </svg>
+        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+          {/* View toggle */}
+          <button
+            title="Lijstweergave"
+            onClick={() => setViewMode('list')}
+            className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
+          >
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M2 3h10M2 7h10M2 11h10"/>
+            </svg>
+          </button>
+          <button
+            title="Mappenweergave"
+            onClick={() => setViewMode('folders')}
+            className={`p-1 rounded transition-colors ${viewMode === 'folders' ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
+          >
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 3h4l1.5 1.5H13v7.5H1z"/>
+            </svg>
+          </button>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+            style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', marginLeft: 4 }}
+            onClick={() => setCollapsed(v => !v)}
+          >
+            <path d="M2 3.5l3 3 3-3"/>
+          </svg>
+        </div>
       </button>
 
       {!collapsed && (
         <div className="border-t border-gray-100">
           {total === 0 && folders.length === 0 ? (
             <p className="text-xs text-gray-400 px-4 py-3">Nog geen opgeslagen ontwerpen.</p>
-          ) : (
+          ) : viewMode === 'list' ? (
+            /* ── Lijst view ── */
             <div className="max-h-80 overflow-y-auto">
-              {/* Folder tree */}
-              {tree.map(node => (
-                <FolderNode key={node.path} node={node} depth={0} {...sharedFolderNodeProps} />
-              ))}
-              {/* Ungrouped designs */}
-              {ungrouped.map(d => (
+              {sortedByDate.map(d => (
                 <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
                   onLoad={onLoad} onDelete={onDelete} onRename={onRename}
                   onStartRename={onStartRename} onMoveToFolder={onMoveToFolder} indent={0} />
               ))}
             </div>
-          )}
-
-          {/* Add root folder */}
-          <div className="border-t border-gray-100 px-3 py-2">
-            {addingSubfolderFor === 'root' ? (
-              <div className="flex items-center gap-1">
-                <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === '/') { e.preventDefault(); return }
-                    if (e.key === 'Enter') { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }
-                    if (e.key === 'Escape') handleCancelAddSubfolder()
-                  }}
-                  placeholder="Mapnaam..."
-                  className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-                />
-                <button onClick={() => { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }}
-                  className="text-[10px] text-blue-600 font-semibold">OK</button>
-                <button onClick={handleCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
+          ) : (
+            /* ── Mappen view ── */
+            <>
+              <div className="max-h-80 overflow-y-auto">
+                {tree.map(node => (
+                  <FolderNode key={node.path} node={node} depth={0} {...sharedFolderNodeProps} />
+                ))}
+                {ungrouped.map(d => (
+                  <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
+                    onLoad={onLoad} onDelete={onDelete} onRename={onRename}
+                    onStartRename={onStartRename} onMoveToFolder={onMoveToFolder} indent={0} />
+                ))}
               </div>
-            ) : (
-              <button onClick={() => { setAddingSubfolderFor('root'); setAddSubfolderVal('') }}
-                className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-blue-600 transition-colors">
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M6 1v10M1 6h10"/>
-                </svg>
-                Nieuwe map
-              </button>
-            )}
-          </div>
+              {/* Add root folder */}
+              <div className="border-t border-gray-100 px-3 py-2">
+                {addingSubfolderFor === 'root' ? (
+                  <div className="flex items-center gap-1">
+                    <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === '/') { e.preventDefault(); return }
+                        if (e.key === 'Enter') { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }
+                        if (e.key === 'Escape') handleCancelAddSubfolder()
+                      }}
+                      placeholder="Mapnaam..."
+                      className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                    />
+                    <button onClick={() => { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }}
+                      className="text-[10px] text-blue-600 font-semibold">OK</button>
+                    <button onClick={handleCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => { setAddingSubfolderFor('root'); setAddSubfolderVal('') }}
+                    className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-blue-600 transition-colors">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M6 1v10M1 6h10"/>
+                    </svg>
+                    Nieuwe map
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -594,6 +630,7 @@ export default function App() {
   const [eventGroups, setEventGroups] = useState(() => loadEventGroups())
   const [sponsorGroups, setSponsorGroups] = useState(() => loadSponsorGroups())
   const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
+  const [canvasPresets, setCanvasPresets] = useState(() => loadCanvasPresets())
   const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
   const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
@@ -601,6 +638,7 @@ export default function App() {
   const [toast, setToast] = useState(null)          // { message, type }
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
+  const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'frequency'
   const hasMounted = useRef(false)
   const skipNextDirtyMark = useRef(false)
 
@@ -966,6 +1004,11 @@ export default function App() {
     setCellPresets(newPresets); saveCellPresets(newPresets)
   }
 
+  // ─── Canvas presets ───────────────────────────────────────────────────────
+  function handleCanvasPresetsChange(newPresets) {
+    setCanvasPresets(newPresets); saveCanvasPresets(newPresets)
+  }
+
   // ─── Default aspect ratio ─────────────────────────────────────────────────
   function handleDefaultAspectChange(val) {
     const v = parseFloat(val) || 1.667
@@ -1139,16 +1182,6 @@ export default function App() {
                 )}
               </p>
             </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              title="Instellingen"
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors border border-gray-200"
-            >
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="9" cy="9" r="3"/>
-                <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>
-              </svg>
-            </button>
             {showSaveInput ? (
               <div className="flex items-center gap-1.5">
                 <input
@@ -1211,104 +1244,181 @@ export default function App() {
         )}
       </header>
 
-      {/* Main layout — 3 columns */}
-      <div className="flex gap-4 p-4 flex-1 overflow-hidden min-h-0">
+      {/* Main layout */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
 
-        {/* Left sidebar */}
-        <div className="w-64 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+        {/* ── Icon bar ── */}
+        <div className="w-12 bg-gray-900 flex flex-col items-center py-3 gap-1 flex-shrink-0">
+          {[
+            {
+              id: 'designs',
+              title: 'Opgeslagen ontwerpen',
+              icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 3h5l2 2h7v10H2z"/>
+                  <path d="M6 10h6M6 13h4"/>
+                </svg>
+              ),
+            },
+            {
+              id: 'formats',
+              title: 'Backdrop formaten',
+              icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="6" height="6" rx="1.5"/>
+                  <rect x="10" y="2" width="6" height="6" rx="1.5"/>
+                  <rect x="2" y="10" width="6" height="6" rx="1.5"/>
+                  <rect x="10" y="10" width="6" height="6" rx="1.5"/>
+                </svg>
+              ),
+            },
+            {
+              id: 'frequency',
+              title: 'Frequentie',
+              icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 14V8M7 14V5M11 14V9M15 14V3"/>
+                </svg>
+              ),
+            },
+          ].map(({ id, title, icon }) => (
+            <button
+              key={id}
+              title={title}
+              onClick={() => setLeftPanel(p => p === id ? null : id)}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
+                leftPanel === id
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              {icon}
+            </button>
+          ))}
 
-          {/* Saved designs panel */}
-          <SavedDesignsPanel
-            designs={savedDesigns}
-            folders={designFolders}
-            renamingDesign={renamingDesign}
-            onLoad={handleLoadDesign}
-            onDelete={handleDeleteDesign}
-            onRename={handleRenameDesign}
-            onStartRename={setRenamingDesign}
-            onMoveToFolder={handleMoveToFolder}
-            onAddFolder={handleAddFolder}
-            onRenameFolder={handleRenameFolder}
-            onDeleteFolder={handleDeleteFolder}
-          />
+          {/* Spacer */}
+          <div className="flex-1" />
 
-          <GridTypeSelector
-            selected={selectedFormat}
-            onSelect={handleSelectFormat}
-            onCustom={() => setShowCustomModal(true)}
-          />
-          {format && (
-            <>
-              <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} />
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
-                  Formaat info
-                </h2>
-                <dl className="space-y-1">
-                  {[
-                    ['Categorie', format.Categorie],
-                    ['Event', format.EventStyle],
-                    format.Variant && ['Variant', format.Variant],
-                    format.CanvasWidth_mm && ['Canvas', `${format.CanvasWidth_mm} × ${format.CanvasHeight_mm} mm`],
-                  ].filter(Boolean).map(([label, value]) => value && (
-                    <div key={label} className="flex justify-between text-xs">
-                      <dt className="text-gray-400">{label}</dt>
-                      <dd className="text-gray-700 font-medium">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </>
-          )}
+          {/* Settings — bottom */}
+          <button
+            title="Instellingen"
+            onClick={() => setShowSettings(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+              <circle cx="9" cy="9" r="3"/>
+              <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>
+            </svg>
+          </button>
         </div>
+
+        {/* ── Side panel — conditional ── */}
+        {leftPanel && (
+          <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                {leftPanel === 'designs' && 'Opgeslagen'}
+                {leftPanel === 'formats' && 'Formaten'}
+                {leftPanel === 'frequency' && 'Frequentie'}
+              </h2>
+              <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M3 3l8 8M11 3L3 11"/>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+              {leftPanel === 'designs' && (
+                <SavedDesignsPanel
+                  designs={savedDesigns}
+                  folders={designFolders}
+                  renamingDesign={renamingDesign}
+                  onLoad={handleLoadDesign}
+                  onDelete={handleDeleteDesign}
+                  onRename={handleRenameDesign}
+                  onStartRename={setRenamingDesign}
+                  onMoveToFolder={handleMoveToFolder}
+                  onAddFolder={handleAddFolder}
+                  onRenameFolder={handleRenameFolder}
+                  onDeleteFolder={handleDeleteFolder}
+                />
+              )}
+              {leftPanel === 'formats' && (
+                <>
+                  {format && (
+                    <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} layout="vertical" />
+                  )}
+                  <GridTypeSelector
+                    selected={selectedFormat}
+                    onSelect={handleSelectFormat}
+                    onCustom={() => setShowCustomModal(true)}
+                  />
+                  {format && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                      <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">Info</h2>
+                      <dl className="space-y-1">
+                        {[
+                          ['Categorie', format.Categorie],
+                          ['Event', format.EventStyle],
+                          format.Variant && ['Variant', format.Variant],
+                          format.CanvasWidth_mm && ['Canvas', `${format.CanvasWidth_mm} × ${format.CanvasHeight_mm} mm`],
+                        ].filter(Boolean).map(([label, value]) => value && (
+                          <div key={label} className="flex justify-between text-xs">
+                            <dt className="text-gray-400">{label}</dt>
+                            <dd className="text-gray-700 font-medium">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+                </>
+              )}
+              {leftPanel === 'frequency' && (
+                <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Center + right — with padding */}
+        <div className="flex-1 flex gap-4 p-4 overflow-hidden min-h-0 min-w-0">
 
         {/* Center — toolbar + grid/preview */}
         <div className="flex-1 flex flex-col gap-3 overflow-hidden min-w-0">
 
           {format && (
-            <>
-              {/* View toggle + toolbar row */}
-              <div className="flex items-start gap-3">
-                {/* View toggle */}
-                <div className="flex-shrink-0 bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
-                  <button
-                    onClick={() => setView('grid')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      view === 'grid'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                      <rect x="0" y="0" width="5" height="5" rx="1"/>
-                      <rect x="7" y="0" width="5" height="5" rx="1"/>
-                      <rect x="0" y="7" width="5" height="5" rx="1"/>
-                      <rect x="7" y="7" width="5" height="5" rx="1"/>
-                    </svg>
-                    Grid
-                  </button>
-                  <button
-                    onClick={() => setView('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      view === 'preview'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="1" y="2" width="10" height="8" rx="1.5"/>
-                      <path d="M4 6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
-                    </svg>
-                    Preview
-                  </button>
-                </div>
-
-                {/* Toolbar */}
-                <div className="flex-1 min-w-0">
-                  <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} />
-                </div>
-              </div>
-            </>
+            <div className="flex-shrink-0 bg-white border border-gray-200 rounded-xl p-1 flex gap-1 self-start">
+              <button
+                onClick={() => setView('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  view === 'grid'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <rect x="0" y="0" width="5" height="5" rx="1"/>
+                  <rect x="7" y="0" width="5" height="5" rx="1"/>
+                  <rect x="0" y="7" width="5" height="5" rx="1"/>
+                  <rect x="7" y="7" width="5" height="5" rx="1"/>
+                </svg>
+                Grid
+              </button>
+              <button
+                onClick={() => setView('preview')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  view === 'preview'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="1" y="2" width="10" height="8" rx="1.5"/>
+                  <path d="M4 6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
+                </svg>
+                Preview
+              </button>
+            </div>
           )}
 
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -1323,8 +1433,8 @@ export default function App() {
                       <rect x="16" y="16" width="10" height="10" rx="2"/>
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Selecteer een backdrop-formaat links</p>
-                  <p className="text-gray-300 text-xs mt-1">of maak een nieuw formaat aan</p>
+                  <p className="text-gray-400 text-sm">Selecteer een backdrop-formaat</p>
+                  <p className="text-gray-300 text-xs mt-1">Klik op het raster-icoon links</p>
                 </div>
               </div>
             ) : view === 'grid' ? (
@@ -1376,6 +1486,7 @@ export default function App() {
           />
         </div>
 
+        </div> {/* end center+right wrapper */}
       </div>
 
       {showCustomModal && (
@@ -1390,6 +1501,8 @@ export default function App() {
           onClose={() => setShowSettings(false)}
           cellPresets={cellPresets}
           onCellPresetsChange={handleCellPresetsChange}
+          canvasPresets={canvasPresets}
+          onCanvasPresetsChange={handleCanvasPresetsChange}
           defaultAspect={defaultAspect}
           onDefaultAspectChange={handleDefaultAspectChange}
           events={events}

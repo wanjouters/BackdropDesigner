@@ -208,6 +208,21 @@ Alle tags/events/categorieën intact
 - **Centrering**: grid wordt visueel gecentreerd binnen de beschikbare ruimte (optische marge groeit bij minder kolommen, maar toolbar-waarden blijven ongewijzigd)
 - **TargetCellW_mm**: cellen onthouden hun beoogde breedte; bij minder kolommen springen ze terug naar originele preset-grootte
 - **Preset apply**: bij toepassen van een preset worden kolommen/rijen herberekend naar het maximum dat past binnen de marges
+- **Icon bar navigatie**: links icon bar (VS Code/Figma stijl, `bg-gray-900`) met Ontwerpen / Formaten / Frequentie panels; standaard `'formats'`
+- **Formats panel**: GridToolbar verticaal bovenaan, gevolgd door GridTypeSelector en Info-blok
+- **GridToolbar vertical layout**: `layout="vertical"` prop geeft ingeklapbare kaartblokken (VSection) voor Canvas, Grid, Gutter, Marges, Header, Divider, Stijl
+- **Canvas afmetingen live aanpasbaar**: CanvasWidth_mm / CanvasHeight_mm rechtstreeks in het formaten-paneel, met link-knop voor proportionele schaling en preset dropdown
+- **Canvas presets**: opgeslagen in `backdropDesigner_canvasPresets` localStorage; beheerbaar via Instellingen → tab "Canvas"
+- **SettingsModal: tab Canvas**: apart tabblad voor canvas presets (losgekoppeld van Celdimensies)
+- **Preview centering fix**: canvas hercentreert bij formaatwissel, canvas preset wissel én canvas maatwijziging; `needsCenter` ref-patroon wacht op bijgewerkte `baseScale` voor correcte scroll bij groot→klein overgangen
+- **Bijwerken knop**: overschrijft bestaand opgeslagen ontwerp zonder kopie
+- **ExportMenu dropdown**: JPEG, CSV, JSON export + JSON laden gecombineerd in één knop
+- **Bulk replace in FrequencyPanel**: vervang alle slots van sponsor A door sponsor B via inline zoekpaneel
+- **JSON export/import**: `{ version: 1, format, slots, exportedAt }` structuur
+- **`parseBarPosition` gededupliceerd**: verplaatst naar `utils/barPosition.js`, geïmporteerd in PreviewCanvas en exportJpeg
+- **`buildGroups` gememoized**: `useMemo` in LogoLibrary.jsx
+- **Lazy loading logo's**: `loading="lazy"` op SponsorCard img-tags
+- **Cmd/Ctrl pan**: panning in preview vereist ingedrukte Cmd (Mac) of Ctrl (Win); cursor toont grab/grabbing indicator
 
 ---
 
@@ -243,18 +258,18 @@ Alle tags/events/categorieën intact
 
 | # | Punt | Beschrijving |
 |---|------|-------------|
-| 4.1 | **Bulk replace** | "Vervang alle slots met sponsor A door sponsor B." Handig bij late sponsorwijzigingen. |
+| 4.1 | ✅ **Bulk replace** | Vervang alle slots van sponsor A door B via FrequencyPanel hover-knop + inline zoek |
 | 4.2 | **Ontwerp dupliceren** | Snel een kopie maken voor varianten. |
-| 4.3 | **Export/import als JSON** | Backup van ontwerp buiten localStorage; overdraagbaar tussen computers. |
+| 4.3 | ✅ **Export/import als JSON** | `{ version: 1, format, slots, exportedAt }` via ExportMenu dropdown |
 | 4.4 | **Sponsor zoeken zonder eventfilter** | Modus om ook niet-getagde sponsors te kunnen toewijzen. |
 
 ### Prioriteit 5 — Code & onderhoudbaarheid
 
 | # | Punt | Beschrijving |
 |---|------|-------------|
-| 5.1 | **`parseBarPosition` dedupliceren** | Staat zowel in `GridToolbar.jsx` als `PreviewCanvas.jsx`. Verplaatsen naar `utils/`. |
-| 5.2 | **`buildGroups` memoizen** | In `LogoLibrary.jsx` wordt dit elke render opnieuw berekend. `useMemo` toevoegen. |
-| 5.3 | **Lazy loading logo's** | 188 logo's worden allemaal tegelijk geladen. `IntersectionObserver` toevoegen. |
+| 5.1 | ✅ **`parseBarPosition` gededupliceerd** | Verplaatst naar `utils/barPosition.js` |
+| 5.2 | ✅ **`buildGroups` gememoized** | `useMemo` in `LogoLibrary.jsx` |
+| 5.3 | ✅ **Lazy loading logo's** | `loading="lazy"` op SponsorCard img-tags |
 
 ### Bewust niet oppakken
 
