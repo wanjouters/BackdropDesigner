@@ -1,3 +1,11 @@
+function csvCell(val) {
+  const s = (val && val !== '') ? val : 'BLANK'
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+    return '"' + s.replace(/"/g, '""') + '"'
+  }
+  return s
+}
+
 export default function ExportButton({ format, slots }) {
   const { Cols, Rows, Code } = format
 
@@ -8,8 +16,7 @@ export default function ExportButton({ format, slots }) {
     for (let r = 0; r < Rows; r++) {
       const row = []
       for (let c = 0; c < Cols; c++) {
-        const val = slots[r * Cols + c]
-        row.push(val && val !== '' ? val : 'BLANK')
+        row.push(csvCell(slots[r * Cols + c]))
       }
       lines.push(row.join(','))
     }
