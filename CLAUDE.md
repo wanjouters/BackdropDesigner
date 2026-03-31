@@ -226,56 +226,14 @@ Alle tags/events/categorieën intact
 
 ---
 
-## Plan van aanpak — Verbeteringen (2026)
+## Openstaande verbeterpunten
 
-### Prioriteit 1 — Robuustheid & dataveiligheid
-
-| # | Punt | Beschrijving |
-|---|------|-------------|
-| 1.1 | **Auto-save werkstand** | Bij elke wijziging de huidige staat opslaan als "draft" in localStorage. Bij herladen → vragen of je wil herstellen. |
-| 1.2 | **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. Nu gaat alles direct weg zonder bevestiging. |
-| 1.3 | **Negatieve marges en ongeldige waarden blokkeren** | Min=0 op marge-inputs; CellAspect mag nooit 0 worden (deelt door nul). |
-
-### Prioriteit 2 — Gedragsproblemen / bugs
-
-| # | Punt | Beschrijving |
-|---|------|-------------|
-| 2.1 | **Pan werkt niet correct bij zoom** | In de preview: panning gebruikt ruwe muiscoördinaten zonder zoom-schaal, waardoor beweging niet klopt bij > 100%. |
-| 2.2 | **Zoeken negeert eventfilter niet** | Als eventfilter actief is, verschijnen niet-getagde sponsors niet — je kan hen niet toewijzen aan een slot. Aparte "alle sponsors"-modus nodig. |
-| 2.3 | **CSV-export escaping ontbreekt** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
-| 2.4 | **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat. Validatie bij aanmaken/hernoemen. |
-
-### Prioriteit 3 — UX & feedback
-
-| # | Punt | Beschrijving |
-|---|------|-------------|
-| 3.1 | **Toastmelding bij opslaan/verwijderen** | Korte bevestiging (2s) bij "Ontwerp opgeslagen", "Map verwijderd", etc. Nu geen feedback. |
-| 3.2 | **Markering "onopgeslagen wijzigingen"** | Kleine indicator in de header wanneer het huidige ontwerp gewijzigd is t.o.v. de opgeslagen staat. |
-| 3.3 | **Waarschuwing bij formaatwissel met ingevulde slots** | Slots worden nu stilletjes bijgeknipt bij formaatwissel. Korte bevestigingsvraag toevoegen. |
-| 3.4 | **Frequentiepaneel: toelichting bij ongeldige sponsors** | Rode markering is onduidelijk zonder uitleg dat de naam niet in sponsors.json staat. |
-
-### Prioriteit 4 — Ontbrekende functies (hoge waarde)
-
-| # | Punt | Beschrijving |
-|---|------|-------------|
-| 4.1 | ✅ **Bulk replace** | Vervang alle slots van sponsor A door B via FrequencyPanel hover-knop + inline zoek |
-| 4.2 | **Ontwerp dupliceren** | Snel een kopie maken voor varianten. |
-| 4.3 | ✅ **Export/import als JSON** | `{ version: 1, format, slots, exportedAt }` via ExportMenu dropdown |
-| 4.4 | **Sponsor zoeken zonder eventfilter** | Modus om ook niet-getagde sponsors te kunnen toewijzen. |
-
-### Prioriteit 5 — Code & onderhoudbaarheid
-
-| # | Punt | Beschrijving |
-|---|------|-------------|
-| 5.1 | ✅ **`parseBarPosition` gededupliceerd** | Verplaatst naar `utils/barPosition.js` |
-| 5.2 | ✅ **`buildGroups` gememoized** | `useMemo` in `LogoLibrary.jsx` |
-| 5.3 | ✅ **Lazy loading logo's** | `loading="lazy"` op SponsorCard img-tags |
-
-### Bewust niet oppakken
-
-- Undo/redo: zinvol maar complex zonder bugs te introduceren
-- Mobiele ondersteuning: buiten scope voor intern gebruik
-- i18n / meertaligheid: niet relevant voor interne tool
+| Punt | Beschrijving |
+|------|-------------|
+| **Ontwerp dupliceren** | Snel een kopie maken voor varianten vanuit de opgeslagen ontwerpen lijst. |
+| **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. |
+| **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat — validatie toevoegen bij aanmaken/hernoemen. |
+| **CSV-export escaping** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
 
 ---
 
