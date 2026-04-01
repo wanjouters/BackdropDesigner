@@ -3,7 +3,7 @@ import './index.css'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
 import FrequencyPanel from './components/FrequencyPanel'
-import CustomFormatModal from './components/CustomFormatModal'
+import FormatPickerModal from './components/FormatPickerModal'
 import LogoLibrary from './components/LogoLibrary'
 import SettingsModal from './components/SettingsModal'
 import GridToolbar from './components/GridToolbar'
@@ -20,6 +20,7 @@ import {
   loadCellPresets, saveCellPresets,
   loadCanvasPresets, saveCanvasPresets,
   loadDefaultAspect, saveDefaultAspect,
+  loadCustomFormats, saveCustomFormats,
   saveDraft, loadDraft, clearDraft,
 } from './utils/sponsorTags'
 
@@ -455,12 +456,11 @@ function ExportMenu({ format, slots, customLogos, onImportJson }) {
   }, [open])
 
   function handleJpeg() {
-    setOpen(false)
     exportJpeg(format, slots, customLogos)
+    setOpen(false)
   }
 
   function handleJson() {
-    setOpen(false)
     var data = { version: 1, format: format, slots: slots, exportedAt: Date.now() }
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     var url = URL.createObjectURL(blob)
@@ -469,6 +469,7 @@ function ExportMenu({ format, slots, customLogos, onImportJson }) {
     a.download = (format.Code || 'ontwerp') + '_design.json'
     a.click()
     URL.revokeObjectURL(url)
+    setOpen(false)
   }
 
   function handleImportClick() {
@@ -494,7 +495,6 @@ function ExportMenu({ format, slots, customLogos, onImportJson }) {
   }
 
   function handleCsv() {
-    setOpen(false)
     const { Cols, Rows, Code } = format
     function csvCell(val) {
       var s = (val && val !== '') ? val : 'BLANK'
@@ -631,6 +631,7 @@ export default function App() {
   const [sponsorGroups, setSponsorGroups] = useState(() => loadSponsorGroups())
   const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
   const [canvasPresets, setCanvasPresets] = useState(() => loadCanvasPresets())
+  const [customFormats, setCustomFormats] = useState(() => loadCustomFormats())
   const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
   const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
@@ -861,6 +862,25 @@ export default function App() {
   function handleCustomFormat(format) {
     setShowCustomModal(false)
     handleSelectFormat(format)
+  }
+
+  function handleSaveCustomFormat(format, editingId) {
+    const withMeta = { ...format, _custom: true, id: editingId || `custom_${Date.now()}` }
+    setCustomFormats(prev => {
+      const updated = editingId
+        ? prev.map(f => (f.id === editingId || f.Code === editingId) ? withMeta : f)
+        : [...prev, withMeta]
+      saveCustomFormats(updated)
+      return updated
+    })
+  }
+
+  function handleDeleteCustomFormat(format) {
+    setCustomFormats(prev => {
+      const updated = prev.filter(f => f.id !== format.id && f.Code !== format.Code)
+      saveCustomFormats(updated)
+      return updated
+    })
   }
 
   function handleFormatChange(updated) {
@@ -1351,6 +1371,8 @@ export default function App() {
                   <GridTypeSelector
                     selected={selectedFormat}
                     onSelect={handleSelectFormat}
+                    customFormats={customFormats}
+                    onDeleteCustomFormat={handleDeleteCustomFormat}
                     onCustom={() => setShowCustomModal(true)}
                   />
                   {format && (
@@ -1490,8 +1512,11 @@ export default function App() {
       </div>
 
       {showCustomModal && (
-        <CustomFormatModal
-          onConfirm={handleCustomFormat}
+        <FormatPickerModal
+          customFormats={customFormats}
+          onConfirm={format => { setShowCustomModal(false); handleSelectFormat(format) }}
+          onSaveCustom={handleSaveCustomFormat}
+          onDeleteCustom={handleDeleteCustomFormat}
           onClose={() => setShowCustomModal(false)}
         />
       )}

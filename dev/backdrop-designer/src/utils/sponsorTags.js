@@ -161,6 +161,17 @@ export function saveCanvasPresets(list) {
   localStorage.setItem(CANVAS_PRESETS_KEY, JSON.stringify(list))
 }
 
+// --- Custom format presets ---
+// Structure: [{ id, _custom: true, Code, Beschrijving, Cols, Rows, CanvasWidth_mm, ... }]
+const CUSTOM_FORMATS_KEY = 'backdropDesigner_customFormats'
+
+export function loadCustomFormats() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_FORMATS_KEY)) || [] } catch { return [] }
+}
+export function saveCustomFormats(list) {
+  localStorage.setItem(CUSTOM_FORMATS_KEY, JSON.stringify(list))
+}
+
 // --- Draft (auto-save werkstand) ---
 const DRAFT_KEY = 'backdropDesigner_draft'
 
