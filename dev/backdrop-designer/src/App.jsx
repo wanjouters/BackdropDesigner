@@ -640,6 +640,7 @@ export default function App() {
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
   const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'frequency'
+  const [formatsView, setFormatsView] = useState('browse') // 'browse' | 'detail'
   const hasMounted = useRef(false)
   const skipNextDirtyMark = useRef(false)
 
@@ -847,6 +848,7 @@ export default function App() {
       setSlots(makeEmptySlots(format.Cols, format.Rows))
       setSelectedSlots(new Set())
       clearDraft()
+      setFormatsView('detail')
     }
     const filled = slots.filter(s => s !== 'BLANK').length
     if (filled > 0) {
@@ -1338,14 +1340,27 @@ export default function App() {
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
                 {leftPanel === 'designs' && 'Opgeslagen'}
-                {leftPanel === 'formats' && 'Formaten'}
+                {leftPanel === 'formats' && (formatsView === 'detail' ? (selectedFormat?.Categorie || 'Formaat') : 'Formaten')}
                 {leftPanel === 'frequency' && 'Frequentie'}
               </h2>
-              <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M3 3l8 8M11 3L3 11"/>
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {leftPanel === 'formats' && formatsView === 'detail' && (
+                  <button
+                    onClick={() => setFormatsView('browse')}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 2L4 6l4 4"/>
+                    </svg>
+                    Terug
+                  </button>
+                )}
+                <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M3 3l8 8M11 3L3 11"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
               {leftPanel === 'designs' && (
@@ -1363,18 +1378,20 @@ export default function App() {
                   onDeleteFolder={handleDeleteFolder}
                 />
               )}
-              {leftPanel === 'formats' && (
+              {leftPanel === 'formats' && formatsView === 'browse' && (
+                <GridTypeSelector
+                  selected={selectedFormat}
+                  onSelect={handleSelectFormat}
+                  customFormats={customFormats}
+                  onDeleteCustomFormat={handleDeleteCustomFormat}
+                  onCustom={() => setShowCustomModal(true)}
+                />
+              )}
+              {leftPanel === 'formats' && formatsView === 'detail' && (
                 <>
                   {format && (
                     <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} layout="vertical" />
                   )}
-                  <GridTypeSelector
-                    selected={selectedFormat}
-                    onSelect={handleSelectFormat}
-                    customFormats={customFormats}
-                    onDeleteCustomFormat={handleDeleteCustomFormat}
-                    onCustom={() => setShowCustomModal(true)}
-                  />
                   {format && (
                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                       <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">Info</h2>
