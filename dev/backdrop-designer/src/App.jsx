@@ -1307,7 +1307,12 @@ export default function App() {
             <button
               key={id}
               title={title}
-              onClick={() => setLeftPanel(p => p === id ? null : id)}
+              onClick={() => {
+                setLeftPanel(p => {
+                  if (p !== id) setFormatsView('browse')
+                  return p === id ? null : id
+                })
+              }}
               className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
                 leftPanel === id
                   ? 'bg-blue-500 text-white'
@@ -1355,7 +1360,7 @@ export default function App() {
                     Terug
                   </button>
                 )}
-                <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                <button onClick={() => { setLeftPanel(null); setFormatsView('browse') }} className="text-gray-300 hover:text-gray-500 transition-colors">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M3 3l8 8M11 3L3 11"/>
                   </svg>

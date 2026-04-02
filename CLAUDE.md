@@ -199,6 +199,45 @@ Alle tags/events/categorieën intact
 
 ---
 
+## Recente wijzigingen (sessie april 2026)
+
+### FormatPickerModal — Nieuw formaat aanmaken (popup)
+- **Nieuw component** `FormatPickerModal.jsx` — InDesign-stijl modal met twee niveaus:
+  - **Level 1 (browse)**: categorietabs als pills + preset-kaartgrid met visuele thumbnails (`FormatThumbnail`) + `BlankCard` als eerste kaart
+  - **Level 2 (detail)**: formulier met ← Terug, live preview strip, Identificatie / Canvas / Grid / Cel / Gutter / Marges
+- **Preset bijwerken**: knop alleen zichtbaar voor `_custom: true` formats; geeft ✓-feedback na opslaan
+- **Code readonly** voor statische presets (niet-custom); rood + foutmelding bij duplicate code
+- **Duplicate code check**: `isDuplicateCode` via `useMemo` — vergelijkt met statische én custom codes, exclusief de huidige editeer-ID
+- **BlankCard**: gestippeld kaartje met `+` icoon als eerste item in het grid; vervangt de ambigue "Leeg beginnen →" footer-knop
+- **Footer**: "Annuleren" + "Aanmaken" rechts; "Preset bijwerken" + ✓ links (alleen voor custom)
+- Link-knoppen voor Canvas (breedte↔hoogte) en Gutter (X↔Y)
+- `saveAsPreset` checkbox voor nieuwe lege formaten
+
+### GridTypeSelector — Formaatpanel sidebar
+- **Zoekveld** bovenaan met ×-wis-knop — filtert op code én beschrijving
+- **Filter-button** met ≡-icoontje, actieve categorienaam als label en chevron — identiek aan sponsorblok
+  - Kleurt blauw bij actief filter
+  - Floating dropdown sluit bij buitenklik (`useRef` + `useEffect`)
+  - "Opgeslagen" krijgt amber-styling in dropdown
+- **Twee-regelige layout** per format-rij: code + kolom/rij-telling op rij 1 (code truncate + `min-w-0`), beschrijving op rij 2
+- `title` tooltip op elke rij met volledige code
+
+### App.jsx — Twee-niveau navigatie in formats-panel
+- `formatsView` state: `'browse' | 'detail'`
+  - `'browse'`: toont `GridTypeSelector` (lijst + filter)
+  - `'detail'`: toont `GridToolbar` + info-blok
+- `handleSelectFormat` zet `formatsView` naar `'detail'`
+- "← Terug" knop in panel-header terug naar `'browse'`
+- Reset naar `'browse'` bij sluiten panel (× knop) én bij wisselen van panel (icon bar)
+
+### Custom formats
+- Persistentie via `backdropDesigner_customFormats` localStorage (`loadCustomFormats` / `saveCustomFormats`)
+- `handleSaveCustomFormat(format, editingId)`: upsert met `_custom: true, id`
+- `handleDeleteCustomFormat(format)`: filtert op `id` of `Code`
+- Custom formats zichtbaar als "Opgeslagen" tab in zowel GridTypeSelector als FormatPickerModal
+
+---
+
 ## Recente wijzigingen (sessie maart 2026)
 
 - **Gutterlink in SettingsModal**: chain-knop per preset om GutterX/Y gesynchroniseerd te houden
@@ -234,6 +273,7 @@ Alle tags/events/categorieën intact
 | **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. |
 | **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat — validatie toevoegen bij aanmaken/hernoemen. |
 | **CSV-export escaping** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
+| **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). Preview strip neemt ~25% modalhoogte in. "PRESET DETAILS" + "IDENTIFICATIE" is dubbel label. |
 
 ---
 
