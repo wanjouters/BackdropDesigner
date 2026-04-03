@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './index.css'
+import allStaticFormats from './data/backdropFormats.json'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
 import FrequencyPanel from './components/FrequencyPanel'
@@ -21,6 +22,7 @@ import {
   loadCanvasPresets, saveCanvasPresets,
   loadDefaultAspect, saveDefaultAspect,
   loadCustomFormats, saveCustomFormats,
+  loadStaticImported, saveStaticImported,
   saveDraft, loadDraft, clearDraft,
 } from './utils/sponsorTags'
 
@@ -611,6 +613,8 @@ export default function App() {
   const [editedFormat, setEditedFormat] = useState(null)
   const [slots, setSlots] = useState([])
   const [showCustomModal, setShowCustomModal] = useState(false)
+  const [editingFormat, setEditingFormat] = useState(null)
+  const [staticImported, setStaticImported] = useState(() => loadStaticImported())
   const [selectedSlots, setSelectedSlots] = useState(new Set())
   const [view, setView] = useState('grid') // 'grid' | 'preview'
   const [customLogos, setCustomLogos] = useState(() => loadCustomLogos())
@@ -875,6 +879,20 @@ export default function App() {
       saveCustomFormats(updated)
       return updated
     })
+  }
+
+  function handleImportAllFormats() {
+    const existingCodes = new Set(customFormats.map(f => f.Code))
+    const toImport = allStaticFormats
+      .filter(f => !existingCodes.has(f.Code))
+      .map(f => ({ ...f, _custom: true, id: f.Code }))
+    setCustomFormats(prev => {
+      const updated = [...prev, ...toImport]
+      saveCustomFormats(updated)
+      return updated
+    })
+    setStaticImported(true)
+    saveStaticImported(true)
   }
 
   function handleDeleteCustomFormat(format) {
@@ -1367,7 +1385,7 @@ export default function App() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+            <div className="flex-1 overflow-hidden p-3 flex flex-col gap-3">
               {leftPanel === 'designs' && (
                 <SavedDesignsPanel
                   designs={savedDesigns}
@@ -1387,9 +1405,11 @@ export default function App() {
                 <GridTypeSelector
                   selected={selectedFormat}
                   onSelect={handleSelectFormat}
+                  staticFormats={staticImported ? [] : allStaticFormats}
                   customFormats={customFormats}
                   onDeleteCustomFormat={handleDeleteCustomFormat}
                   onCustom={() => setShowCustomModal(true)}
+                  onEdit={f => setEditingFormat(f)}
                 />
               )}
               {leftPanel === 'formats' && formatsView === 'detail' && (
@@ -1533,13 +1553,16 @@ export default function App() {
         </div> {/* end center+right wrapper */}
       </div>
 
-      {showCustomModal && (
+      {(showCustomModal || editingFormat) && (
         <FormatPickerModal
+          staticFormats={staticImported ? [] : allStaticFormats}
           customFormats={customFormats}
-          onConfirm={format => { setShowCustomModal(false); handleSelectFormat(format) }}
+          initialFormat={editingFormat || null}
+          editMode={!!editingFormat}
+          onConfirm={format => { setShowCustomModal(false); setEditingFormat(null); handleSelectFormat(format) }}
           onSaveCustom={handleSaveCustomFormat}
           onDeleteCustom={handleDeleteCustomFormat}
-          onClose={() => setShowCustomModal(false)}
+          onClose={() => { setShowCustomModal(false); setEditingFormat(null) }}
         />
       )}
 

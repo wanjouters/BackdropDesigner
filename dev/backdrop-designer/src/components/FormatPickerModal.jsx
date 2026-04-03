@@ -1,7 +1,4 @@
 import { useState, useMemo } from 'react'
-import formats from '../data/backdropFormats.json'
-
-const STATIC_CATEGORIES = ['Alle', ...[...new Set(formats.map(f => f.Categorie))].sort()]
 
 function r(v, d = 1) {
   const m = Math.pow(10, d)
@@ -94,7 +91,7 @@ function PresetCard({ format, isSelected, onClick, onDelete }) {
     >
       <FormatThumbnail format={format} maxW={120} h={52} />
       <p className={`text-[10px] font-semibold mt-2 truncate leading-tight ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
-        {format.Code}
+        {format.Beschrijving || format.Code}
       </p>
       <p className="text-[9px] text-gray-400 mt-0.5">{format.Cols}×{format.Rows}</p>
       {format.CanvasWidth_mm
@@ -152,28 +149,35 @@ function SLabel({ children }) {
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-export default function FormatPickerModal({ customFormats = [], onConfirm, onSaveCustom, onDeleteCustom, onClose }) {
+export default function FormatPickerModal({ staticFormats = [], customFormats = [], onConfirm, onSaveCustom, onDeleteCustom, onClose, initialFormat = null, editMode = false }) {
+  const initIsCustom = !!(initialFormat && initialFormat._custom)
   // 'browse' = level 1 (preset grid), 'detail' = level 2 (form)
-  const [level, setLevel] = useState('browse')
+  const [level, setLevel] = useState(initialFormat ? 'detail' : 'browse')
   const [activeCategory, setActiveCategory] = useState('Alle')
-  const [selectedPreset, setSelectedPreset] = useState(null)
-  const [editingCustomId, setEditingCustomId] = useState(null)
-  const [form, setForm] = useState(defaultForm())
+  const [selectedPreset, setSelectedPreset] = useState(initialFormat || null)
+  const [editingCustomId, setEditingCustomId] = useState(initIsCustom ? (initialFormat.id || initialFormat.Code) : null)
+  const [form, setForm] = useState(initialFormat ? { ...defaultForm(), ...initialFormat } : defaultForm())
   const [canvasLinked, setCanvasLinked] = useState(false)
   const [gutterLinked, setGutterLinked] = useState(true)
-  const [saveAsPreset, setSaveAsPreset] = useState(false)
+  const [saveAsPreset, setSaveAsPreset] = useState(initIsCustom)
   const [presetSaved, setPresetSaved] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const allCategories = useMemo(() => [
-    ...STATIC_CATEGORIES,
-    ...(customFormats.length > 0 ? ['Opgeslagen'] : [])
-  ], [customFormats.length])
+  const staticCategories = useMemo(() => [...new Set(staticFormats.map(f => f.Categorie))].sort(), [staticFormats])
+
+  const allCategories = useMemo(() => {
+    const cats = ['Alle', ...staticCategories]
+    if (customFormats.length > 0) cats.push('Opgeslagen')
+    return cats
+  }, [staticCategories, customFormats.length])
 
   const visiblePresets = useMemo(() => {
+    const customCodes = new Set(customFormats.map(f => f.Code))
+    const dedupedStatic = staticFormats.filter(f => !customCodes.has(f.Code))
     if (activeCategory === 'Opgeslagen') return customFormats
-    if (activeCategory === 'Alle') return formats
-    return formats.filter(f => f.Categorie === activeCategory)
-  }, [activeCategory, customFormats])
+    if (activeCategory === 'Alle') return [...dedupedStatic, ...customFormats]
+    return dedupedStatic.filter(f => f.Categorie === activeCategory)
+  }, [activeCategory, staticFormats, customFormats])
 
   function openDetail(preset, isCustom = false) {
     setSelectedPreset(preset)
@@ -202,32 +206,25 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
     })
   }
 
+  function autoCode(naam) {
+    return naam.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '') || ('CUSTOM_' + Date.now())
+  }
+
   function handleConfirm() {
-    if (!form.Code.trim()) return
+    if (!form.Beschrijving.trim()) return
+    const naam = form.Beschrijving.trim()
     const final = {
       ...form,
-      Code: form.Code.trim().toUpperCase(),
-      Beschrijving: form.Beschrijving.trim() || form.Code.trim().toUpperCase(),
+      Code: form.Code || autoCode(naam),
+      Beschrijving: naam,
     }
-    if (saveAsPreset || editingCustomId) onSaveCustom(final, editingCustomId)
+    const saveId = editingCustomId || (editMode && selectedPreset?._custom ? (selectedPreset.id || selectedPreset.Code) : null)
+    if (saveAsPreset || editingCustomId || editMode) onSaveCustom(final, saveId)
     onConfirm(final)
   }
 
   const isEditing = !!editingCustomId
-
-  // Duplicate code check — only when code field is editable
-  const codeEditable = !(selectedPreset && !selectedPreset._custom)
-  const isDuplicateCode = useMemo(() => {
-    if (!codeEditable || !form.Code.trim()) return false
-    const code = form.Code.trim().toUpperCase()
-    const staticCodes = formats.map(f => f.Code)
-    const customCodes = customFormats
-      .filter(f => (f.id || f.Code) !== (editingCustomId || ''))
-      .map(f => f.Code)
-    return staticCodes.includes(code) || customCodes.includes(code)
-  }, [form.Code, codeEditable, customFormats, editingCustomId])
-
-  const canConfirm = !!form.Code.trim() && !isDuplicateCode
+  const canConfirm = !!form.Beschrijving.trim()
 
   // ── Level 1: Browse presets ─────────────────────────────────────────────────
   if (level === 'browse') {
@@ -311,7 +308,7 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
             Terug
           </button>
           <h2 className="text-sm font-semibold text-gray-700">
-            {isEditing ? 'Formaat bewerken' : selectedPreset ? selectedPreset.Code : 'Leeg formaat'}
+            {selectedPreset ? (selectedPreset.Beschrijving || selectedPreset.Code) : 'Nieuw formaat'}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -325,8 +322,8 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
           <FormatThumbnail format={form} maxW={140} h={64} />
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Preview</p>
-            <p className="text-sm font-mono font-semibold text-white leading-tight">
-              {form.Code || <span className="text-gray-500 font-sans font-normal italic">geen code</span>}
+            <p className="text-sm font-semibold text-white leading-tight">
+              {form.Beschrijving || <span className="text-gray-500 font-normal italic">geen naam</span>}
             </p>
             <p className="text-[11px] text-gray-400 mt-0.5">{form.Cols} × {form.Rows} = {form.Cols * form.Rows} slots</p>
             <p className="text-[11px] text-gray-500">{form.CanvasWidth_mm} × {form.CanvasHeight_mm} mm</p>
@@ -335,40 +332,14 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
 
         {/* Form — scrollable */}
         <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
-          <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-4">Preset Details</p>
 
-          {/* Identificatie */}
-          <SLabel>Identificatie</SLabel>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 flex-shrink-0 text-right" style={{ width: 52 }}>Code</span>
-              <div className="flex-1 min-w-0">
-                <input value={form.Code}
-                  onChange={e => update('Code', e.target.value.toUpperCase().replace(/\s+/g, '_'))}
-                  placeholder="CUSTOM_10x6"
-                  readOnly={!!(selectedPreset && !selectedPreset._custom)}
-                  className={`w-full text-sm px-3 py-1.5 border rounded-lg focus:outline-none font-mono ${
-                    selectedPreset && !selectedPreset._custom
-                      ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-default'
-                      : isDuplicateCode
-                        ? 'border-red-300 bg-red-50 focus:ring-1 focus:ring-red-400 text-red-700'
-                        : 'border-gray-200 focus:ring-1 focus:ring-blue-400'
-                  }`}
-                />
-                {isDuplicateCode && (
-                  <p className="text-[10px] text-red-500 mt-0.5 px-1">Code bestaat al — kies een unieke naam</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 flex-shrink-0 text-right" style={{ width: 52 }}>Naam</span>
-              <input value={form.Beschrijving}
-                onChange={e => update('Beschrijving', e.target.value)}
-                placeholder="Backdrop mixed zone..."
-                className="flex-1 text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
-            </div>
-          </div>
+          {/* Naam */}
+          <SLabel>Naam</SLabel>
+          <input value={form.Beschrijving}
+            onChange={e => update('Beschrijving', e.target.value)}
+            placeholder="Backdrop mixed zone breed..."
+            className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 mb-1"
+          />
 
           {/* Canvas */}
           <SLabel>Canvas</SLabel>
@@ -432,7 +403,7 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-3.5 border-t border-gray-100 flex-shrink-0 bg-gray-50/80">
           <div className="flex items-center gap-3">
-            {selectedPreset && selectedPreset._custom && (
+            {selectedPreset && (editMode || selectedPreset._custom) && !confirmDelete && (
               <button
                 onClick={() => {
                   const final = {
@@ -440,16 +411,45 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
                     Code: form.Code.trim().toUpperCase(),
                     Beschrijving: form.Beschrijving.trim() || form.Code.trim().toUpperCase(),
                   }
-                  onSaveCustom(final, editingCustomId || selectedPreset.id || selectedPreset.Code)
+                  const saveId = editingCustomId || (selectedPreset._custom ? (selectedPreset.id || selectedPreset.Code) : null)
+                  onSaveCustom(final, saveId)
                   setPresetSaved(true)
                   setTimeout(() => setPresetSaved(false), 2500)
                 }}
                 className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors border-gray-200 text-gray-600 hover:bg-gray-50"
               >
-                Preset bijwerken
+                {selectedPreset._custom ? 'Preset bijwerken' : 'Opslaan als preset'}
               </button>
             )}
-            {presetSaved && (
+            {selectedPreset && selectedPreset._custom && !confirmDelete && (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                title="Preset verwijderen"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                  <path d="M2 3.5h10M5.5 3.5V2.5h3v1M4.5 3.5v7h5v-7"/>
+                </svg>
+              </button>
+            )}
+            {confirmDelete && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600 font-medium">Preset verwijderen?</span>
+                <button
+                  onClick={() => { onDeleteCustom(selectedPreset); onClose() }}
+                  className="px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Verwijderen
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Annuleren
+                </button>
+              </div>
+            )}
+            {presetSaved && !confirmDelete && (
               <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 7l3.5 3.5L11 3"/>
@@ -459,18 +459,22 @@ export default function FormatPickerModal({ customFormats = [], onConfirm, onSav
             )}
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-              Annuleren
-            </button>
-            <button onClick={handleConfirm} disabled={!canConfirm}
-              className={`px-5 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                canConfirm
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}>
-              {isEditing ? 'Bijwerken & gebruiken' : saveAsPreset ? 'Aanmaken & opslaan' : 'Aanmaken'}
-            </button>
+            {!confirmDelete && (
+              <>
+                <button onClick={onClose}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  Annuleren
+                </button>
+                <button onClick={handleConfirm} disabled={!canConfirm}
+                  className={`px-5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                    canConfirm
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}>
+                  {isEditing ? 'Bijwerken & gebruiken' : editMode ? 'Opslaan & gebruiken' : saveAsPreset ? 'Aanmaken & opslaan' : 'Aanmaken'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

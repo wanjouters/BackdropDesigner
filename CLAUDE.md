@@ -199,6 +199,35 @@ Alle tags/events/categorieën intact
 
 ---
 
+## Recente wijzigingen (sessie april 2026 — vervolg)
+
+### Formaatbeheer — statische JSON vervangen door bewerkbare presets
+- **Override-systeem**: custom format met zelfde Code als statisch preset verdringt de statische versie in alle lijsten (deduplicatie op Code)
+- **Potlood-icoon** op hover in GridTypeSelector — opent FormatPickerModal direct op level 2 (edit-modus)
+- **`editMode` prop** in FormatPickerModal: Code altijd bewerkbaar, "Opslaan als preset" voor statische presets, "Preset bijwerken" voor custom
+- **Eenmalige import**: "Importeer alle presets als bewerkbaar" converteert de volledige statische JSON naar custom presets in één klik; na import verdwijnt de statische lijst volledig
+- **`staticImported` flag** in localStorage (`backdropDesigner_staticImported`); als gezet, ontvangt GridTypeSelector en FormatPickerModal een lege `staticFormats=[]`
+- **`staticFormats` prop**: App.jsx importeert `backdropFormats.json` als `allStaticFormats` en geeft lege array door na import — componenten zijn niet meer hardgekoppeld aan de JSON
+
+### GridTypeSelector — volledige hoogte
+- Kaart-wrapper (`rounded-xl border`) verwijderd — component vult de volledige panelhoogte
+- Formaatlijst is nu `flex-1 overflow-y-auto` (groeit mee) ipv vaste `max-h-64`
+- "Nieuw formaat aanmaken" blijft onderaan geplakt via `flex-shrink-0`
+- Importknop volledig verwijderd
+
+### Code-veld verwijderd uit UI
+- Code niet meer zichtbaar in FormatPickerModal of GridTypeSelector
+- **Naam** (`Beschrijving`) is de enige gebruikersidentificatie; Code wordt automatisch gegenereerd uit de naam bij opslaan (slugify)
+- Duplicate check op Code verwijderd; `canConfirm` gebaseerd op `Beschrijving.trim()`
+- Preview strip en kaarttitel tonen `Beschrijving || Code`
+
+### Bugfixes
+- **SponsorEditModal callbacks**: signature mismatch opgelost — `onTagsChange(next)`, `onCategoryChange(ev, cat)`, `onSponsorGroupsChange(current)` zonder redundante `sponsorName` prefix (LogoLibrary bindt die al via wrappers)
+- **Custom formats niet zichtbaar in "Alle"**: `[...staticFormats, ...customFormats]` ipv enkel statische lijst
+- **Events gegroepeerd op koepel** in SettingsModal (Events & Koepels tab): sectiekoppen per koepel, alfabetisch gesorteerd binnen elke groep; events zonder koepel onderaan
+
+---
+
 ## Recente wijzigingen (sessie april 2026)
 
 ### FormatPickerModal — Nieuw formaat aanmaken (popup)
@@ -273,7 +302,7 @@ Alle tags/events/categorieën intact
 | **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. |
 | **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat — validatie toevoegen bij aanmaken/hernoemen. |
 | **CSV-export escaping** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
-| **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). Preview strip neemt ~25% modalhoogte in. "PRESET DETAILS" + "IDENTIFICATIE" is dubbel label. |
+| **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). Preview strip neemt ~25% modalhoogte in. |
 
 ---
 

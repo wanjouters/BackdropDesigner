@@ -1,40 +1,40 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import formats from '../data/backdropFormats.json'
 
-const STATIC_CATEGORIES = [...new Set(formats.map(f => f.Categorie))].sort()
-
-export default function GridTypeSelector({ selected, onSelect, onCustom, customFormats = [], onDeleteCustomFormat }) {
+export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit, staticFormats = [], customFormats = [], onDeleteCustomFormat }) {
+  const STATIC_CATEGORIES = useMemo(() => [...new Set(staticFormats.map(f => f.Categorie))].sort(), [staticFormats])
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [query, setQuery] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
 
   const allCategories = useMemo(() => {
-    const cats = [{ id: 'ALL', label: 'Alle categorieën' }, ...STATIC_CATEGORIES.map(c => ({ id: c, label: c }))]
+    const cats = [{ id: 'ALL', label: 'Alle' }]
+    if (STATIC_CATEGORIES.length > 0) cats.push(...STATIC_CATEGORIES.map(c => ({ id: c, label: c })))
     if (customFormats.length > 0) cats.push({ id: 'OPGESLAGEN', label: `Opgeslagen (${customFormats.length})` })
     return cats
-  }, [customFormats.length])
+  }, [STATIC_CATEGORIES, customFormats.length])
 
-  const activeCategoryLabel = allCategories.find(c => c.id === activeCategory)?.label || 'Alle categorieën'
+  const activeCategoryLabel = allCategories.find(c => c.id === activeCategory)?.label || 'Alle'
 
   const visibleFormats = useMemo(() => {
+    const customCodes = new Set(customFormats.map(f => f.Code))
+    const dedupedStatic = staticFormats.filter(f => !customCodes.has(f.Code))
     const base = activeCategory === 'OPGESLAGEN'
       ? customFormats
       : activeCategory === 'ALL'
-        ? formats
-        : formats.filter(f => f.Categorie === activeCategory)
+        ? [...dedupedStatic, ...customFormats]
+        : dedupedStatic.filter(f => f.Categorie === activeCategory)
     if (!query.trim()) return base
     const q = query.trim().toLowerCase()
     return base.filter(f =>
-      f.Code.toLowerCase().includes(q) ||
+      (f.Code || '').toLowerCase().includes(q) ||
       (f.Beschrijving || '').toLowerCase().includes(q)
     )
-  }, [activeCategory, customFormats, query])
+  }, [activeCategory, staticFormats, customFormats, query])
 
   const isCustomCategory = activeCategory === 'OPGESLAGEN'
   const hasFilter = activeCategory !== 'ALL'
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!filterOpen) return
     function onDown(e) {
@@ -45,10 +45,7 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, customF
   }, [filterOpen])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
-        Backdrop formaat
-      </h2>
+    <div className="flex flex-col h-full">
 
       {/* Search */}
       <div className="relative mb-2">
@@ -99,36 +96,41 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, customF
         )}
       </div>
 
-      {/* Format list */}
-      <div className="space-y-0.5 max-h-64 overflow-y-auto pr-1">
+      {/* Format list — fills remaining space */}
+      <div className="flex-1 overflow-y-auto space-y-0.5 min-h-0">
         {visibleFormats.length === 0 && (
           <p className="text-xs text-gray-400 italic py-2 text-center">Geen formaten.</p>
         )}
         {visibleFormats.map(f => {
           const isActive = selected?.Code === f.Code
           return (
-            <div key={f.Code} className="flex items-center group">
+            <div key={f.id || f.Code} className="flex items-center group">
               <button
                 onClick={() => onSelect(f)}
-                title={f.Code}
+                title={f.Beschrijving || f.Code}
                 className={`flex-1 text-left px-3 py-1.5 rounded-lg transition-colors overflow-hidden ${
                   isActive ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'
                 }`}
               >
                 <div className="flex items-center justify-between gap-1 min-w-0">
-                  <span className={`font-mono font-medium text-xs truncate min-w-0 ${isActive ? 'text-white' : 'text-gray-700'}`}>{f.Code}</span>
+                  <span className={`font-medium text-xs truncate min-w-0 ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                    {f.Beschrijving || f.Code}
+                  </span>
                   <span className={`text-[10px] flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-300'}`}>
                     {f.Cols}×{f.Rows}
                   </span>
                 </div>
-                {f.Beschrijving && (
-                  <div className={`text-[10px] truncate ${isActive ? 'text-blue-100' : 'text-gray-400'}`}>
-                    {f.Beschrijving}
-                  </div>
-                )}
               </button>
+              {onEdit && (
+                <button onClick={e => { e.stopPropagation(); onEdit(f) }} title="Preset aanpassen"
+                  className="ml-1 flex-shrink-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-blue-500 rounded">
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 1l3 3-7 7H1V8l7-7z"/>
+                  </svg>
+                </button>
+              )}
               {isCustomCategory && onDeleteCustomFormat && (
-                <button onClick={() => onDeleteCustomFormat(f)} title="Verwijderen"
+                <button onClick={e => { e.stopPropagation(); onDeleteCustomFormat(f) }} title="Verwijderen"
                   className="ml-1 flex-shrink-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-red-500 rounded">
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/>
@@ -140,7 +142,8 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, customF
         })}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100">
+      {/* Footer */}
+      <div className="pt-3 mt-3 border-t border-gray-100 flex-shrink-0">
         <button onClick={onCustom}
           className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
           + Nieuw formaat aanmaken

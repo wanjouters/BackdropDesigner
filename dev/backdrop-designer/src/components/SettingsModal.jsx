@@ -547,50 +547,87 @@ function EventsKoepelsTab({ events, onAddEvent, onDeleteEvent, onRenameEvent, ev
               <span></span>
             </div>
           )}
-          <div className="space-y-1 mb-2">
-            {events.map(ev => (
-              <div key={ev} className="grid grid-cols-[1fr_140px_auto_auto] gap-2 items-center">
-                {renamingEvent === ev ? (
-                  <div className="col-span-2 flex items-center gap-1">
-                    <input
-                      ref={renamingEventRef}
-                      autoFocus
-                      defaultValue={ev}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }
-                        if (e.key === 'Escape') setRenamingEvent(null)
-                      }}
-                      className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-                    />
-                    <button onMouseDown={e => { e.preventDefault(); onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
-                    <button onMouseDown={() => setRenamingEvent(null)} className="text-[10px] text-gray-400">✕</button>
+          {(() => {
+            // Group events by koepel, sort alphabetically within each group
+            const grouped = {}
+            const ungrouped = []
+            events.forEach(ev => {
+              const koepel = getEventKoepel(ev)
+              if (koepel) {
+                if (!grouped[koepel]) grouped[koepel] = []
+                grouped[koepel].push(ev)
+              } else {
+                ungrouped.push(ev)
+              }
+            })
+            Object.keys(grouped).forEach(k => grouped[k].sort())
+            ungrouped.sort()
+            const sortedGroups = Object.keys(grouped).sort()
+
+            function renderRow(ev) {
+              return (
+                <div key={ev} className="grid grid-cols-[1fr_140px_auto_auto] gap-2 items-center">
+                  {renamingEvent === ev ? (
+                    <div className="col-span-2 flex items-center gap-1">
+                      <input
+                        ref={renamingEventRef}
+                        autoFocus
+                        defaultValue={ev}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') { onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }
+                          if (e.key === 'Escape') setRenamingEvent(null)
+                        }}
+                        className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                      />
+                      <button onMouseDown={e => { e.preventDefault(); onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+                      <button onMouseDown={() => setRenamingEvent(null)} className="text-[10px] text-gray-400">✕</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800">{ev}</span>
+                      <select
+                        value={getEventKoepel(ev)}
+                        onChange={e => onSetEventKoepel(ev, e.target.value)}
+                        className="text-xs px-1.5 py-0.5 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white text-gray-700"
+                      >
+                        <option value="">— geen koepel —</option>
+                        {Object.keys(eventGroups).map(grp => <option key={grp} value={grp}>{grp}</option>)}
+                      </select>
+                    </>
+                  )}
+                  {renamingEvent !== ev && (
+                    <>
+                      <button onClick={() => setRenamingEvent(ev)} title="Hernoemen" className="text-orange-400 hover:text-orange-600 transition-colors">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
+                      </button>
+                      <button onClick={() => onDeleteEvent(ev)} title="Verwijderen" className="text-orange-300 hover:text-red-500 transition-colors">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <div className="space-y-3 mb-2">
+                {sortedGroups.map(grp => (
+                  <div key={grp}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-teal-600 mb-1 px-1 border-b border-orange-100 pb-0.5">{grp}</p>
+                    <div className="space-y-1">{grouped[grp].map(ev => renderRow(ev))}</div>
                   </div>
-                ) : (
-                  <>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800">{ev}</span>
-                    <select
-                      value={getEventKoepel(ev)}
-                      onChange={e => onSetEventKoepel(ev, e.target.value)}
-                      className="text-xs px-1.5 py-0.5 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white text-gray-700"
-                    >
-                      <option value="">— geen koepel —</option>
-                      {Object.keys(eventGroups).map(grp => <option key={grp} value={grp}>{grp}</option>)}
-                    </select>
-                  </>
-                )}
-                {renamingEvent !== ev && (
-                  <>
-                    <button onClick={() => setRenamingEvent(ev)} title="Hernoemen" className="text-orange-400 hover:text-orange-600 transition-colors">
-                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
-                    </button>
-                    <button onClick={() => onDeleteEvent(ev)} title="Verwijderen" className="text-orange-300 hover:text-red-500 transition-colors">
-                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
-                    </button>
-                  </>
+                ))}
+                {ungrouped.length > 0 && (
+                  <div>
+                    {sortedGroups.length > 0 && (
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-orange-300 mb-1 px-1 border-b border-orange-100 pb-0.5">Geen koepel</p>
+                    )}
+                    <div className="space-y-1">{ungrouped.map(ev => renderRow(ev))}</div>
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
+            )
+          })()}
           <div className="flex gap-1">
             <input
               type="text"

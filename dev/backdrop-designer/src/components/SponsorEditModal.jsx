@@ -40,12 +40,12 @@ export default function SponsorEditModal({
   function toggleEvent(ev, checked) {
     const current = tags[sponsorName] || []
     const next = checked ? [...new Set([...current, ev])] : current.filter(e => e !== ev)
-    onTagsChange(sponsorName, next)
-    if (!checked) onCategoryChange(sponsorName, ev, '')
+    onTagsChange(next)
+    if (!checked) onCategoryChange(ev, '')
   }
 
   function setCategory(ev, cat) {
-    onCategoryChange(sponsorName, ev, cat)
+    onCategoryChange(ev, cat)
   }
 
   return (
@@ -124,7 +124,7 @@ export default function SponsorEditModal({
                             const current = { ...(sponsorGroups[sponsorName] || {}) }
                             if (e.target.checked) current[groupName] = ''
                             else delete current[groupName]
-                            onSponsorGroupsChange(sponsorName, current)
+                            onSponsorGroupsChange(current)
                           }}
                           className="w-4 h-4 accent-teal-600"
                         />
@@ -136,7 +136,7 @@ export default function SponsorEditModal({
                         value={cat}
                         onChange={e => {
                           const current = { ...(sponsorGroups[sponsorName] || {}), [groupName]: e.target.value }
-                          onSponsorGroupsChange(sponsorName, current)
+                          onSponsorGroupsChange(current)
                         }}
                         disabled={!checked}
                         className={`flex-1 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-400 transition-colors ${

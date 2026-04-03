@@ -172,6 +172,14 @@ export function saveCustomFormats(list) {
   localStorage.setItem(CUSTOM_FORMATS_KEY, JSON.stringify(list))
 }
 
+const STATIC_IMPORTED_KEY = 'backdropDesigner_staticImported'
+export function loadStaticImported() {
+  return localStorage.getItem(STATIC_IMPORTED_KEY) === 'true'
+}
+export function saveStaticImported(val) {
+  localStorage.setItem(STATIC_IMPORTED_KEY, val ? 'true' : 'false')
+}
+
 // --- Draft (auto-save werkstand) ---
 const DRAFT_KEY = 'backdropDesigner_draft'
 
