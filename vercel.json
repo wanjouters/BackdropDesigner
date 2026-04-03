@@ -1,7 +1,5 @@
 {
-  "root": "dev/backdrop-designer",
-  "buildCommand": "npm run build",
+  "buildCommand": "cd dev/backdrop-designer && npm install && npm run build",
   "outputDirectory": "dev/backdrop-designer/dist",
-  "installCommand": "npm install",
-  "framework": "vite"
+  "framework": null
 }
