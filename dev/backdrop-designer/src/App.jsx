@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import './index.css'
 import allStaticFormats from './data/backdropFormats.json'
 import GridTypeSelector from './components/GridTypeSelector'
@@ -42,373 +42,258 @@ function resizeSlots(oldSlots, oldCols, newCols, newRows) {
   return next
 }
 
-// Build tree from flat path list: [{ path, name, children }]
-function buildFolderTree(folders) {
-  const nodes = {}
-  folders.forEach(path => { nodes[path] = { path, name: path.split('/').pop(), children: [] } })
-  const roots = []
-  folders.forEach(path => {
-    const parts = path.split('/')
-    if (parts.length === 1) { roots.push(nodes[path]); return }
-    const parentPath = parts.slice(0, -1).join('/')
-    if (nodes[parentPath]) nodes[parentPath].children.push(nodes[path])
-    else roots.push(nodes[path]) // orphan — show as root
-  })
-  return roots
-}
 
-function DesignRow({ d, renamingDesign, folders, onLoad, onDelete, onRename, onStartRename, onMoveToFolder, indent = 0 }) {
-  const [folderMenuOpen, setFolderMenuOpen] = useState(false)
+function DesignRow({ d, renamingDesign, isLoaded, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
   const inputRef = { current: null }
-
   return (
-    <div className="hover:bg-gray-50 transition-colors group relative" style={{ paddingLeft: 12 + indent * 12 }}>
-      <div className="px-3 py-2">
-        {renamingDesign === d.id ? (
-          <div className="flex items-center gap-1">
-            <input
-              ref={el => { inputRef.current = el }}
-              autoFocus
-              defaultValue={d.name}
-              onKeyDown={e => {
-                if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
-                if (e.key === 'Escape') onStartRename(null)
-              }}
-              className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-            />
-            <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
-            <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
-              <p className="text-xs font-semibold text-gray-800 truncate">{d.name}</p>
-              <p className="text-[10px] text-gray-400">{d.formatCode} · {new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
+    <div className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ml-2 ${isLoaded ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+      {renamingDesign === d.id ? (
+        <div className="flex items-center gap-1 flex-1">
+          <input
+            ref={el => { inputRef.current = el }}
+            autoFocus
+            defaultValue={d.name}
+            onKeyDown={e => {
+              if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
+              if (e.key === 'Escape') onStartRename(null)
+            }}
+            className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+          />
+          <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+          <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
+        </div>
+      ) : (
+        <>
+          <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
+            <p className={`text-xs font-medium truncate ${isLoaded ? 'text-blue-700' : 'text-gray-800'}`}>{d.name}</p>
+            <p className="text-[10px] text-gray-400">{d.formatCode}{d.formatCode ? ' · ' : ''}{new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
+          </button>
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button onClick={e => { e.stopPropagation(); onDuplicate(d) }} title="Dupliceren"
+              className="p-1 text-gray-300 hover:text-blue-500 rounded transition-colors">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1"/><path d="M1 8V2a1 1 0 011-1h6"/>
+              </svg>
             </button>
-            {folders.length > 0 && (
-              <div className="relative flex-shrink-0">
-                <button onClick={() => setFolderMenuOpen(v => !v)} title="Verplaats naar map"
-                  className="text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 3.5h4l1 1.5h5v5.5H1z"/>
-                  </svg>
-                </button>
-                {folderMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 min-w-[150px] max-h-48 overflow-y-auto">
-                    {d.folder && (
-                      <button onClick={() => { onMoveToFolder(d.id, null); setFolderMenuOpen(false) }}
-                        className="w-full text-left text-xs px-3 py-1.5 text-gray-400 hover:bg-gray-50 italic">Geen map</button>
-                    )}
-                    {folders.filter(f => f !== d.folder).map(f => {
-                      const depth = f.split('/').length - 1
-                      const label = f.split('/').pop()
-                      return (
-                        <button key={f} onClick={() => { onMoveToFolder(d.id, f); setFolderMenuOpen(false) }}
-                          className="w-full text-left text-xs py-1.5 text-gray-700 hover:bg-blue-50 hover:text-blue-700 truncate flex items-center gap-1"
-                          style={{ paddingLeft: 12 + depth * 10, paddingRight: 12 }}
-                        >
-                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-gray-400">
-                            <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
-                          </svg>
-                          {label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-            <button onClick={() => onStartRename(d.id)} title="Hernoemen"
-              className="text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button onClick={e => { e.stopPropagation(); onStartRename(d.id) }} title="Hernoemen"
+              className="p-1 text-gray-300 hover:text-gray-500 rounded transition-colors">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
             </button>
-            <button onClick={() => onDelete(d.id)} title="Verwijderen"
-              className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button onClick={e => { e.stopPropagation(); onDelete(d.id) }} title="Verwijderen"
+              className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
             </button>
           </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function FolderNode({ node, depth, designs, folders, renamingDesign, collapsedFolders, renamingFolder, addingSubfolderFor,
-  onLoad, onDelete, onRename, onStartRename, onMoveToFolder,
-  onToggleFolder, onStartRenameFolder, onConfirmRenameFolder, onDeleteFolder,
-  onStartAddSubfolder, onConfirmAddSubfolder, onCancelAddSubfolder, addSubfolderVal, setAddSubfolderVal,
-}) {
-  const folderRenameRef = { current: null }
-  const isCollapsed = collapsedFolders[node.path]
-  const isRenaming = renamingFolder === node.path
-  const isAddingSub = addingSubfolderFor === node.path
-
-  // Designs directly in this folder (not in subfolders)
-  const inFolder = designs.filter(d => d.folder === node.path)
-  // Count: designs in this folder + all descendant folders
-  const allPaths = new Set([node.path, ...folders.filter(f => f.startsWith(node.path + '/'))])
-  const totalCount = designs.filter(d => allPaths.has(d.folder)).length
-
-  const indent = depth * 12
-  const bgClass = depth === 0 ? 'bg-gray-50' : 'bg-gray-50/60'
-
-  return (
-    <div className="border-b border-gray-50 last:border-0">
-      {/* Folder header */}
-      <div className={`flex items-center gap-1 py-1.5 ${bgClass} group/folder`} style={{ paddingLeft: 12 + indent, paddingRight: 8 }}>
-        <button onClick={() => onToggleFolder(node.path)} className="flex items-center gap-1 flex-1 min-w-0">
-          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-            style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
-            <path d="M2 3.5l3 3 3-3"/>
-          </svg>
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-            className={depth === 0 ? 'text-blue-400' : 'text-blue-300'} style={{ flexShrink: 0 }}>
-            <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
-          </svg>
-          {isRenaming ? (
-            <input ref={el => { folderRenameRef.current = el }} autoFocus defaultValue={node.name}
-              onClick={e => e.stopPropagation()}
-              onKeyDown={e => {
-                if (e.key === 'Enter') { onConfirmRenameFolder(node.path, folderRenameRef.current.value); }
-                if (e.key === 'Escape') onStartRenameFolder(null)
-              }}
-              className="flex-1 text-xs px-1 py-0 border-b border-blue-400 bg-transparent focus:outline-none min-w-0"
-            />
-          ) : (
-            <span className="text-xs font-semibold text-gray-600 truncate">{node.name}</span>
-          )}
-          <span className="text-[10px] text-gray-400 flex-shrink-0 ml-0.5">({totalCount})</span>
-        </button>
-        {!isRenaming && (
-          <>
-            <button onClick={() => onStartAddSubfolder(node.path)} title="Submap toevoegen"
-              className="text-gray-300 hover:text-blue-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M6 1v10M1 6h10"/>
-              </svg>
-            </button>
-            <button onClick={() => onStartRenameFolder(node.path)} title="Hernoemen"
-              className="text-gray-300 hover:text-gray-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
-            </button>
-            <button onClick={() => onDeleteFolder(node.path)} title="Map verwijderen"
-              className="text-gray-300 hover:text-red-500 opacity-0 group-hover/folder:opacity-100 transition-opacity flex-shrink-0">
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Contents */}
-      {!isCollapsed && (
-        <>
-          {/* Add subfolder input */}
-          {isAddingSub && (
-            <div className="flex items-center gap-1 py-1.5 border-b border-gray-50" style={{ paddingLeft: 24 + indent, paddingRight: 8 }}>
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-300 flex-shrink-0">
-                <path d="M1 3h3.5l1 1.5H11v5.5H1z"/>
-              </svg>
-              <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === '/') { e.preventDefault(); return }
-                  if (e.key === 'Enter') onConfirmAddSubfolder(node.path)
-                  if (e.key === 'Escape') onCancelAddSubfolder()
-                }}
-                placeholder="Submapnaam..."
-                className="flex-1 text-xs px-1 py-0.5 border-b border-blue-400 bg-transparent focus:outline-none min-w-0"
-              />
-              <button onClick={() => onConfirmAddSubfolder(node.path)} className="text-[10px] text-blue-600 font-semibold">OK</button>
-              <button onClick={onCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
-            </div>
-          )}
-
-          {/* Subfolders */}
-          {node.children.map(child => (
-            <FolderNode key={child.path} node={child} depth={depth + 1}
-              designs={designs} folders={folders} renamingDesign={renamingDesign}
-              collapsedFolders={collapsedFolders} renamingFolder={renamingFolder}
-              addingSubfolderFor={addingSubfolderFor}
-              onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-              onStartRename={onStartRename} onMoveToFolder={onMoveToFolder}
-              onToggleFolder={onToggleFolder} onStartRenameFolder={onStartRenameFolder}
-              onConfirmRenameFolder={onConfirmRenameFolder} onDeleteFolder={onDeleteFolder}
-              onStartAddSubfolder={onStartAddSubfolder} onConfirmAddSubfolder={onConfirmAddSubfolder}
-              onCancelAddSubfolder={onCancelAddSubfolder}
-              addSubfolderVal={addSubfolderVal} setAddSubfolderVal={setAddSubfolderVal}
-            />
-          ))}
-
-          {/* Designs in this folder */}
-          {inFolder.length === 0 && node.children.length === 0 && !isAddingSub && (
-            <p className="text-[10px] text-gray-300 italic py-1.5" style={{ paddingLeft: 28 + indent }}>Leeg</p>
-          )}
-          {inFolder.map(d => (
-            <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
-              onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-              onStartRename={onStartRename} onMoveToFolder={onMoveToFolder}
-              indent={depth + 1}
-            />
-          ))}
         </>
       )}
     </div>
   )
 }
 
-function SavedDesignsPanel({ designs, folders, renamingDesign, onLoad, onDelete, onRename, onStartRename, onMoveToFolder, onAddFolder, onRenameFolder, onDeleteFolder }) {
-  const [collapsed, setCollapsed] = useState(designs.length === 0 && folders.length === 0)
-  const [collapsedFolders, setCollapsedFolders] = useState({})
-  const [renamingFolder, setRenamingFolder] = useState(null)
-  const [addingSubfolderFor, setAddingSubfolderFor] = useState(null) // folder path | 'root'
-  const [addSubfolderVal, setAddSubfolderVal] = useState('')
-  const [viewMode, setViewMode] = useState('folders') // 'list' | 'folders'
+function SaveModal({ events, defaults, onConfirm, onCancel }) {
+  var currentYear = new Date().getFullYear()
+  var [event, setEvent] = useState(defaults && defaults.event ? defaults.event : '')
+  var [edition, setEdition] = useState(defaults && defaults.edition ? defaults.edition : currentYear)
+  var [name, setName] = useState(defaults && defaults.name ? defaults.name : '')
 
-  const tree = buildFolderTree(folders)
-  const ungrouped = designs.filter(d => !d.folder)
-  const total = designs.length
-
-  function toggleFolder(path) {
-    setCollapsedFolders(prev => ({ ...prev, [path]: !prev[path] }))
+  function handleConfirm() {
+    if (!name.trim()) return
+    onConfirm({ event: event || null, edition: edition || null, name: name.trim() })
   }
-
-  function handleConfirmRenameFolder(path, newName) {
-    onRenameFolder(path, newName)
-    setRenamingFolder(null)
-  }
-
-  function handleStartAddSubfolder(parentPath) {
-    setAddingSubfolderFor(parentPath)
-    setAddSubfolderVal('')
-  }
-
-  function handleConfirmAddSubfolder(parentPath) {
-    if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), parentPath)
-    setAddingSubfolderFor(null)
-    setAddSubfolderVal('')
-  }
-
-  function handleCancelAddSubfolder() {
-    setAddingSubfolderFor(null)
-    setAddSubfolderVal('')
-  }
-
-  const sharedFolderNodeProps = {
-    designs, folders, renamingDesign, collapsedFolders, renamingFolder,
-    addingSubfolderFor,
-    onLoad, onDelete, onRename, onStartRename, onMoveToFolder,
-    onToggleFolder: toggleFolder,
-    onStartRenameFolder: setRenamingFolder,
-    onConfirmRenameFolder: handleConfirmRenameFolder,
-    onDeleteFolder,
-    onStartAddSubfolder: handleStartAddSubfolder,
-    onConfirmAddSubfolder: handleConfirmAddSubfolder,
-    onCancelAddSubfolder: handleCancelAddSubfolder,
-    addSubfolderVal, setAddSubfolderVal,
-  }
-
-  const sortedByDate = [...designs].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 flex-shrink-0">
-      <button onClick={() => setCollapsed(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left">
-        <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 1h8l2 2v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-            <path d="M9 1v4H4V1"/>
-          </svg>
-          Opgeslagen
-          {total > 0 && <span className="text-xs text-gray-400 font-normal">({total})</span>}
-        </span>
-        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-          {/* View toggle */}
-          <button
-            title="Lijstweergave"
-            onClick={() => setViewMode('list')}
-            className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
-          >
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M2 3h10M2 7h10M2 11h10"/>
-            </svg>
-          </button>
-          <button
-            title="Mappenweergave"
-            onClick={() => setViewMode('folders')}
-            className={`p-1 rounded transition-colors ${viewMode === 'folders' ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
-          >
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 3h4l1.5 1.5H13v7.5H1z"/>
-            </svg>
-          </button>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-            style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', marginLeft: 4 }}
-            onClick={() => setCollapsed(v => !v)}
-          >
-            <path d="M2 3.5l3 3 3-3"/>
-          </svg>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <h2 className="text-sm font-semibold text-gray-800 mb-4">Ontwerp opslaan</h2>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Event</label>
+            <select value={event} onChange={e => setEvent(e.target.value)}
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+              <option value="">Geen event</option>
+              {events.map(ev => <option key={ev} value={ev}>{ev}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Editie (jaar)</label>
+            <input type="number" value={edition}
+              onChange={e => setEdition(parseInt(e.target.value, 10) || currentYear)}
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+              min={2000} max={2100}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Naam *</label>
+            <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); if (e.key === 'Escape') onCancel() }}
+              placeholder="Bijv. Startpodium — Variant A"
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
         </div>
-      </button>
-
-      {!collapsed && (
-        <div className="border-t border-gray-100">
-          {total === 0 && folders.length === 0 ? (
-            <p className="text-xs text-gray-400 px-4 py-3">Nog geen opgeslagen ontwerpen.</p>
-          ) : viewMode === 'list' ? (
-            /* ── Lijst view ── */
-            <div className="max-h-80 overflow-y-auto">
-              {sortedByDate.map(d => (
-                <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
-                  onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-                  onStartRename={onStartRename} onMoveToFolder={onMoveToFolder} indent={0} />
-              ))}
-            </div>
-          ) : (
-            /* ── Mappen view ── */
-            <>
-              <div className="max-h-80 overflow-y-auto">
-                {tree.map(node => (
-                  <FolderNode key={node.path} node={node} depth={0} {...sharedFolderNodeProps} />
-                ))}
-                {ungrouped.map(d => (
-                  <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} folders={folders}
-                    onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-                    onStartRename={onStartRename} onMoveToFolder={onMoveToFolder} indent={0} />
-                ))}
-              </div>
-              {/* Add root folder */}
-              <div className="border-t border-gray-100 px-3 py-2">
-                {addingSubfolderFor === 'root' ? (
-                  <div className="flex items-center gap-1">
-                    <input autoFocus type="text" value={addSubfolderVal} onChange={e => setAddSubfolderVal(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === '/') { e.preventDefault(); return }
-                        if (e.key === 'Enter') { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }
-                        if (e.key === 'Escape') handleCancelAddSubfolder()
-                      }}
-                      placeholder="Mapnaam..."
-                      className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-                    />
-                    <button onClick={() => { if (addSubfolderVal.trim()) onAddFolder(addSubfolderVal.trim(), null); handleCancelAddSubfolder() }}
-                      className="text-[10px] text-blue-600 font-semibold">OK</button>
-                    <button onClick={handleCancelAddSubfolder} className="text-[10px] text-gray-400">✕</button>
-                  </div>
-                ) : (
-                  <button onClick={() => { setAddingSubfolderFor('root'); setAddSubfolderVal('') }}
-                    className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-blue-600 transition-colors">
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M6 1v10M1 6h10"/>
-                    </svg>
-                    Nieuwe map
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+        <div className="flex gap-2 mt-5 justify-end">
+          <button onClick={onCancel}
+            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors">
+            Annuleren
+          </button>
+          <button onClick={handleConfirm} disabled={!name.trim()}
+            className="text-xs px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Opslaan
+          </button>
         </div>
-      )}
+      </div>
     </div>
   )
 }
+
+function SavedDesignsPanel({ designs, events, renamingDesign, loadedDesignId, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
+  var [query, setQuery] = useState('')
+  var [collapsedEvents, setCollapsedEvents] = useState({})
+  var [collapsedEditions, setCollapsedEditions] = useState({})
+
+  var filtered = useMemo(function() {
+    if (!query.trim()) return designs
+    var q = query.toLowerCase()
+    return designs.filter(function(d) {
+      return (d.name || '').toLowerCase().includes(q) ||
+        (d.event || '').toLowerCase().includes(q) ||
+        String(d.edition || '').includes(q)
+    })
+  }, [designs, query])
+
+  var grouped = useMemo(function() {
+    var eventMap = {}
+    var noEvent = []
+    filtered.forEach(function(d) {
+      if (!d.event) { noEvent.push(d); return }
+      if (!eventMap[d.event]) eventMap[d.event] = {}
+      var year = d.edition !== null && d.edition !== undefined ? String(d.edition) : '__none__'
+      if (!eventMap[d.event][year]) eventMap[d.event][year] = []
+      eventMap[d.event][year].push(d)
+    })
+    var eventOrder = {}
+    events.forEach(function(ev, i) { eventOrder[ev] = i })
+    var sortedEventKeys = Object.keys(eventMap).sort(function(a, b) {
+      var ai = eventOrder[a] !== undefined ? eventOrder[a] : 999
+      var bi = eventOrder[b] !== undefined ? eventOrder[b] : 999
+      if (ai !== bi) return ai - bi
+      return a.localeCompare(b)
+    })
+    var result = sortedEventKeys.map(function(ev) {
+      return {
+        event: ev,
+        editions: Object.keys(eventMap[ev]).sort(function(a, b) {
+          if (a === '__none__') return 1
+          if (b === '__none__') return -1
+          return parseInt(b, 10) - parseInt(a, 10)
+        }).map(function(year) {
+          return {
+            year: year === '__none__' ? null : year,
+            designs: eventMap[ev][year].slice().sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0) })
+          }
+        })
+      }
+    })
+    if (noEvent.length > 0) {
+      result.push({
+        event: null,
+        editions: [{ year: null, designs: noEvent.slice().sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0) }) }]
+      })
+    }
+    return result
+  }, [filtered, events])
+
+  function toggleEvent(evKey) {
+    setCollapsedEvents(function(prev) { var n = Object.assign({}, prev); n[evKey] = !n[evKey]; return n })
+  }
+  function toggleEdition(evKey, yearKey) {
+    var k = evKey + '__' + yearKey
+    setCollapsedEditions(function(prev) { var n = Object.assign({}, prev); n[k] = !n[k]; return n })
+  }
+  function isEventCollapsed(evKey) { return !!collapsedEvents[evKey] }
+  function isEditionCollapsed(evKey, yearKey) { return !!collapsedEditions[evKey + '__' + yearKey] }
+
+  if (designs.length === 0 && !query) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
+          <path d="M6 3h14l6 6v20a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+          <path d="M20 3v8h8M12 17h8M12 22h5"/>
+        </svg>
+        <p className="text-xs text-gray-400">Nog geen opgeslagen ontwerpen.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="relative mb-2 flex-shrink-0">
+        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Zoek ontwerp..."
+          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400"
+        />
+        {query && (
+          <button onClick={() => setQuery('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2 2l8 8M10 2L2 10"/></svg>
+          </button>
+        )}
+      </div>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {grouped.length === 0 && (
+          <p className="text-xs text-gray-400 text-center py-4 italic">Geen resultaten.</p>
+        )}
+        {grouped.map(function(group) {
+          var evKey = group.event || '__none__'
+          var totalCount = group.editions.reduce(function(n, e) { return n + e.designs.length }, 0)
+          return (
+            <div key={evKey} className="mb-1">
+              <button onClick={() => toggleEvent(evKey)}
+                className="w-full flex items-center gap-1.5 px-2 py-1.5 text-left hover:bg-gray-50 rounded-lg transition-colors">
+                <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                  style={{ transform: isEventCollapsed(evKey) ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
+                  <path d="M2 3.5l3 3 3-3"/>
+                </svg>
+                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide truncate flex-1">
+                  {group.event || 'Overig'}
+                </span>
+                <span className="text-[10px] text-gray-400 flex-shrink-0">({totalCount})</span>
+              </button>
+              {!isEventCollapsed(evKey) && group.editions.map(function(editionGroup) {
+                var yearKey = editionGroup.year !== null ? String(editionGroup.year) : '__none__'
+                var showEditionHeader = editionGroup.year !== null || group.editions.length > 1
+                return (
+                  <div key={yearKey} className="ml-3">
+                    {showEditionHeader && (
+                      <button onClick={() => toggleEdition(evKey, yearKey)}
+                        className="w-full flex items-center gap-1.5 px-2 py-1 text-left hover:bg-gray-50 rounded transition-colors">
+                        <svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                          style={{ transform: isEditionCollapsed(evKey, yearKey) ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
+                          <path d="M2 3.5l3 3 3-3"/>
+                        </svg>
+                        <span className="text-[11px] font-semibold text-gray-500">{editionGroup.year || 'Geen editie'}</span>
+                        <span className="text-[10px] text-gray-300 ml-auto">({editionGroup.designs.length})</span>
+                      </button>
+                    )}
+                    {!isEditionCollapsed(evKey, yearKey) && editionGroup.designs.map(function(d) {
+                      return (
+                        <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} isLoaded={loadedDesignId === d.id}
+                          onLoad={onLoad} onDelete={onDelete} onRename={onRename}
+                          onStartRename={onStartRename} onDuplicate={onDuplicate}
+                        />
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 
 // ─── Toast notification ────────────────────────────────────────────────────────
 function Toast({ message, type = 'success', onDone }) {
@@ -620,9 +505,8 @@ export default function App() {
   const [customLogos, setCustomLogos] = useState(() => loadCustomLogos())
   const [savedDesigns, setSavedDesigns] = useState(() => loadSavedDesigns())
   const [designFolders, setDesignFolders] = useState(() => loadDesignFolders())
-  const [saveNameInput, setSaveNameInput] = useState('')
-  const [saveFolderInput, setSaveFolderInput] = useState('')
-  const [showSaveInput, setShowSaveInput] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saveModalDefaults, setSaveModalDefaults] = useState(null)
   const [renamingDesign, setRenamingDesign] = useState(null)
   const [advanceDir, setAdvanceDirState] = useState(() => localStorage.getItem('backdropDesigner_advanceDir') || 'r')
 
@@ -643,8 +527,7 @@ export default function App() {
   const [toast, setToast] = useState(null)          // { message, type }
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
-  const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'frequency'
-  const [formatsView, setFormatsView] = useState('browse') // 'browse' | 'detail'
+  const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'adjust' | 'frequency'
   const hasMounted = useRef(false)
   const skipNextDirtyMark = useRef(false)
 
@@ -711,26 +594,41 @@ export default function App() {
     saveCustomLogos(next)
   }
 
-  function handleSaveDesign() {
-    const name = saveNameInput.trim() || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`
+  function handleSaveDesign({ event, edition, name }) {
     const design = {
       id: Date.now(),
-      name,
+      name: name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`,
+      event: event || null,
+      edition: edition || null,
       formatCode: editedFormat?.Code || '',
       format: { ...editedFormat },
       slots: [...slots],
       savedAt: Date.now(),
-      folder: saveFolderInput || null,
+      folder: null,
     }
     const next = [design, ...savedDesigns]
     setSavedDesigns(next)
     saveDesignsList(next)
-    setSaveNameInput('')
-    setSaveFolderInput('')
-    setShowSaveInput(false)
+    setShowSaveModal(false)
+    setSaveModalDefaults(null)
     clearDraft()
     setIsDirty(false)
     showToast('Ontwerp opgeslagen', 'success')
+  }
+
+  function handleDuplicateDesign(design) {
+    const copy = {
+      ...design,
+      id: Date.now(),
+      name: design.name + ' (kopie)',
+      savedAt: Date.now(),
+      slots: [...design.slots],
+      format: { ...design.format },
+    }
+    const next = [copy, ...savedDesigns]
+    setSavedDesigns(next)
+    saveDesignsList(next)
+    showToast('"' + copy.name + '" aangemaakt', 'success')
   }
 
   function handleUpdateDesign() {
@@ -746,67 +644,6 @@ export default function App() {
     setIsDirty(false)
     const design = next.find(d => d.id === loadedDesignId)
     showToast(`"${design?.name || 'Ontwerp'}" bijgewerkt`, 'success')
-  }
-
-  function handleMoveToFolder(id, folderName) {
-    const next = savedDesigns.map(d => d.id === id ? { ...d, folder: folderName || null } : d)
-    setSavedDesigns(next)
-    saveDesignsList(next)
-  }
-
-  function handleAddFolder(name, parentPath) {
-    const val = name.trim()
-    if (!val || val.includes('/')) return
-    const fullPath = parentPath ? `${parentPath}/${val}` : val
-    if (designFolders.includes(fullPath)) return
-    const next = [...designFolders, fullPath]
-    setDesignFolders(next)
-    saveDesignFolders(next)
-  }
-
-  function handleRenameFolder(oldPath, newName) {
-    const val = newName.trim()
-    if (!val || val.includes('/')) return
-    const parts = oldPath.split('/')
-    parts[parts.length - 1] = val
-    const newPath = parts.join('/')
-    if (newPath === oldPath || designFolders.includes(newPath)) return
-    const next = designFolders.map(f => {
-      if (f === oldPath) return newPath
-      if (f.startsWith(oldPath + '/')) return newPath + f.slice(oldPath.length)
-      return f
-    })
-    setDesignFolders(next)
-    saveDesignFolders(next)
-    const updatedDesigns = savedDesigns.map(d => {
-      if (!d.folder) return d
-      if (d.folder === oldPath) return { ...d, folder: newPath }
-      if (d.folder.startsWith(oldPath + '/')) return { ...d, folder: newPath + d.folder.slice(oldPath.length) }
-      return d
-    })
-    setSavedDesigns(updatedDesigns)
-    saveDesignsList(updatedDesigns)
-  }
-
-  function handleDeleteFolder(path) {
-    const folderName = path.split('/').pop()
-    const subCount = designFolders.filter(f => f.startsWith(path + '/')).length
-    const designCount = savedDesigns.filter(d => d.folder === path || (d.folder && d.folder.startsWith(path + '/'))).length
-    const parts = [
-      subCount > 0 && `${subCount} submap${subCount > 1 ? 'pen' : ''}`,
-      designCount > 0 && `${designCount} ontwerp${designCount > 1 ? 'en worden uit de map geplaatst' : ' wordt uit de map geplaatst'}`,
-    ].filter(Boolean).join(' en ')
-    const detail = parts ? ` ${parts}.` : ''
-    askConfirm(`Map "${folderName}" verwijderen?${detail}`, () => {
-      const toDelete = new Set(designFolders.filter(f => f === path || f.startsWith(path + '/')))
-      const next = designFolders.filter(f => !toDelete.has(f))
-      setDesignFolders(next)
-      saveDesignFolders(next)
-      const updatedDesigns = savedDesigns.map(d => toDelete.has(d.folder) ? { ...d, folder: null } : d)
-      setSavedDesigns(updatedDesigns)
-      saveDesignsList(updatedDesigns)
-      showToast(`Map "${folderName}" verwijderd`, 'info')
-    })
   }
 
   function handleLoadDesign(design) {
@@ -852,7 +689,6 @@ export default function App() {
       setSlots(makeEmptySlots(format.Cols, format.Rows))
       setSelectedSlots(new Set())
       clearDraft()
-      setFormatsView('detail')
     }
     const filled = slots.filter(s => s !== 'BLANK').length
     if (filled > 0) {
@@ -1222,57 +1058,21 @@ export default function App() {
                 )}
               </p>
             </div>
-            {showSaveInput ? (
-              <div className="flex items-center gap-1.5">
-                <input
-                  autoFocus
-                  type="text"
-                  value={saveNameInput}
-                  onChange={e => setSaveNameInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSaveDesign(); if (e.key === 'Escape') setShowSaveInput(false) }}
-                  placeholder={`${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`}
-                  className="text-xs px-2.5 py-1.5 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-52"
-                />
-                {designFolders.length > 0 && (
-                  <select
-                    value={saveFolderInput}
-                    onChange={e => setSaveFolderInput(e.target.value)}
-                    className="text-xs px-2 py-1.5 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                  >
-                    <option value="">Geen map</option>
-                    {designFolders.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                )}
-                <button onClick={handleSaveDesign} className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">Opslaan</button>
-                <button onClick={() => setShowSaveInput(false)} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                {loadedDesignId && isDirty && (
-                  <button
-                    onClick={handleUpdateDesign}
-                    title={`Bestaand ontwerp overschrijven`}
-                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-                      <path d="M8 1v4H4V1M4 7h4"/>
-                    </svg>
-                    Bijwerken
-                  </button>
-                )}
+            <div className="flex items-center gap-1.5">
+              {loadedDesignId && isDirty && (
                 <button
-                  onClick={() => setShowSaveInput(true)}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-blue-300 transition-colors"
+                  onClick={handleUpdateDesign}
+                  title="Bestaand ontwerp overschrijven"
+                  className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
                     <path d="M8 1v4H4V1M4 7h4"/>
                   </svg>
-                  {loadedDesignId ? 'Kopie opslaan' : 'Opslaan'}
+                  Bijwerken
                 </button>
-              </div>
-            )}
+              )}
+            </div>
             <button
               onClick={handleClearGrid}
               className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-red-300 transition-colors"
@@ -1313,6 +1113,17 @@ export default function App() {
               ),
             },
             {
+              id: 'adjust',
+              title: 'Formaat aanpassen',
+              disabled: !format,
+              icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                  <path d="M3 5h2M9 5h6M3 9h6M13 9h2M3 13h2M9 13h6"/>
+                  <circle cx="7" cy="5" r="2"/><circle cx="11" cy="9" r="2"/><circle cx="7" cy="13" r="2"/>
+                </svg>
+              ),
+            },
+            {
               id: 'frequency',
               title: 'Frequentie',
               icon: (
@@ -1321,20 +1132,18 @@ export default function App() {
                 </svg>
               ),
             },
-          ].map(({ id, title, icon }) => (
+          ].map(({ id, title, icon, disabled }) => (
             <button
               key={id}
               title={title}
-              onClick={() => {
-                setLeftPanel(p => {
-                  if (p !== id) setFormatsView('browse')
-                  return p === id ? null : id
-                })
-              }}
+              disabled={!!disabled}
+              onClick={() => setLeftPanel(p => p === id ? null : id)}
               className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
-                leftPanel === id
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                disabled
+                  ? 'text-gray-600 cursor-not-allowed'
+                  : leftPanel === id
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
               }`}
             >
               {icon}
@@ -1363,45 +1172,45 @@ export default function App() {
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
                 {leftPanel === 'designs' && 'Opgeslagen'}
-                {leftPanel === 'formats' && (formatsView === 'detail' ? (selectedFormat?.Categorie || 'Formaat') : 'Formaten')}
+                {leftPanel === 'formats' && 'Formaten'}
+                {leftPanel === 'adjust' && 'Aanpassen'}
                 {leftPanel === 'frequency' && 'Frequentie'}
               </h2>
-              <div className="flex items-center gap-2">
-                {leftPanel === 'formats' && formatsView === 'detail' && (
-                  <button
-                    onClick={() => setFormatsView('browse')}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M8 2L4 6l4 4"/>
-                    </svg>
-                    Terug
-                  </button>
-                )}
-                <button onClick={() => { setLeftPanel(null); setFormatsView('browse') }} className="text-gray-300 hover:text-gray-500 transition-colors">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M3 3l8 8M11 3L3 11"/>
-                  </svg>
-                </button>
-              </div>
+              <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M3 3l8 8M11 3L3 11"/>
+                </svg>
+              </button>
             </div>
-            <div className="flex-1 overflow-hidden p-3 flex flex-col gap-3">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">
               {leftPanel === 'designs' && (
-                <SavedDesignsPanel
-                  designs={savedDesigns}
-                  folders={designFolders}
-                  renamingDesign={renamingDesign}
-                  onLoad={handleLoadDesign}
-                  onDelete={handleDeleteDesign}
-                  onRename={handleRenameDesign}
-                  onStartRename={setRenamingDesign}
-                  onMoveToFolder={handleMoveToFolder}
-                  onAddFolder={handleAddFolder}
-                  onRenameFolder={handleRenameFolder}
-                  onDeleteFolder={handleDeleteFolder}
-                />
+                <div className="flex flex-col h-full gap-2">
+                  {format && (
+                    <button
+                      onClick={() => { setSaveModalDefaults(null); setShowSaveModal(true) }}
+                      className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-2 font-semibold transition-colors flex-shrink-0"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+                        <path d="M8 1v4H4V1M4 7h4"/>
+                      </svg>
+                      Huidig ontwerp opslaan
+                    </button>
+                  )}
+                  <SavedDesignsPanel
+                    designs={savedDesigns}
+                    events={events}
+                    renamingDesign={renamingDesign}
+                    loadedDesignId={loadedDesignId}
+                    onLoad={handleLoadDesign}
+                    onDelete={handleDeleteDesign}
+                    onRename={handleRenameDesign}
+                    onStartRename={setRenamingDesign}
+                    onDuplicate={handleDuplicateDesign}
+                  />
+                </div>
               )}
-              {leftPanel === 'formats' && formatsView === 'browse' && (
+              {leftPanel === 'formats' && (
                 <GridTypeSelector
                   selected={selectedFormat}
                   onSelect={handleSelectFormat}
@@ -1412,29 +1221,25 @@ export default function App() {
                   onEdit={f => setEditingFormat(f)}
                 />
               )}
-              {leftPanel === 'formats' && formatsView === 'detail' && (
+              {leftPanel === 'adjust' && format && (
                 <>
-                  {format && (
-                    <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} layout="vertical" />
-                  )}
-                  {format && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">Info</h2>
-                      <dl className="space-y-1">
-                        {[
-                          ['Categorie', format.Categorie],
-                          ['Event', format.EventStyle],
-                          format.Variant && ['Variant', format.Variant],
-                          format.CanvasWidth_mm && ['Canvas', `${format.CanvasWidth_mm} × ${format.CanvasHeight_mm} mm`],
-                        ].filter(Boolean).map(([label, value]) => value && (
-                          <div key={label} className="flex justify-between text-xs">
-                            <dt className="text-gray-400">{label}</dt>
-                            <dd className="text-gray-700 font-medium">{value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                  )}
+                  <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} layout="vertical" />
+                  <div className="bg-white rounded-xl border border-gray-200 p-4 flex-shrink-0">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Info</h2>
+                    <dl className="space-y-1">
+                      {[
+                        ['Categorie', format.Categorie],
+                        ['Event', format.EventStyle],
+                        format.Variant && ['Variant', format.Variant],
+                        format.CanvasWidth_mm && ['Canvas', `${format.CanvasWidth_mm} × ${format.CanvasHeight_mm} mm`],
+                      ].filter(Boolean).map(([label, value]) => value && (
+                        <div key={label} className="flex justify-between text-xs">
+                          <dt className="text-gray-400">{label}</dt>
+                          <dd className="text-gray-700 font-medium">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
                 </>
               )}
               {leftPanel === 'frequency' && (
@@ -1552,6 +1357,15 @@ export default function App() {
 
         </div> {/* end center+right wrapper */}
       </div>
+
+      {showSaveModal && (
+        <SaveModal
+          events={events}
+          defaults={saveModalDefaults}
+          onConfirm={handleSaveDesign}
+          onCancel={() => { setShowSaveModal(false); setSaveModalDefaults(null) }}
+        />
+      )}
 
       {(showCustomModal || editingFormat) && (
         <FormatPickerModal

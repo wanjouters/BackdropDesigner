@@ -73,8 +73,10 @@ Alle state wordt opgeslagen in `localStorage` via `src/utils/sponsorTags.js`.
 | `backdropDesigner_eventGroups` | `{ [koepelName]: string[] }` — welke events onder een koepel vallen |
 | `backdropDesigner_sponsorGroups` | `{ [sponsorName]: { [koepelName]: categoryName } }` — koepelpartner-assignments |
 | `backdropDesigner_customLogos` | `{ [sponsorName]: dataUrl }` — custom geüploade logo's |
-| `backdropDesigner_savedDesigns` | `[{ id, name, formatCode, format, slots, savedAt }]` |
+| `backdropDesigner_savedDesigns` | `[{ id, name, event, edition, formatCode, format, slots, savedAt, folder }]` — `event` en `edition` zijn nieuw; oude ontwerpen zonder deze velden verschijnen onder "Overig" |
 | `backdropDesigner_advanceDir` | `'r' \| 'l' \| 'd' \| 'u' \| 'dr' \| 'dl' \| 'ur' \| 'ul' \| 'none'` |
+| `backdropDesigner_staticImported` | `'true'` zodra alle statische presets zijn omgezet naar custom |
+| `backdropDesigner_customFormats` | `[{ ...format, _custom: true, id }]` — bewerkbare formaatpresets |
 
 ---
 
@@ -120,7 +122,11 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 - Beheert alle hoofd-state: `slots`, `selectedFormat`, `editedFormat`, `selectedSlots`, `view`, `savedDesigns`, `advanceDir`
 - `handleAssignFromLibrary`: wijst sponsor toe + berekent volgend slot op basis van `advanceDir` en grid-dimensies
 - `handleFormatChange`: herberekent slots bij wijziging kolommen/rijen (behoudt bestaande waarden)
-- `SavedDesignsPanel`: ingebouwde component voor opslaan/laden/hernoemen/verwijderen van ontwerpen
+- `handleDuplicateDesign`: kopieert een ontwerp met "(kopie)" suffix
+- `handleSaveDesign({ event, edition, name })`: slaat huidig ontwerp op via SaveModal
+- **Icon bar**: 4 panels — `'designs'`, `'formats'`, `'adjust'`, `'frequency'`; `'adjust'` uitgeschakeld wanneer geen formaat geladen
+- **`SaveModal`**: ingebouwde component — dialoog met Event (dropdown vanuit `events`), Editie (jaar, default huidig jaar), Naam
+- **`SavedDesignsPanel`**: ingebouwde component — gegroepeerd op event → editie, zoekveld, dupliceer/hernoem/verwijder per rij; "Huidig ontwerp opslaan" knop bovenaan (enkel als formaat geladen)
 
 ### `LogoLibrary.jsx`
 - Rechterpaneel: zoekbalk (met × wis-knop), event-filter dropdown, richtingskiezer
@@ -144,11 +150,17 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 - Ontvangt `groupCategories` (= `categoryList`)
 
 ### `GridTypeSelector.jsx`
-- Lijst van alle gridformaten uit `formats.json`
-- Filters: categorie (dropdown) + event (dropdown)
+- Enkelvoudige lijst van alle gridformaten (statisch + custom)
+- Zoekveld + categoriefilter (dropdown met ≡-icoon)
+- Geselecteerde rij toont subtitel: `Categorie · EventStyle`
+- Potlood-icoon op hover opent FormatPickerModal in editMode
+- `+ Nieuw formaat aanmaken` footer-knop
 
 ### `GridToolbar.jsx`
-- Inline-bewerkbare velden: kolommen, rijen, celbreedte, aspect ratio, celhoogte, gutter horiz/vert
+- Twee layouts: `horizontal` (boven het grid) en `vertical` (in het "Aanpassen" paneel)
+- Vertical: VSection-blokken (inklapbaar) voor Canvas, Grid, Gutter, Marges, Header, Divider, Stijl
+- **Grid en Gutter zijn samengevoegd** in één VSection — gescheiden door een subtiele lijn
+- `withFittedAndCentered`: herberekent celgroottes en centrering na elke wijziging
 
 ---
 
@@ -199,7 +211,45 @@ Alle tags/events/categorieën intact
 
 ---
 
-## Recente wijzigingen (sessie april 2026 — vervolg)
+## Recente wijzigingen (sessie april 2026 — UX herstructurering)
+
+### Opgeslagen ontwerpen — Event + Editie model
+- **Nieuw datamodel**: elk ontwerp heeft nu `event` (string, uit events-lijst) en `edition` (jaar als number); bestaande ontwerpen zonder deze velden verschijnen onder "Overig"
+- **`SaveModal`**: apart opslaan-dialoog (niet meer inline in de header) met Event dropdown, Editie-jaar, Naam; Event dropdown gevuld vanuit dezelfde `events`-lijst als sponsortags
+- **`SavedDesignsPanel`** volledig herschreven:
+  - Geen inklapbare kaart-wrapper meer — inhoud direct zichtbaar
+  - Gegroepeerd: Event → Editie (jaar, aflopend) → ontwerpen (op datum)
+  - Events gesorteerd op positie in `events`-array; ontwerpen zonder event onder "Overig"
+  - Zoekveld filtert op naam, event én editie
+  - "Huidig ontwerp opslaan" knop bovenaan (enkel zichtbaar als formaat geladen)
+  - Dupliceer-actie per ontwerp (kopie-icoon op hover)
+- **"Bijwerken" knop** blijft in de header voor snelle updates van het actieve ontwerp
+- **Mappenstructuur** verwijderd uit de UI (data blijft in localStorage voor backwards compat)
+
+### Formats panel — vereenvoudigd
+- **`formatsView` state verwijderd** — geen browse/detail navigatie meer
+- Klikken op een formaat selecteert het in-place (blauwe highlight + subtitel)
+- Geen "← Terug" knop meer
+- **GridToolbar verplaatst** naar een nieuw "Aanpassen" panel (4e icoon)
+
+### Nieuw "Aanpassen" panel
+- 4e icoon in de icon bar: schuifregelaars-symbool
+- Uitgeschakeld (grijs, `disabled`) zolang geen formaat geladen
+- Bevat `GridToolbar` (vertical) + Info-blok (Categorie, EventStyle, Variant, Canvas)
+- Duidelijke scheiding: Formaten = kiezen, Aanpassen = finetunen
+
+### GridToolbar — Grid en Gutter samengevoegd
+- Grid (kolommen, rijen, celbreedte) en Gutter (H/V) staan nu in één VSection "Grid"
+- Subtiele `h-px` scheidingslijn tussen rij 3 (celbreedte) en gutter-rij
+- Labels aangepast: "Gutter H" en "Gutter V"
+
+### Scrollfix panelen
+- Content div gewijzigd van `overflow-hidden` naar `overflow-y-auto` + `min-h-0`
+- GridTypeSelector root gewijzigd van `h-full` naar `flex-1 min-h-0` — correcte flex-hoogteketting
+
+---
+
+## Recente wijzigingen (sessie april 2026 — formaatbeheer)
 
 ### Formaatbeheer — statische JSON vervangen door bewerkbare presets
 - **Override-systeem**: custom format met zelfde Code als statisch preset verdringt de statische versie in alle lijsten (deduplicatie op Code)
@@ -298,11 +348,9 @@ Alle tags/events/categorieën intact
 
 | Punt | Beschrijving |
 |------|-------------|
-| **Ontwerp dupliceren** | Snel een kopie maken voor varianten vanuit de opgeslagen ontwerpen lijst. |
-| **Bevestiging bij destructieve acties** | Pop-up bij verwijderen van ontwerp, map, event of categorie. |
-| **Mapnamen mogen geen `/` bevatten** | Path-based mapmodel breekt als een naam een slash bevat — validatie toevoegen bij aanmaken/hernoemen. |
+| **Toekomstig: backend/sync** | Designs staan nu in localStorage (apparaat-gebonden). Op termijn migratie naar Supabase voor gedeelde toegang. |
 | **CSV-export escaping** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
-| **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). Preview strip neemt ~25% modalhoogte in. |
+| **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). |
 
 ---
 

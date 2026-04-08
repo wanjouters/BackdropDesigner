@@ -363,7 +363,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
           </VRow>
         </VSection>
 
-        {/* Grid */}
+        {/* Grid + Gutter */}
         <VSection label="Grid">
           {cellPresets && cellPresets.length > 0 && (
             <label className="flex flex-col gap-0.5">
@@ -386,15 +386,12 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
             <NumInput label="Celbreedte" value={format.CellW_mm} step={0.1} onChange={handleCellWChange} wide />
             <NumInput label="Celhoogte" value={cellH} readOnly wide />
           </VRow>
-        </VSection>
-
-        {/* Gutter */}
-        <VSection label="Gutter">
+          <div className="h-px bg-gray-100 -mx-3" />
           <VRow>
-            <NumInput label="Horiz" value={format.GutterX_mm} step={0.5} onChange={handleGutterXChange} wide />
+            <NumInput label="Gutter H" value={format.GutterX_mm} step={0.5} onChange={handleGutterXChange} wide />
             <LinkBtn linked={gutterLinked} onToggle={handleGutterLinkToggle}
               title={gutterLinked ? 'Gelinkt — klik om los te koppelen' : 'Los — klik om te linken'} />
-            <NumInput label="Vert" value={format.GutterY_mm} step={0.5} onChange={handleGutterYChange} wide />
+            <NumInput label="Gutter V" value={format.GutterY_mm} step={0.5} onChange={handleGutterYChange} wide />
           </VRow>
         </VSection>
 

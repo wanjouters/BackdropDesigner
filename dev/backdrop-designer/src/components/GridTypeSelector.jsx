@@ -45,7 +45,7 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit,
   }, [filterOpen])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
 
       {/* Search */}
       <div className="relative mb-2">
@@ -120,6 +120,11 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit,
                     {f.Cols}×{f.Rows}
                   </span>
                 </div>
+                {isActive && (f.Categorie || f.EventStyle) && (
+                  <p className="text-[10px] text-blue-200 truncate mt-0.5">
+                    {[f.Categorie, f.EventStyle].filter(Boolean).join(' · ')}
+                  </p>
+                )}
               </button>
               {onEdit && (
                 <button onClick={e => { e.stopPropagation(); onEdit(f) }} title="Preset aanpassen"
