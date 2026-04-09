@@ -156,11 +156,13 @@
     savePrefs(prefs);
 
     // ─── Artboard-namen verzamelen (BLANK altijd overslaan) ───────────────────
+    // Bewaar zowel de artboard-index als de naam zodat setActiveArtboardIndex
+    // altijd de juiste artboard activeert (niet verschoven door BLANK-filtering).
     var SKIP = { 'BLANK': true };   // namen die nooit geëxporteerd worden
-    var artboardNames = [];
+    var artboards = [];  // [{ index, name }]
     for (var i = 0; i < doc.artboards.length; i++) {
         var n = doc.artboards[i].name;
-        if (!SKIP[n]) artboardNames.push(n);
+        if (!SKIP[n]) artboards.push({ index: i, name: n });
     }
 
     // ─── Export ───────────────────────────────────────────────────────────────
@@ -169,9 +171,10 @@
 
     if (format === 'PNG') {
 
-        for (var i = 0; i < artboardNames.length; i++) {
-            doc.artboards.setActiveArtboardIndex(i);
-            var abName  = artboardNames[i];
+        for (var i = 0; i < artboards.length; i++) {
+            var ab     = artboards[i];
+            var abName = ab.name;
+            doc.artboards.setActiveArtboardIndex(ab.index);  // gebruik originele index
             var outFile = new File(outputFolder.fsName + '/' + abName + '.png');
             try {
                 var pngOpts = new ExportOptionsPNG24();
@@ -190,6 +193,7 @@
     } else {
         // SVG: Illustrator exporteert alle artboards met suffix _01, _02 ...
         // We exporteren naar een tijdelijke basisnaam en hernoemen daarna.
+        // Gebruik doc.artboards.length als range zodat alle artboards meegenomen worden.
 
         var TEMP = '_bd_temp_';
         var tempBase = new File(outputFolder.fsName + '/' + TEMP + 'export');
@@ -197,7 +201,7 @@
         try {
             var svgOpts = new ExportOptionsSVG();
             svgOpts.saveMultipleArtboards  = true;
-            svgOpts.artboardRange          = '1-' + artboardNames.length;
+            svgOpts.artboardRange          = '1-' + doc.artboards.length;
             svgOpts.embedRasterImages      = true;
             svgOpts.fontSubsetting         = SVGFontSubsetting.None;
             svgOpts.cssProperties          = SVGCSSPropertyLocation.PRESENTATIONATTRIBUTES;
@@ -208,10 +212,12 @@
             return;
         }
 
-        // Tijdelijke bestanden hernoemen naar artboard-naam
-        for (var i = 0; i < artboardNames.length; i++) {
-            var abName = artboardNames[i];
-            var suffix = (i + 1 < 10 ? '0' : '') + String(i + 1);
+        // Tijdelijke bestanden hernoemen naar artboard-naam.
+        // De suffix loopt over ALLE artboards (inclusief BLANK) — gebruik ab.index + 1.
+        for (var i = 0; i < artboards.length; i++) {
+            var ab     = artboards[i];
+            var abName = ab.name;
+            var suffix = (ab.index + 1 < 10 ? '0' : '') + String(ab.index + 1);
             var tempFile = new File(outputFolder.fsName + '/' + TEMP + 'export_' + suffix + '.svg');
 
             if (!tempFile.exists) {
