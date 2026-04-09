@@ -246,6 +246,14 @@ Alle tags/events/categorieën intact
 - **Richting-picker**: iconen verkleind (`w-4 h-4`), label "RICHTING" verwijderd
 - **Overig-groep hint**: klein label "zonder event" naast koepelgroepen zonder event-koppeling
 
+### Toolbar boven het werkveld
+- **Twee matchende segmenten**: `bg-white border border-gray-200 rounded-xl p-1 flex gap-1`
+  - Links: Grid / Preview view-toggle
+  - Rechts: Bijwerken (conditioneel, blauw filled) + Wissen (grijs, rood on hover)
+- Alle knoppen: `px-3 py-1.5 rounded-lg text-xs font-medium` — zelfde grootte en padding
+- Bijwerken en Wissen zijn **niet meer in de header** — header toont enkel naam/info + ExportMenu
+- Wissen heeft een prullenbak-icoon voor visuele consistentie met de andere knoppen
+
 ### Lege staat (canvas zonder formaat)
 - **Visuele illustratie**: 2×2 grid-icoon in grijs blok (`w-20 h-20 bg-gray-100 rounded-2xl`)
 - **Contextuele CTA**: als formats-panel al open is → instructietekst "← Selecteer een formaat uit de lijst"; anders → klikbare knop "Formaten bekijken →"
