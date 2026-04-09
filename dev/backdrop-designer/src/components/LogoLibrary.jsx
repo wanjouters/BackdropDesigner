@@ -220,7 +220,6 @@ export default function LogoLibrary({
 }) {
   const [query, setQuery] = useState('')
   const [imgErrors, setImgErrors] = useState({})
-  const [dragging, setDragging] = useState(null)
   const [eventFilter, setEventFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
@@ -335,9 +334,8 @@ export default function LogoLibrary({
   function handleDragStart(e, sponsorName) {
     e.dataTransfer.setData('sponsor', sponsorName)
     e.dataTransfer.effectAllowed = 'copy'
-    setDragging(sponsorName)
   }
-  function handleDragEnd() { setDragging(null) }
+  function handleDragEnd() {}
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-full">
@@ -466,7 +464,6 @@ export default function LogoLibrary({
             const customSrc = customLogos && customLogos[s.partner]
             const localSrc = customSrc || s.dataUrl || (s.filename === 'BLANK' ? null : `/logos/${s.filename}.png`)
             const hasError = !customSrc && !s.dataUrl && imgErrors[s.filename]
-            const isDraggingThis = dragging === s.partner
             const isBeingEdited = editingSponsor === s.partner
             const sponsorTags = tags[s.partner] || []
             const hasEventTags = sponsorTags.length > 0
@@ -491,7 +488,6 @@ export default function LogoLibrary({
                     ? isMarkedForDelete
                       ? 'border-red-400 bg-red-50 cursor-pointer ring-2 ring-red-300'
                       : 'border-red-200 bg-white cursor-pointer hover:border-red-400 hover:bg-red-50'
-                    : isDraggingThis ? 'border-blue-400 bg-blue-50 opacity-60 cursor-grab active:cursor-grabbing'
                     : isBeingEdited ? 'border-blue-400 bg-blue-50 cursor-grab active:cursor-grabbing'
                     : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-grab active:cursor-grabbing'}
                 `}

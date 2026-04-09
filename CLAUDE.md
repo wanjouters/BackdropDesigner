@@ -399,6 +399,50 @@ Alle tags/events/categorieën intact
 
 ---
 
+## Recente wijzigingen (sessie april 2026 — silhouetten, rulers, toolbar)
+
+### Silhouet-overlays op PreviewCanvas
+
+- **Professionele SVG-silhouetten**: `SILHOUETTE_PERSON.svg` en `SILHOUETTE_CHAIR.svg` (geëxporteerd vanuit Adobe Illustrator) zijn rechtstreeks als JSX-path-elementen geïntegreerd in `PreviewCanvas.jsx` als `<PersonSilhouette>` en `<ChairSilhouette>` subcomponenten.
+- **Overlay op canvas**: silhouetten worden over de backdrop heen gerenderd (niet ernaast), floor-aligned: `top = 400 + scaledH - SILHOUETTE_H_MM * scale`.
+- **Horizontaal versleepbaar**: muisknop op silhouet start een drag-sessie (window-level `mousemove`/`mouseup`). Positie opgeslagen als `personX_mm` / `chairX_mm` in mm.
+- **Mutex**: slechts één silhouet tegelijk actief via `activeOverlay: null | 'person' | 'chair'`. Toggle-logica: `v === type ? null : type`.
+- **Reset bij formaatwissel**: posities worden herberekend naar horizontaal midden bij elke `Code`-wijziging.
+- **Stijl**: gouden vulling `rgba(255,215,100,0.6)`, `feDropShadow` glow-filter per silhouet.
+- **Constanten** (bovenaan `PreviewCanvas.jsx`):
+  ```js
+  const PERSON_H_MM = 1800, PERSON_W_MM = 583
+  const PERSON_VB_W = 1653.519, PERSON_VB_H = 5102.362
+  const CHAIR_H_MM = 1327, CHAIR_W_MM = 691
+  const CHAIR_VB_W = 1959.463, CHAIR_VB_H = 3761.352
+  ```
+- **`activeOverlay` state gelift naar App.jsx**: PreviewCanvas ontvangt `activeOverlay` en `onOverlayChange` als props; beheert de state niet meer zelf.
+- **Toggle-knoppen**: aparte knoppengroep in de App.jsx-werkbalk (naast Liniaal), iconen alleen — ✕ / persoon / stoel. ✕ is grijs in off-state, persoon/stoel blauw wanneer actief. Knoppen zijn alleen zichtbaar bij `view === 'preview'`.
+
+### Logo drag — eerste klik fix
+
+- **Probleem**: logo's in `LogoLibrary` vereisten twee muisklikken voordat slepen werkte.
+- **Oorzaak**: `SponsorCard` was gedefinieerd binnenin een IIFE in de JSX-render. Bij elke state-wijziging (o.a. `setDragging`) maakte React een nieuwe functiereferentie aan → onmount + remount van alle kaart-DOM-nodes → HTML5 drag onmiddellijk afgebroken.
+- **Oplossing**: `dragging` state volledig verwijderd uit `LogoLibrary`. `setDragging` werd enkel gebruikt voor visuele feedback op de gesleepte kaart; de `cursor-grab / active:cursor-grabbing` CSS-klassen zijn voldoende. Hierdoor veroorzaakt `handleDragStart` geen re-render meer en blijft het DOM-element intact gedurende de drag.
+
+### Horizontale en verticale rulers
+
+- **Rendering**: SVG-gebaseerde rulers langs de boven- en linkerkant van het werkblad, alleen zichtbaar wanneer `showRuler === true`.
+- **Sync met scroll**: `rulerScroll` state (`{ left, top }`) wordt bijgewerkt via `onScroll` op de container én expliciet in de centering `useEffect` en `fitScreen` (anders tonen rulers foute waarden bij programmatisch centreren).
+- **Adaptieve tick-spacing**: `getTickSpacing(scale)` kiest de kleinste "nette" stapgrootte (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000 mm) waarbij major ticks ≥ 55px uit elkaar liggen. Minor ticks = majorMM / 5.
+- **Tick-formule**: `svgX = mm * scale + canvasOff - scrollLeft` (canvasOff = 400 px padding).
+- **Constante**: `const RULER_SIZE = 20` (px breedte/hoogte van rulers).
+- **Corner square**: klein grijs vierkant (20×20 px) in de linkerbovenhoek waar H- en V-ruler samenkomen.
+
+### Toolbar-wijzigingen (App.jsx)
+
+- **"Liniaal" toggle**: nieuw knopje naast de Grid/Preview toggle, alleen zichtbaar bij `view === 'preview'`. Staat standaard **uit** (`showRuler` default = `false`).
+- **Default view**: gewijzigd van `'grid'` naar `'preview'`.
+- **Links uitlijnen**: toolbar-rij van `justify-between` naar `flex items-center gap-2 w-full`; "Wissen"-knop blijft rechts via `ml-auto` op de actions-groep.
+- **`showRuler` prop**: doorgegeven vanuit `App.jsx` aan `<PreviewCanvas showRuler={showRuler} />`.
+
+---
+
 ## Openstaande verbeterpunten
 
 | Punt | Beschrijving |

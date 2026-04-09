@@ -515,7 +515,9 @@ export default function App() {
   const [editingFormat, setEditingFormat] = useState(null)
   const [staticImported, setStaticImported] = useState(() => loadStaticImported())
   const [selectedSlots, setSelectedSlots] = useState(new Set())
-  const [view, setView] = useState('grid') // 'grid' | 'preview'
+  const [view, setView] = useState('preview') // 'grid' | 'preview'
+  const [showRuler, setShowRuler] = useState(false)
+  const [activeOverlay, setActiveOverlay] = useState(null) // null | 'person' | 'chair'
   const [customLogos, setCustomLogos] = useState(() => loadCustomLogos())
   const [savedDesigns, setSavedDesigns] = useState(() => loadSavedDesigns())
   const [designFolders, setDesignFolders] = useState(() => loadDesignFolders())
@@ -1274,7 +1276,7 @@ export default function App() {
         <div className="flex-1 flex flex-col gap-3 overflow-hidden min-w-0">
 
           {format && (
-            <div className="flex-shrink-0 flex items-center justify-between">
+            <div className="flex-shrink-0 flex items-center gap-2 w-full">
               {/* View toggle */}
               <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
                 <button
@@ -1308,8 +1310,72 @@ export default function App() {
                   Preview
                 </button>
               </div>
+              {/* Ruler toggle — only relevant in preview */}
+              {view === 'preview' && (
+                <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
+                  <button
+                    onClick={() => setShowRuler(v => !v)}
+                    title={showRuler ? 'Liniaal verbergen' : 'Liniaal tonen'}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      showRuler ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <rect x="1" y="3.5" width="10" height="5" rx="1"/>
+                      <line x1="3" y1="3.5" x2="3" y2="5.5"/>
+                      <line x1="5" y1="3.5" x2="5" y2="4.5"/>
+                      <line x1="7" y1="3.5" x2="7" y2="5.5"/>
+                      <line x1="9" y1="3.5" x2="9" y2="4.5"/>
+                    </svg>
+                    Liniaal
+                  </button>
+                </div>
+              )}
+              {/* Silhouette 3-way toggle: Off / Persoon / Stoel — only in preview */}
+              {view === 'preview' && (
+                <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
+                  <button
+                    onClick={() => setActiveOverlay(null)}
+                    title="Geen silhouet"
+                    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                      activeOverlay === null ? 'bg-gray-200 text-gray-500' : 'text-gray-400 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                      <line x1="1.5" y1="1.5" x2="8.5" y2="8.5"/>
+                      <line x1="8.5" y1="1.5" x2="1.5" y2="8.5"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setActiveOverlay('person')}
+                    title="Referentiepersoon (180 cm)"
+                    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                      activeOverlay === 'person' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                      <circle cx="7" cy="3" r="2.2"/>
+                      <path d="M3.5 6.5C3.5 5.7 5.1 5 7 5s3.5.7 3.5 1.5V9H9.5v4h-5V9H3.5V6.5z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setActiveOverlay('chair')}
+                    title="Referentiestoel"
+                    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                      activeOverlay === 'chair' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                      <rect x="3" y="2" width="8" height="5" rx="1"/>
+                      <rect x="2" y="7" width="10" height="1.5" rx="0.5"/>
+                      <rect x="3" y="8.5" width="1.5" height="3.5" rx="0.5"/>
+                      <rect x="9.5" y="8.5" width="1.5" height="3.5" rx="0.5"/>
+                    </svg>
+                  </button>
+                </div>
+              )}
               {/* Actions */}
-              <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
+              <div className="ml-auto bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
                 {loadedDesignId && isDirty && (
                   <button
                     onClick={handleUpdateDesign}
@@ -1384,6 +1450,9 @@ export default function App() {
                 onSelectSlot={handleSelectSlot}
                 onDropSponsor={handleDropOnSlot}
                 customLogos={customLogos}
+                showRuler={showRuler}
+                activeOverlay={activeOverlay}
+                onOverlayChange={setActiveOverlay}
               />
             )}
           </div>
