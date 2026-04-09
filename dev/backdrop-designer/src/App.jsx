@@ -1265,6 +1265,7 @@ export default function App() {
 
           {format && (
             <div className="flex-shrink-0 flex items-center justify-between">
+              {/* View toggle */}
               <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
                 <button
                   onClick={() => setView('grid')}
@@ -1297,12 +1298,13 @@ export default function App() {
                   Preview
                 </button>
               </div>
-              <div className="flex items-center gap-2">
+              {/* Actions */}
+              <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
                 {loadedDesignId && isDirty && (
                   <button
                     onClick={handleUpdateDesign}
                     title="Bestaand ontwerp overschrijven"
-                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
@@ -1313,9 +1315,12 @@ export default function App() {
                 )}
                 <button
                   onClick={handleClearGrid}
-                  className="text-xs text-gray-400 hover:text-red-400 transition-colors px-1 py-1.5"
                   title="Grid wissen"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-gray-500 hover:bg-red-50 hover:text-red-500"
                 >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h8M5 3V2h2v1M4 3l.5 7h3L8 3"/>
+                  </svg>
                   Wissen
                 </button>
               </div>
