@@ -394,11 +394,21 @@ function ExportMenu({ format, slots, customLogos, onImportJson }) {
       }
       return s
     }
+    // Metadata rows (parseable by Gridzilla via META prefix)
+    var meta = []
+    meta.push('META,BackgroundColor_Hex,' + (format.BackgroundColor_Hex || '#000000'))
+    var c = format.BackgroundColor_C ?? ''
+    var m = format.BackgroundColor_M ?? ''
+    var y = format.BackgroundColor_Y ?? ''
+    var k = format.BackgroundColor_K ?? ''
+    if (c !== '' || m !== '' || y !== '' || k !== '') {
+      meta.push('META,BackgroundColor_CMYK,' + c + ',' + m + ',' + y + ',' + k)
+    }
     var colHeaders = Array.from({ length: Cols }, function(_, i) { return 'C' + (i + 1) })
-    var lines = [colHeaders.join(',')]
+    var lines = meta.concat([colHeaders.join(',')])
     for (var r = 0; r < Rows; r++) {
       var row = []
-      for (var c = 0; c < Cols; c++) row.push(csvCell(slots[r * Cols + c]))
+      for (var c2 = 0; c2 < Cols; c2++) row.push(csvCell(slots[r * Cols + c2]))
       lines.push(row.join(','))
     }
     var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
