@@ -23,6 +23,7 @@ import {
   loadDefaultAspect, saveDefaultAspect,
   loadCustomFormats, saveCustomFormats,
   loadStaticImported, saveStaticImported,
+  loadCustomSponsors, saveCustomSponsors,
   saveDraft, loadDraft, clearDraft,
 } from './utils/sponsorTags'
 
@@ -257,6 +258,9 @@ function SavedDesignsPanel({ designs, events, renamingDesign, loadedDesignId, on
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide truncate flex-1">
                   {group.event || 'Overig'}
                 </span>
+                {!group.event && (
+                  <span className="text-[9px] text-gray-300 mr-1 flex-shrink-0" title="Sla op met een event en editie om te groeperen">zonder event</span>
+                )}
                 <span className="text-[10px] text-gray-400 flex-shrink-0">({totalCount})</span>
               </button>
               {!isEventCollapsed(evKey) && group.editions.map(function(editionGroup) {
@@ -520,6 +524,7 @@ export default function App() {
   const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
   const [canvasPresets, setCanvasPresets] = useState(() => loadCanvasPresets())
   const [customFormats, setCustomFormats] = useState(() => loadCustomFormats())
+  const [customSponsors, setCustomSponsors] = useState(() => loadCustomSponsors())
   const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
   const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
@@ -592,6 +597,30 @@ export default function App() {
     else delete next[sponsorName]
     setCustomLogos(next)
     saveCustomLogos(next)
+  }
+
+  function handleAddCustomSponsor({ partner, dataUrl, eventSelections, groupSelections }) {
+    const id = Date.now().toString()
+    const next = [...customSponsors, { id, partner, dataUrl }]
+    setCustomSponsors(next)
+    saveCustomSponsors(next)
+    // eventSelections: { [eventCode]: categoryString }
+    if (eventSelections && Object.keys(eventSelections).length > 0) {
+      handleTagsChange(partner, Object.keys(eventSelections))
+      Object.entries(eventSelections).forEach(([ev, cat]) => {
+        if (cat) handleCategoryChange(partner, ev, cat)
+      })
+    }
+    // groupSelections: { [groupName]: categoryString }
+    if (groupSelections && Object.keys(groupSelections).length > 0) {
+      handleSponsorGroupsChange(partner, groupSelections)
+    }
+  }
+
+  function handleDeleteCustomSponsor(partner) {
+    const next = customSponsors.filter(s => s.partner !== partner)
+    setCustomSponsors(next)
+    saveCustomSponsors(next)
   }
 
   function handleSaveDesign({ event, edition, name }) {
@@ -993,33 +1022,29 @@ export default function App() {
 
       {/* Draft restore banner */}
       {draftRestoreData && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center justify-between flex-shrink-0 z-10">
-          <div className="flex items-center gap-2">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="text-amber-500 flex-shrink-0">
-              <path d="M7 1v6l3 2"/><circle cx="7" cy="7" r="6"/>
-            </svg>
-            <span className="text-xs text-amber-700">
-              Niet-opgeslagen werkstand gevonden van {new Date(draftRestoreData.savedAt).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })}. Wil je verdergaan?
-            </span>
-          </div>
-          <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-            <button
-              onClick={() => {
-                setEditedFormat({ ...draftRestoreData.format })
-                setSelectedFormat({ ...draftRestoreData.format })
-                setSlots([...draftRestoreData.slots])
-                setSelectedSlots(new Set())
-                setDraftRestoreData(null)
-              }}
-              className="text-xs px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-colors">
-              Herstellen
-            </button>
-            <button
-              onClick={() => { clearDraft(); setDraftRestoreData(null) }}
-              className="text-xs px-2 py-1 text-amber-600 hover:text-amber-800 transition-colors">
-              Negeren
-            </button>
-          </div>
+        <div className="border-b border-gray-100 px-6 py-1 flex items-center gap-3 flex-shrink-0 bg-white">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="text-amber-400 flex-shrink-0">
+            <path d="M7 1v6l3 2"/><circle cx="7" cy="7" r="6"/>
+          </svg>
+          <span className="text-[11px] text-gray-400 flex-1">
+            Niet-opgeslagen werkstand van {new Date(draftRestoreData.savedAt).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })} gevonden
+          </span>
+          <button
+            onClick={() => {
+              setEditedFormat({ ...draftRestoreData.format })
+              setSelectedFormat({ ...draftRestoreData.format })
+              setSlots([...draftRestoreData.slots])
+              setSelectedSlots(new Set())
+              setDraftRestoreData(null)
+            }}
+            className="text-[11px] text-amber-600 hover:text-amber-700 font-semibold transition-colors flex-shrink-0">
+            Herstellen
+          </button>
+          <button
+            onClick={() => { clearDraft(); setDraftRestoreData(null) }}
+            className="text-[11px] text-gray-300 hover:text-gray-500 transition-colors flex-shrink-0">
+            Negeren
+          </button>
         </div>
       )}
 
@@ -1044,13 +1069,17 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5">
-                <p className="text-sm font-semibold text-gray-800">{format.Code}</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {loadedDesignId
+                    ? (savedDesigns.find(d => d.id === loadedDesignId) || {}).name || format.Code
+                    : format.Code}
+                </p>
                 {isDirty && (
                   <span title="Niet-opgeslagen wijzigingen" className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
                 )}
               </div>
               <p className="text-xs text-gray-400">
-                {format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
+                {loadedDesignId ? format.Code + ' · ' : ''}{format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
                 {selectionCount > 0 && (
                   <span className="ml-2 text-blue-500">
                     · {selectionCount} {selectionCount === 1 ? 'slot' : 'slots'} geselecteerd
@@ -1075,7 +1104,8 @@ export default function App() {
             </div>
             <button
               onClick={handleClearGrid}
-              className="text-xs text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-red-300 transition-colors"
+              className="text-xs text-gray-300 hover:text-red-400 transition-colors px-1"
+              title="Grid wissen"
             >
               Wissen
             </button>
@@ -1176,8 +1206,8 @@ export default function App() {
                 {leftPanel === 'adjust' && 'Aanpassen'}
                 {leftPanel === 'frequency' && 'Frequentie'}
               </h2>
-              <button onClick={() => setLeftPanel(null)} className="text-gray-300 hover:text-gray-500 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <button onClick={() => setLeftPanel(null)} className="p-1 -mr-1 rounded text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="Paneel sluiten">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M3 3l8 8M11 3L3 11"/>
                 </svg>
               </button>
@@ -1294,16 +1324,25 @@ export default function App() {
             {!format ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#9ca3af" strokeWidth="2">
+                  <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 28 28" fill="none" strokeWidth="2" className="text-gray-300" stroke="currentColor">
                       <rect x="2" y="2" width="10" height="10" rx="2"/>
                       <rect x="16" y="2" width="10" height="10" rx="2"/>
                       <rect x="2" y="16" width="10" height="10" rx="2"/>
                       <rect x="16" y="16" width="10" height="10" rx="2"/>
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Selecteer een backdrop-formaat</p>
-                  <p className="text-gray-300 text-xs mt-1">Klik op het raster-icoon links</p>
+                  <p className="text-gray-500 text-sm font-medium">Kies een backdrop-formaat</p>
+                  {leftPanel === 'formats' ? (
+                    <p className="mt-2 text-xs text-gray-400">← Selecteer een formaat uit de lijst</p>
+                  ) : (
+                    <button
+                      onClick={() => setLeftPanel('formats')}
+                      className="mt-3 text-xs text-blue-500 hover:text-blue-600 font-semibold transition-colors"
+                    >
+                      Formaten bekijken →
+                    </button>
+                  )}
                 </div>
               </div>
             ) : view === 'grid' ? (
@@ -1352,6 +1391,9 @@ export default function App() {
             onTagsChange={handleTagsChange}
             onCategoryChange={handleCategoryChange}
             onSponsorGroupsChange={handleSponsorGroupsChange}
+            customSponsors={customSponsors}
+            onAddCustomSponsor={handleAddCustomSponsor}
+            onDeleteCustomSponsor={handleDeleteCustomSponsor}
           />
         </div>
 

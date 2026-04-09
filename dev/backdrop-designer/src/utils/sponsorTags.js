@@ -193,6 +193,17 @@ export function clearDraft() {
   localStorage.removeItem(DRAFT_KEY)
 }
 
+// --- Custom sponsors ---
+// Structure: [{ id, partner, dataUrl }]
+const CUSTOM_SPONSORS_KEY = 'backdropDesigner_customSponsors'
+
+export function loadCustomSponsors() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_SPONSORS_KEY)) || [] } catch { return [] }
+}
+export function saveCustomSponsors(list) {
+  localStorage.setItem(CUSTOM_SPONSORS_KEY, JSON.stringify(list))
+}
+
 // --- Default aspect ratio ---
 const DEFAULT_ASPECT_KEY = 'backdropDesigner_defaultAspect'
 

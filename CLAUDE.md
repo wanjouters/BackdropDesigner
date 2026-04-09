@@ -72,7 +72,8 @@ Alle state wordt opgeslagen in `localStorage` via `src/utils/sponsorTags.js`.
 | `backdropDesigner_events` | `string[]` — lijst van events (AGR, BCC, ROAD…) |
 | `backdropDesigner_eventGroups` | `{ [koepelName]: string[] }` — welke events onder een koepel vallen |
 | `backdropDesigner_sponsorGroups` | `{ [sponsorName]: { [koepelName]: categoryName } }` — koepelpartner-assignments |
-| `backdropDesigner_customLogos` | `{ [sponsorName]: dataUrl }` — custom geüploade logo's |
+| `backdropDesigner_customLogos` | `{ [sponsorName]: dataUrl }` — logo-overrides voor bestaande sponsors |
+| `backdropDesigner_customSponsors` | `[{ id, partner, dataUrl }]` — volledig nieuwe (custom) sponsors met eigen logo |
 | `backdropDesigner_savedDesigns` | `[{ id, name, event, edition, formatCode, format, slots, savedAt, folder }]` — `event` en `edition` zijn nieuw; oude ontwerpen zonder deze velden verschijnen onder "Overig" |
 | `backdropDesigner_advanceDir` | `'r' \| 'l' \| 'd' \| 'u' \| 'dr' \| 'dl' \| 'ur' \| 'ul' \| 'none'` |
 | `backdropDesigner_staticImported` | `'true'` zodra alle statische presets zijn omgezet naar custom |
@@ -208,6 +209,52 @@ Alle tags/events/categorieën intact
 - Huidig formaat: **PNG**
 - SVG is ondersteund in het script (aanbevolen voor toekomstige overstap)
 - Overstap = enkel andere radiobutton aanvinken in het dialoogvenster
+
+---
+
+## Recente wijzigingen (sessie april 2026 — custom sponsors & UX polish)
+
+### Custom sponsors — in-app logo upload
+- **Nieuw `customSponsors` state**: `[{ id, partner, dataUrl }]` — opgeslagen in `backdropDesigner_customSponsors` localStorage
+- **`handleAddCustomSponsor({ partner, dataUrl, eventSelections, groupSelections })`**: voegt custom sponsor toe + kent meteen events/koepels + categorieën toe
+- **`handleDeleteCustomSponsor(partner)`**: verwijdert custom sponsor uit lijst
+- **Auto-fill naam**: sponsornaam wordt automatisch ingevuld vanuit de PNG-bestandsnaam bij upload (spaties en underscores genormaliseerd); naam blijft aanpasbaar
+- **`AddSponsorModal`** in `LogoLibrary.jsx`:
+  - Bestandskiezer + naam-inputveld
+  - **`CheckSection`** component: inline inklapbare lijst met checkbox per event/koepel + categorie-select per item
+  - Twee secties: "Koepels" en "Events" — elk apart inklapbaar
+  - Geen absolute-positioned dropdowns (voorkomt overflow-clipping in modal)
+- **`mergedCustomLogos` useMemo**: combineert `customLogos` (overrides) + `customSponsors[].dataUrl` — doorgegeven aan `SponsorEditModal` zodat preview ook voor custom sponsors werkt
+- **`allSponsors` useMemo**: fusie van statische sponsors (`STATIC_SPONSORS`) + custom sponsors
+
+### Delete-mode voor custom sponsors
+- **Geen per-kaart delete-knop** meer (conflicteerde met tag-icoon op zelfde positie)
+- **Prullenbak-toggle** naast "+" in LogoLibrary header (enkel zichtbaar als custom sponsors bestaan)
+- In delete-mode: kaarten tonen een selectiecirkel; klikken selecteert/deselecteert
+- **Rode bevestigingsbalk** onderaan met aantal geselecteerde + "Verwijder" knop
+- `deleteMode` + `toDelete` states in `LogoLibrary.jsx`
+
+### Tag-icoon voor custom sponsors
+- Eerder was tag-icoon alleen zichtbaar voor niet-custom sponsors
+- Nu tonen **alle sponsors** (inclusief custom) het tag-icoon om events/koepels te bewerken
+- Tag-icoon touch target vergroot: `p-1` padding + `absolute top-0.5 right-0.5`
+
+### UX-verbeteringen (UI review)
+- **Draft banner**: van brede amber-balk naar dunne witte strip — minder visueel lawaai
+- **Header naam**: toont naam van geladen ontwerp i.p.v. altijd de format-code
+- **Wissen-knop**: gedempte rode tekstkleur (`text-gray-300 hover:text-red-400`) — minder prominent
+- **Richting-picker**: iconen verkleind (`w-4 h-4`), label "RICHTING" verwijderd
+- **Overig-groep hint**: klein label "zonder event" naast koepelgroepen zonder event-koppeling
+
+### Lege staat (canvas zonder formaat)
+- **Visuele illustratie**: 2×2 grid-icoon in grijs blok (`w-20 h-20 bg-gray-100 rounded-2xl`)
+- **Contextuele CTA**: als formats-panel al open is → instructietekst "← Selecteer een formaat uit de lijst"; anders → klikbare knop "Formaten bekijken →"
+- Voorkomt dat een CTA-knop "niets doet" wanneer het bijbehorende panel al actief is
+
+### Ontwerpbeslissingen (patroon)
+- **`CheckSection`**: gebruik inline inklapbare secties (geen absolute dropdowns) in modals met `overflow-hidden` of beperkte hoogte
+- **Delete-mode patroon**: bij conflicterende icoon-posities → gebruik een toggle-mode in plaats van per-item acties
+- **`mergedCustomLogos`**: wanneer twee bronnen hetzelfde doel dienen (`customLogos` + `customSponsors[].dataUrl`), combineer ze via `useMemo` vóór doorgeven aan child-components
 
 ---
 
