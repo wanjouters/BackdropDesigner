@@ -1087,28 +1087,6 @@ export default function App() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              {loadedDesignId && isDirty && (
-                <button
-                  onClick={handleUpdateDesign}
-                  title="Bestaand ontwerp overschrijven"
-                  className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-                    <path d="M8 1v4H4V1M4 7h4"/>
-                  </svg>
-                  Bijwerken
-                </button>
-              )}
-            </div>
-            <button
-              onClick={handleClearGrid}
-              className="text-xs text-gray-300 hover:text-red-400 transition-colors px-1"
-              title="Grid wissen"
-            >
-              Wissen
-            </button>
             <ExportMenu format={format} slots={slots} customLogos={customLogos} onImportJson={handleImportJson} />
           </div>
         )}
@@ -1286,37 +1264,61 @@ export default function App() {
         <div className="flex-1 flex flex-col gap-3 overflow-hidden min-w-0">
 
           {format && (
-            <div className="flex-shrink-0 bg-white border border-gray-200 rounded-xl p-1 flex gap-1 self-start">
-              <button
-                onClick={() => setView('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  view === 'grid'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <rect x="0" y="0" width="5" height="5" rx="1"/>
-                  <rect x="7" y="0" width="5" height="5" rx="1"/>
-                  <rect x="0" y="7" width="5" height="5" rx="1"/>
-                  <rect x="7" y="7" width="5" height="5" rx="1"/>
-                </svg>
-                Grid
-              </button>
-              <button
-                onClick={() => setView('preview')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  view === 'preview'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="1" y="2" width="10" height="8" rx="1.5"/>
-                  <path d="M4 6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
-                </svg>
-                Preview
-              </button>
+            <div className="flex-shrink-0 flex items-center justify-between">
+              <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
+                <button
+                  onClick={() => setView('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    view === 'grid'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                    <rect x="0" y="0" width="5" height="5" rx="1"/>
+                    <rect x="7" y="0" width="5" height="5" rx="1"/>
+                    <rect x="0" y="7" width="5" height="5" rx="1"/>
+                    <rect x="7" y="7" width="5" height="5" rx="1"/>
+                  </svg>
+                  Grid
+                </button>
+                <button
+                  onClick={() => setView('preview')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    view === 'preview'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="1" y="2" width="10" height="8" rx="1.5"/>
+                    <path d="M4 6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
+                  </svg>
+                  Preview
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {loadedDesignId && isDirty && (
+                  <button
+                    onClick={handleUpdateDesign}
+                    title="Bestaand ontwerp overschrijven"
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 font-semibold transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
+                      <path d="M8 1v4H4V1M4 7h4"/>
+                    </svg>
+                    Bijwerken
+                  </button>
+                )}
+                <button
+                  onClick={handleClearGrid}
+                  className="text-xs text-gray-400 hover:text-red-400 transition-colors px-1 py-1.5"
+                  title="Grid wissen"
+                >
+                  Wissen
+                </button>
+              </div>
             </div>
           )}
 
