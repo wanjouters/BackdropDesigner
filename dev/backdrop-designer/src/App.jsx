@@ -10,22 +10,18 @@ import SettingsModal from './components/SettingsModal'
 import GridToolbar from './components/GridToolbar'
 import PreviewCanvas from './components/PreviewCanvas'
 import { exportJpeg } from './utils/exportJpeg'
-import {
-  loadCustomLogos, saveCustomLogos, loadSavedDesigns, saveDesignsList,
-  loadDesignFolders, saveDesignFolders,
-  loadTags, saveTags, loadEvents, saveEvents,
-  loadSponsorCategories, saveSponsorCategories,
-  loadCategoryList, saveCategoryList,
-  loadEventGroups, saveEventGroups,
-  loadSponsorGroups, saveSponsorGroups,
-  loadCellPresets, saveCellPresets,
-  loadCanvasPresets, saveCanvasPresets,
-  loadDefaultAspect, saveDefaultAspect,
-  loadCustomFormats, saveCustomFormats,
-  loadStaticImported, saveStaticImported,
-  loadCustomSponsors, saveCustomSponsors,
-  saveDraft, loadDraft, clearDraft,
-} from './utils/sponsorTags'
+import { saveDraft, loadDraft, clearDraft } from './utils/sponsorTags'
+import * as db from './utils/db'
+
+const DEFAULT_CATEGORIES = ['Titelsponsor', 'Co-sponsor', 'Partner', 'Leverancier', 'Mediapartner']
+const DEFAULT_CELL_PRESETS = [
+  { id: 'default_1', name: 'Mixed Zone', CellW_mm: 356, CellAspect: 1.667, GutterX_mm: 80, GutterY_mm: 80 },
+  { id: 'default_2', name: 'Flash Interview', CellW_mm: 200, CellAspect: 1.667, GutterX_mm: 40, GutterY_mm: 40 },
+]
+const DEFAULT_CANVAS_PRESETS = [
+  { id: 'canvas_1', name: 'Mixed Zone (7900×2300)', CanvasWidth_mm: 7900, CanvasHeight_mm: 2300 },
+  { id: 'canvas_2', name: 'Flash (4000×2300)', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 },
+]
 
 function makeEmptySlots(cols, rows) {
   return Array(cols * rows).fill('BLANK')
@@ -513,31 +509,32 @@ export default function App() {
   const [slots, setSlots] = useState([])
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [editingFormat, setEditingFormat] = useState(null)
-  const [staticImported, setStaticImported] = useState(() => loadStaticImported())
+  const [staticImported, setStaticImported] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState(new Set())
   const [view, setView] = useState('preview') // 'grid' | 'preview'
   const [showRuler, setShowRuler] = useState(false)
   const [activeOverlay, setActiveOverlay] = useState(null) // null | 'person' | 'chair'
-  const [customLogos, setCustomLogos] = useState(() => loadCustomLogos())
-  const [savedDesigns, setSavedDesigns] = useState(() => loadSavedDesigns())
-  const [designFolders, setDesignFolders] = useState(() => loadDesignFolders())
+  const [customLogos, setCustomLogos] = useState({})
+  const [savedDesigns, setSavedDesigns] = useState([])
+  const [designFolders, setDesignFolders] = useState([])
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [saveModalDefaults, setSaveModalDefaults] = useState(null)
   const [renamingDesign, setRenamingDesign] = useState(null)
   const [advanceDir, setAdvanceDirState] = useState(() => localStorage.getItem('backdropDesigner_advanceDir') || 'r')
+  const [dbLoading, setDbLoading] = useState(true)
 
-  // Settings state (lifted from LogoLibrary)
-  const [tags, setTags] = useState(() => loadTags())
-  const [sponsorCategories, setSponsorCategories] = useState(() => loadSponsorCategories())
-  const [events, setEvents] = useState(() => loadEvents())
-  const [categoryList, setCategoryList] = useState(() => loadCategoryList())
-  const [eventGroups, setEventGroups] = useState(() => loadEventGroups())
-  const [sponsorGroups, setSponsorGroups] = useState(() => loadSponsorGroups())
-  const [cellPresets, setCellPresets] = useState(() => loadCellPresets())
-  const [canvasPresets, setCanvasPresets] = useState(() => loadCanvasPresets())
-  const [customFormats, setCustomFormats] = useState(() => loadCustomFormats())
-  const [customSponsors, setCustomSponsors] = useState(() => loadCustomSponsors())
-  const [defaultAspect, setDefaultAspectState] = useState(() => loadDefaultAspect())
+  // Settings state
+  const [tags, setTags] = useState({})
+  const [sponsorCategories, setSponsorCategories] = useState({})
+  const [events, setEvents] = useState([])
+  const [categoryList, setCategoryList] = useState(DEFAULT_CATEGORIES)
+  const [eventGroups, setEventGroups] = useState({})
+  const [sponsorGroups, setSponsorGroups] = useState({})
+  const [cellPresets, setCellPresets] = useState(DEFAULT_CELL_PRESETS)
+  const [canvasPresets, setCanvasPresets] = useState(DEFAULT_CANVAS_PRESETS)
+  const [customFormats, setCustomFormats] = useState([])
+  const [customSponsors, setCustomSponsors] = useState([])
+  const [defaultAspect, setDefaultAspectState] = useState(1.667)
   const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
   const [draftRestoreData, setDraftRestoreData] = useState(null)
@@ -571,6 +568,53 @@ export default function App() {
   useEffect(() => {
     const draft = loadDraft()
     if (draft && draft.format && Array.isArray(draft.slots)) setDraftRestoreData(draft)
+  }, [])
+
+  // ─── Load all data from Supabase on mount ────────────────────────────────
+  useEffect(() => {
+    async function loadAll() {
+      try {
+        const [
+          designs, events, eventGroups, tags, cats, sponsorGroups,
+          catList, customSponsors, logos, cellPresets, canvasPresets,
+          customFormats, staticImportedVal, defaultAspectVal,
+        ] = await Promise.all([
+          db.loadDesigns(),
+          db.loadEvents(),
+          db.loadEventGroups(),
+          db.loadTags(),
+          db.loadSponsorCategories(),
+          db.loadSponsorGroups(),
+          db.loadSetting('category_list', DEFAULT_CATEGORIES),
+          db.loadCustomSponsors(),
+          db.loadCustomLogos(),
+          db.loadCellPresets(),
+          db.loadCanvasPresets(),
+          db.loadCustomFormats(),
+          db.loadSetting('static_imported', false),
+          db.loadSetting('default_aspect', 1.667),
+        ])
+        setSavedDesigns(designs)
+        setEvents(events.length ? events : [])
+        setEventGroups(eventGroups)
+        setTags(tags)
+        setSponsorCategories(cats)
+        setSponsorGroups(sponsorGroups)
+        setCategoryList(catList)
+        setCustomSponsors(customSponsors)
+        setCustomLogos(logos)
+        setCellPresets(cellPresets.length ? cellPresets : DEFAULT_CELL_PRESETS)
+        setCanvasPresets(canvasPresets.length ? canvasPresets : DEFAULT_CANVAS_PRESETS)
+        setCustomFormats(customFormats)
+        setStaticImported(staticImportedVal)
+        setDefaultAspectState(defaultAspectVal)
+      } catch (err) {
+        console.error('Supabase load error:', err)
+      } finally {
+        setDbLoading(false)
+      }
+    }
+    loadAll()
   }, [])
 
   function setAdvanceDir(dir) {
@@ -608,14 +652,13 @@ export default function App() {
     if (dataUrl) next[sponsorName] = dataUrl
     else delete next[sponsorName]
     setCustomLogos(next)
-    saveCustomLogos(next)
+    db.saveCustomLogos(next).catch(console.error)
   }
 
   function handleAddCustomSponsor({ partner, dataUrl, eventSelections, groupSelections }) {
-    const id = Date.now().toString()
-    const next = [...customSponsors, { id, partner, dataUrl }]
+    const next = [...customSponsors, { id: partner, partner, dataUrl }]
     setCustomSponsors(next)
-    saveCustomSponsors(next)
+    db.addCustomSponsor({ partner, dataUrl }).catch(console.error)
     // eventSelections: { [eventCode]: categoryString }
     if (eventSelections && Object.keys(eventSelections).length > 0) {
       handleTagsChange(partner, Object.keys(eventSelections))
@@ -632,59 +675,82 @@ export default function App() {
   function handleDeleteCustomSponsor(partner) {
     const next = customSponsors.filter(s => s.partner !== partner)
     setCustomSponsors(next)
-    saveCustomSponsors(next)
+    db.deleteCustomSponsor(partner).catch(console.error)
   }
 
-  function handleSaveDesign({ event, edition, name }) {
-    const design = {
-      id: Date.now(),
-      name: name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`,
-      event: event || null,
-      edition: edition || null,
-      formatCode: editedFormat?.Code || '',
-      format: { ...editedFormat },
-      slots: [...slots],
-      savedAt: Date.now(),
-      folder: null,
+  async function handleSaveDesign({ event, edition, name }) {
+    const designName = name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`
+    try {
+      const id = await db.saveDesign({
+        name: designName,
+        formatCode: editedFormat?.Code || '',
+        format: { ...editedFormat },
+        slots: [...slots],
+        folder: null,
+      })
+      const newDesign = {
+        id,
+        name: designName,
+        formatCode: editedFormat?.Code || '',
+        format: { ...editedFormat },
+        slots: [...slots],
+        folder: null,
+        savedAt: new Date().toISOString(),
+      }
+      setSavedDesigns(prev => [newDesign, ...prev])
+      setLoadedDesignId(id)
+      setShowSaveModal(false)
+      setSaveModalDefaults(null)
+      clearDraft()
+      setIsDirty(false)
+      showToast('Ontwerp opgeslagen', 'success')
+    } catch (err) {
+      console.error(err)
+      showToast('Fout bij opslaan', 'error')
     }
-    const next = [design, ...savedDesigns]
-    setSavedDesigns(next)
-    saveDesignsList(next)
-    setShowSaveModal(false)
-    setSaveModalDefaults(null)
-    clearDraft()
-    setIsDirty(false)
-    showToast('Ontwerp opgeslagen', 'success')
   }
 
-  function handleDuplicateDesign(design) {
-    const copy = {
-      ...design,
-      id: Date.now(),
-      name: design.name + ' (kopie)',
-      savedAt: Date.now(),
-      slots: [...design.slots],
-      format: { ...design.format },
+  async function handleDuplicateDesign(design) {
+    try {
+      const newId = await db.duplicateDesign(design.id)
+      const copy = {
+        ...design,
+        id: newId,
+        name: design.name + ' (kopie)',
+        savedAt: new Date().toISOString(),
+      }
+      setSavedDesigns(prev => [copy, ...prev])
+      showToast('"' + copy.name + '" aangemaakt', 'success')
+    } catch (err) {
+      console.error(err)
+      showToast('Fout bij dupliceren', 'error')
     }
-    const next = [copy, ...savedDesigns]
-    setSavedDesigns(next)
-    saveDesignsList(next)
-    showToast('"' + copy.name + '" aangemaakt', 'success')
   }
 
-  function handleUpdateDesign() {
+  async function handleUpdateDesign() {
     if (!loadedDesignId) return
-    const next = savedDesigns.map(d =>
-      d.id === loadedDesignId
-        ? { ...d, format: { ...editedFormat }, slots: [...slots], savedAt: Date.now() }
-        : d
-    )
-    setSavedDesigns(next)
-    saveDesignsList(next)
-    clearDraft()
-    setIsDirty(false)
-    const design = next.find(d => d.id === loadedDesignId)
-    showToast(`"${design?.name || 'Ontwerp'}" bijgewerkt`, 'success')
+    try {
+      await db.updateDesign({
+        id: loadedDesignId,
+        name: savedDesigns.find(d => d.id === loadedDesignId)?.name || 'Ontwerp',
+        formatCode: editedFormat?.Code || '',
+        format: { ...editedFormat },
+        slots: [...slots],
+        folder: savedDesigns.find(d => d.id === loadedDesignId)?.folder || null,
+      })
+      setSavedDesigns(prev => prev.map(d =>
+        d.id === loadedDesignId
+          ? { ...d, format: { ...editedFormat }, slots: [...slots], savedAt: new Date().toISOString() }
+          : d
+      ))
+      clearDraft()
+      setIsDirty(false)
+      const design = savedDesigns.find(d => d.id === loadedDesignId)
+      showToast(`"${design?.name || 'Ontwerp'}" bijgewerkt`, 'success')
+    } catch (err) {
+      console.error(err)
+      showToast('Fout bij bijwerken', 'error')
+    }
   }
 
   function handleLoadDesign(design) {
@@ -702,22 +768,29 @@ export default function App() {
   function handleDeleteDesign(id) {
     const design = savedDesigns.find(d => d.id === id)
     const name = design ? `"${design.name}"` : 'dit ontwerp'
-    askConfirm(`Ontwerp ${name} definitief verwijderen?`, () => {
-      const next = savedDesigns.filter(d => d.id !== id)
-      setSavedDesigns(next)
-      saveDesignsList(next)
-      if (loadedDesignId === id) setLoadedDesignId(null)
-      showToast('Ontwerp verwijderd', 'info')
+    askConfirm(`Ontwerp ${name} definitief verwijderen?`, async () => {
+      try {
+        await db.deleteDesign(id)
+        setSavedDesigns(prev => prev.filter(d => d.id !== id))
+        if (loadedDesignId === id) setLoadedDesignId(null)
+        showToast('Ontwerp verwijderd', 'info')
+      } catch (err) {
+        console.error(err)
+        showToast('Fout bij verwijderen', 'error')
+      }
     })
   }
 
-  function handleRenameDesign(id, newName) {
+  async function handleRenameDesign(id, newName) {
     const val = newName.trim()
     if (!val) return
-    const next = savedDesigns.map(d => d.id === id ? { ...d, name: val } : d)
-    setSavedDesigns(next)
-    saveDesignsList(next)
-    setRenamingDesign(null)
+    try {
+      await db.renameDesign(id, val)
+      setSavedDesigns(prev => prev.map(d => d.id === id ? { ...d, name: val } : d))
+      setRenamingDesign(null)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   function handleSelectFormat(format) {
@@ -753,7 +826,7 @@ export default function App() {
       const updated = editingId
         ? prev.map(f => (f.id === editingId || f.Code === editingId) ? withMeta : f)
         : [...prev, withMeta]
-      saveCustomFormats(updated)
+      db.saveCustomFormats(updated).catch(console.error)
       return updated
     })
   }
@@ -765,17 +838,17 @@ export default function App() {
       .map(f => ({ ...f, _custom: true, id: f.Code }))
     setCustomFormats(prev => {
       const updated = [...prev, ...toImport]
-      saveCustomFormats(updated)
+      db.saveCustomFormats(updated).catch(console.error)
       return updated
     })
     setStaticImported(true)
-    saveStaticImported(true)
+    db.saveSetting('static_imported', true).catch(console.error)
   }
 
   function handleDeleteCustomFormat(format) {
     setCustomFormats(prev => {
       const updated = prev.filter(f => f.id !== format.id && f.Code !== format.Code)
-      saveCustomFormats(updated)
+      db.saveCustomFormats(updated).catch(console.error)
       return updated
     })
   }
@@ -793,104 +866,119 @@ export default function App() {
   // ─── Tags & categories (for SponsorEditModal in LogoLibrary) ─────────────
   function handleTagsChange(sponsorName, eventsArray) {
     const newTags = { ...tags, [sponsorName]: eventsArray }
-    setTags(newTags); saveTags(newTags)
+    setTags(newTags)
+    db.saveSponsorEventData(newTags, sponsorCategories).catch(console.error)
   }
 
   function handleCategoryChange(sponsorName, event, category) {
     const catCopy = { ...sponsorCategories, [sponsorName]: { ...(sponsorCategories[sponsorName] || {}), [event]: category } }
     if (category === '') delete catCopy[sponsorName][event]
-    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+    setSponsorCategories(catCopy)
+    db.saveSponsorEventData(tags, catCopy).catch(console.error)
   }
 
   function handleSponsorGroupsChange(sponsorName, groupData) {
     const next = { ...sponsorGroups, [sponsorName]: groupData }
-    setSponsorGroups(next); saveSponsorGroups(next)
+    setSponsorGroups(next)
+    db.saveSponsorGroups(next).catch(console.error)
   }
 
   // ─── Events ──────────────────────────────────────────────────────────────
   function addEvent(val) {
     const v = val.trim().toUpperCase()
     if (!v || events.includes(v)) return
-    const next = [...events, v]; setEvents(next); saveEvents(next)
+    const next = [...events, v]; setEvents(next)
+    db.saveEvents(next).catch(console.error)
   }
 
   function deleteEvent(ev) {
     askConfirm(`Event "${ev}" verwijderen? Alle sponsortags voor dit event gaan verloren.`, () => {
-      const next = events.filter(e => e !== ev); setEvents(next); saveEvents(next)
+      const next = events.filter(e => e !== ev); setEvents(next)
+      db.saveEvents(next).catch(console.error)
       const newTags = {}
       Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.filter(e => e !== ev) })
-      setTags(newTags); saveTags(newTags)
       const catCopy = {}
       Object.entries(sponsorCategories).forEach(([name, evMap]) => {
         catCopy[name] = { ...evMap }; delete catCopy[name][ev]
       })
-      setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+      setTags(newTags); setSponsorCategories(catCopy)
+      db.saveSponsorEventData(newTags, catCopy).catch(console.error)
     })
   }
 
   function renameEvent(oldName, newName) {
     const val = newName.trim().toUpperCase()
     if (!val || val === oldName || events.includes(val)) return
-    const next = events.map(e => e === oldName ? val : e); setEvents(next); saveEvents(next)
+    const next = events.map(e => e === oldName ? val : e); setEvents(next)
+    db.saveEvents(next).catch(console.error)
     const newTags = {}
     Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.map(e => e === oldName ? val : e) })
-    setTags(newTags); saveTags(newTags)
     const catCopy = {}
     Object.entries(sponsorCategories).forEach(([name, evMap]) => {
       catCopy[name] = {}
       Object.entries(evMap).forEach(([ev, cat]) => { catCopy[name][ev === oldName ? val : ev] = cat })
     })
-    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+    setTags(newTags); setSponsorCategories(catCopy)
+    db.saveSponsorEventData(newTags, catCopy).catch(console.error)
   }
 
   // ─── Categories ──────────────────────────────────────────────────────────
   function addCategory(val) {
     if (!val || categoryList.includes(val)) return
-    const next = [...categoryList, val]; setCategoryList(next); saveCategoryList(next)
+    const next = [...categoryList, val]; setCategoryList(next)
+    db.saveSetting('category_list', next).catch(console.error)
   }
 
   function deleteCategory(cat) {
     askConfirm(`Categorie "${cat}" verwijderen? Alle sponsortoewijzingen voor deze categorie gaan verloren.`, () => {
-      const next = categoryList.filter(c => c !== cat); setCategoryList(next); saveCategoryList(next)
+      const next = categoryList.filter(c => c !== cat); setCategoryList(next)
+      db.saveSetting('category_list', next).catch(console.error)
       const catCopy = {}
       Object.entries(sponsorCategories).forEach(([name, evMap]) => {
         catCopy[name] = {}
         Object.entries(evMap).forEach(([ev, c]) => { if (c !== cat) catCopy[name][ev] = c })
       })
-      setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+      setSponsorCategories(catCopy)
+      db.saveSponsorEventData(tags, catCopy).catch(console.error)
     })
   }
 
   function renameCategory(oldCat, newCat) {
     const val = newCat.trim()
     if (!val || val === oldCat || categoryList.includes(val)) return
-    const next = categoryList.map(c => c === oldCat ? val : c); setCategoryList(next); saveCategoryList(next)
+    const next = categoryList.map(c => c === oldCat ? val : c); setCategoryList(next)
+    db.saveSetting('category_list', next).catch(console.error)
     const catCopy = {}
     Object.entries(sponsorCategories).forEach(([name, evMap]) => {
       catCopy[name] = {}
       Object.entries(evMap).forEach(([ev, c]) => { catCopy[name][ev] = c === oldCat ? val : c })
     })
-    setSponsorCategories(catCopy); saveSponsorCategories(catCopy)
+    setSponsorCategories(catCopy)
+    db.saveSponsorEventData(tags, catCopy).catch(console.error)
   }
 
   function reorderCategoryList(newOrder) {
-    setCategoryList(newOrder); saveCategoryList(newOrder)
+    setCategoryList(newOrder)
+    db.saveSetting('category_list', newOrder).catch(console.error)
   }
 
   // ─── Event groups (koepels) ───────────────────────────────────────────────
   function addEventGroup(name) {
     const v = name.trim()
     if (!v || v in eventGroups) return
-    const next = { ...eventGroups, [v]: [] }; setEventGroups(next); saveEventGroups(next)
+    const next = { ...eventGroups, [v]: [] }; setEventGroups(next)
+    db.saveEventGroups(next).catch(console.error)
   }
 
   function deleteEventGroup(name) {
     askConfirm(`Koepel "${name}" verwijderen?`, () => {
       const next = { ...eventGroups }; delete next[name]
-      setEventGroups(next); saveEventGroups(next)
+      setEventGroups(next)
+      db.saveEventGroups(next).catch(console.error)
       const sg = {}
       Object.entries(sponsorGroups).forEach(([sp, groups]) => { const g = { ...groups }; delete g[name]; sg[sp] = g })
-      setSponsorGroups(sg); saveSponsorGroups(sg)
+      setSponsorGroups(sg)
+      db.saveSponsorGroups(sg).catch(console.error)
     })
   }
 
@@ -899,39 +987,43 @@ export default function App() {
     if (!val || val === oldName || val in eventGroups) return
     const next = {}
     Object.entries(eventGroups).forEach(([k, v]) => { next[k === oldName ? val : k] = v })
-    setEventGroups(next); saveEventGroups(next)
+    setEventGroups(next)
+    db.saveEventGroups(next).catch(console.error)
     const sg = {}
     Object.entries(sponsorGroups).forEach(([sp, groups]) => {
       const g = {}
       Object.entries(groups).forEach(([k, v]) => { g[k === oldName ? val : k] = v })
       sg[sp] = g
     })
-    setSponsorGroups(sg); saveSponsorGroups(sg)
+    setSponsorGroups(sg)
+    db.saveSponsorGroups(sg).catch(console.error)
   }
 
   function setEventKoepelAssign(eventCode, koepelName) {
     const next = {}
     Object.entries(eventGroups).forEach(([grp, evs]) => { next[grp] = evs.filter(e => e !== eventCode) })
     if (koepelName && koepelName in next) next[koepelName] = [...next[koepelName], eventCode]
-    setEventGroups(next); saveEventGroups(next)
+    setEventGroups(next)
+    db.saveEventGroups(next).catch(console.error)
   }
 
   // ─── Cell presets ─────────────────────────────────────────────────────────
   function handleCellPresetsChange(newPresets) {
-    setCellPresets(newPresets); saveCellPresets(newPresets)
+    setCellPresets(newPresets)
+    db.saveCellPresets(newPresets).catch(console.error)
   }
 
   // ─── Canvas presets ───────────────────────────────────────────────────────
   function handleCanvasPresetsChange(newPresets) {
-    setCanvasPresets(newPresets); saveCanvasPresets(newPresets)
+    setCanvasPresets(newPresets)
+    db.saveCanvasPresets(newPresets).catch(console.error)
   }
 
   // ─── Default aspect ratio ─────────────────────────────────────────────────
   function handleDefaultAspectChange(val) {
     const v = parseFloat(val) || 1.667
     setDefaultAspectState(v)
-    saveDefaultAspect(v)
-    // Apply immediately to the currently loaded format
+    db.saveSetting('default_aspect', v).catch(console.error)
     if (editedFormat) {
       const newH = Math.round((editedFormat.CellW_mm || 0) / v * 1000) / 1000
       handleFormatChange({ ...editedFormat, CellAspect: v, CellH_mm: newH })
