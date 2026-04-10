@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import sponsors from '../data/sponsors.json'
 import SponsorEditModal from './SponsorEditModal'
+import { logoUrl } from '../utils/logoUrl'
 
 const BLANK = { partner: 'BLANK', filename: 'BLANK' }
 const STATIC_SPONSORS = [BLANK, ...sponsors]
@@ -462,7 +463,7 @@ export default function LogoLibrary({
         {(() => {
           function SponsorCard({ s }) {
             const customSrc = customLogos && customLogos[s.partner]
-            const localSrc = customSrc || s.dataUrl || (s.filename === 'BLANK' ? null : `/logos/${s.filename}.png`)
+            const localSrc = customSrc || s.dataUrl || logoUrl(s.filename)
             const hasError = !customSrc && !s.dataUrl && imgErrors[s.filename]
             const isBeingEdited = editingSponsor === s.partner
             const sponsorTags = tags[s.partner] || []

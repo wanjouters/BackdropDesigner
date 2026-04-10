@@ -1,754 +1,1 @@
-[
-  {
-    "partner": "226ERS",
-    "filename": "226ERS"
-  },
-  {
-    "partner": "A WARE",
-    "filename": "A_WARE"
-  },
-  {
-    "partner": "AARS",
-    "filename": "AARS"
-  },
-  {
-    "partner": "ACEG",
-    "filename": "ACEG"
-  },
-  {
-    "partner": "AD GARAGE",
-    "filename": "AD_GARAGE"
-  },
-  {
-    "partner": "ADEPS PRO",
-    "filename": "ADEPS_PRO"
-  },
-  {
-    "partner": "ALICANTE",
-    "filename": "ALICANTE"
-  },
-  {
-    "partner": "ANTARGAZ",
-    "filename": "ANTARGAZ"
-  },
-  {
-    "partner": "ANTWERPEN",
-    "filename": "ANTWERPEN"
-  },
-  {
-    "partner": "ASSA ABLOY",
-    "filename": "ASSA_ABLOY"
-  },
-  {
-    "partner": "BELORTA",
-    "filename": "BELORTA"
-  },
-  {
-    "partner": "BENIDORM",
-    "filename": "BENIDORM"
-  },
-  {
-    "partner": "BINGOAL FUN",
-    "filename": "BINGOAL_FUN"
-  },
-  {
-    "partner": "BOB DEFRAEYE",
-    "filename": "BOB_DEFRAEYE"
-  },
-  {
-    "partner": "BRANDHOUT GIGANT",
-    "filename": "BRANDHOUT_GIGANT"
-  },
-  {
-    "partner": "CAENEN",
-    "filename": "CAENEN"
-  },
-  {
-    "partner": "CDSCA OCASC",
-    "filename": "CDSCA_OCASC"
-  },
-  {
-    "partner": "CCEC",
-    "filename": "CCEC"
-  },
-  {
-    "partner": "CIRCUIT ZOLDER",
-    "filename": "CIRCUIT_ZOLDER"
-  },
-  {
-    "partner": "COCA COLA",
-    "filename": "COCA_COLA"
-  },
-  {
-    "partner": "COFIDIS",
-    "filename": "COFIDIS"
-  },
-  {
-    "partner": "COUREUR",
-    "filename": "COUREUR"
-  },
-  {
-    "partner": "CRAZY WHEELS",
-    "filename": "CRAZY_WHEELS"
-  },
-  {
-    "partner": "CREDIT MUTUEL",
-    "filename": "CREDIT_MUTUEL"
-  },
-  {
-    "partner": "CSC",
-    "filename": "CSC"
-  },
-  {
-    "partner": "DE CEUSTER",
-    "filename": "DE_CEUSTER"
-  },
-  {
-    "partner": "DELRUE",
-    "filename": "DELRUE"
-  },
-  {
-    "partner": "DIEGEM",
-    "filename": "DIEGEM"
-  },
-  {
-    "partner": "DOB",
-    "filename": "DOB"
-  },
-  {
-    "partner": "DEFENSIE",
-    "filename": "DEFENSIE"
-  },
-  {
-    "partner": "EBEM",
-    "filename": "EBEM"
-  },
-  {
-    "partner": "ELECTRO DEPOT",
-    "filename": "ELECTRO_DEPOT"
-  },
-  {
-    "partner": "ESPRIT ICT",
-    "filename": "ESPRIT_ICT"
-  },
-  {
-    "partner": "ETHIAS",
-    "filename": "ETHIAS"
-  },
-  {
-    "partner": "EXACT",
-    "filename": "EXACT"
-  },
-  {
-    "partner": "FERO GROUP",
-    "filename": "FERO_GROUP"
-  },
-  {
-    "partner": "FLAMANVILLE",
-    "filename": "FLAMANVILLE"
-  },
-  {
-    "partner": "FLOREAL HOLIDAYS",
-    "filename": "FLOREAL_HOLIDAYS"
-  },
-  {
-    "partner": "FRIESLAND CAMPINA",
-    "filename": "FRIESLAND_CAMPINA"
-  },
-  {
-    "partner": "GARAGE MERCKX",
-    "filename": "GARAGE_MERCKX"
-  },
-  {
-    "partner": "GAVERE",
-    "filename": "GAVERE"
-  },
-  {
-    "partner": "GROUP BRS",
-    "filename": "GROUP_BRS"
-  },
-  {
-    "partner": "HAROL",
-    "filename": "HAROL"
-  },
-  {
-    "partner": "HEUSDEN ZOLDER",
-    "filename": "HEUSDEN_ZOLDER"
-  },
-  {
-    "partner": "HEYLEN VASTGOED",
-    "filename": "HEYLEN_VASTGOED"
-  },
-  {
-    "partner": "HITEC",
-    "filename": "HITEC"
-  },
-  {
-    "partner": "HOOGSTRATEN",
-    "filename": "HOOGSTRATEN"
-  },
-  {
-    "partner": "INFRASPORTS",
-    "filename": "INFRASPORTS"
-  },
-  {
-    "partner": "INTERMARCHE",
-    "filename": "INTERMARCHE"
-  },
-  {
-    "partner": "ISOLATIE STOCK",
-    "filename": "ISOLATIE_STOCK"
-  },
-  {
-    "partner": "JANEV",
-    "filename": "JANEV"
-  },
-  {
-    "partner": "JIHOCESKY KRAJ",
-    "filename": "JIHOCESKY_KRAJ"
-  },
-  {
-    "partner": "KARCHER",
-    "filename": "KARCHER"
-  },
-  {
-    "partner": "KOKSIJDE",
-    "filename": "KOKSIJDE"
-  },
-  {
-    "partner": "KW",
-    "filename": "KW"
-  },
-  {
-    "partner": "LA MANCHE",
-    "filename": "LA_MANCHE"
-  },
-  {
-    "partner": "LE COTENTIN",
-    "filename": "LE_COTENTIN"
-  },
-  {
-    "partner": "LSO",
-    "filename": "LSO"
-  },
-  {
-    "partner": "MAASMECHELEN",
-    "filename": "MAASMECHELEN"
-  },
-  {
-    "partner": "MAES 00",
-    "filename": "MAES_00"
-  },
-  {
-    "partner": "MAES",
-    "filename": "MAES"
-  },
-  {
-    "partner": "MERCEDES VANS",
-    "filename": "MERCEDES_VANS"
-  },
-  {
-    "partner": "MERKSPLAS",
-    "filename": "MERKSPLAS"
-  },
-  {
-    "partner": "MGH",
-    "filename": "MGH"
-  },
-  {
-    "partner": "NAMUR",
-    "filename": "NAMUR"
-  },
-  {
-    "partner": "NCM",
-    "filename": "NCM"
-  },
-  {
-    "partner": "NIEL",
-    "filename": "NIEL"
-  },
-  {
-    "partner": "NSA",
-    "filename": "NSA"
-  },
-  {
-    "partner": "OMNICOL",
-    "filename": "OMNICOL"
-  },
-  {
-    "partner": "OOSTKAMP",
-    "filename": "OOSTKAMP"
-  },
-  {
-    "partner": "ORISTANO",
-    "filename": "ORISTANO"
-  },
-  {
-    "partner": "OVERIJSE",
-    "filename": "OVERIJSE"
-  },
-  {
-    "partner": "PAUWELS SAUZEN",
-    "filename": "PAUWELS_SAUZEN"
-  },
-  {
-    "partner": "PGS",
-    "filename": "PGS"
-  },
-  {
-    "partner": "PISSEI",
-    "filename": "PISSEI"
-  },
-  {
-    "partner": "POLYDAK",
-    "filename": "POLYDAK"
-  },
-  {
-    "partner": "PRIK EN TIK",
-    "filename": "PRIK_EN_TIK"
-  },
-  {
-    "partner": "RAS",
-    "filename": "RAS"
-  },
-  {
-    "partner": "REGION NORMANDIE",
-    "filename": "REGION_NORMANDIE"
-  },
-  {
-    "partner": "RENOTRAP",
-    "filename": "RENOTRAP"
-  },
-  {
-    "partner": "RODE KRUIS",
-    "filename": "RODE_KRUIS"
-  },
-  {
-    "partner": "SARDEGNA",
-    "filename": "SARDEGNA"
-  },
-  {
-    "partner": "SIMAC",
-    "filename": "SIMAC"
-  },
-  {
-    "partner": "SKODA",
-    "filename": "SKODA"
-  },
-  {
-    "partner": "SKUPINA CEZ",
-    "filename": "SKUPINA_CEZ"
-  },
-  {
-    "partner": "SPORT VLAANDEREN",
-    "filename": "SPORT_VLAANDEREN"
-  },
-  {
-    "partner": "SPORTLED",
-    "filename": "SPORTLED"
-  },
-  {
-    "partner": "STIHL",
-    "filename": "STIHL"
-  },
-  {
-    "partner": "SUNSEEKER",
-    "filename": "SUNSEEKER"
-  },
-  {
-    "partner": "TABOR",
-    "filename": "TABOR"
-  },
-  {
-    "partner": "TELENET",
-    "filename": "TELENET"
-  },
-  {
-    "partner": "TERRALBA",
-    "filename": "TERRALBA"
-  },
-  {
-    "partner": "TKF",
-    "filename": "TKF"
-  },
-  {
-    "partner": "TOI TOI",
-    "filename": "TOI_TOI"
-  },
-  {
-    "partner": "UCI CXWC TERRALBA",
-    "filename": "UCI_CXWC_TERRALBA"
-  },
-  {
-    "partner": "VALENCIA",
-    "filename": "VALENCIA"
-  },
-  {
-    "partner": "VANDAELE",
-    "filename": "VANDAELE"
-  },
-  {
-    "partner": "VARTA",
-    "filename": "VARTA"
-  },
-  {
-    "partner": "VELUX",
-    "filename": "VELUX"
-  },
-  {
-    "partner": "VIESSMANN",
-    "filename": "VIESSMANN"
-  },
-  {
-    "partner": "WERKKLEDIJ",
-    "filename": "WERKKLEDIJ"
-  },
-  {
-    "partner": "WHIM",
-    "filename": "WHIM"
-  },
-  {
-    "partner": "WILLY NAESSENS",
-    "filename": "WILLY_NAESSENS"
-  },
-  {
-    "partner": "X2O",
-    "filename": "X2O"
-  },
-  {
-    "partner": "YDES BOMENVERVOER",
-    "filename": "YDES_BOMENVERVOER"
-  },
-  {
-    "partner": "ZONHOVEN",
-    "filename": "ZONHOVEN"
-  },
-  {
-    "partner": "TEST",
-    "filename": "TEST"
-  },
-  {
-    "partner": "LIMAR",
-    "filename": "LIMAR"
-  },
-  {
-    "partner": "BIGMAT",
-    "filename": "BIGMAT"
-  },
-  {
-    "partner": "CAPELLE",
-    "filename": "CAPELLE"
-  },
-  {
-    "partner": "LIBIEZ",
-    "filename": "LIBIEZ"
-  },
-  {
-    "partner": "JAMOTTE",
-    "filename": "JAMOTTE"
-  },
-  {
-    "partner": "LUCY",
-    "filename": "LUCY"
-  },
-  {
-    "partner": "PIERRET",
-    "filename": "PIERRET"
-  },
-  {
-    "partner": "CIBEL",
-    "filename": "CIBEL"
-  },
-  {
-    "partner": "JOMA",
-    "filename": "JOMA"
-  },
-  {
-    "partner": "DENDERMONDE",
-    "filename": "DENDERMONDE"
-  },
-  {
-    "partner": "KONTRIMO",
-    "filename": "KONTRIMO"
-  },
-  {
-    "partner": "MEUBELEN DE MAN",
-    "filename": "MEUBELEN_DE_MAN"
-  },
-  {
-    "partner": "PEPSI",
-    "filename": "PEPSI"
-  },
-  {
-    "partner": "R2 PROJECTS",
-    "filename": "R2_PROJECTS"
-  },
-  {
-    "partner": "WALLONIE",
-    "filename": "WALLONIE"
-  },
-  {
-    "partner": "VELOFOLIES",
-    "filename": "VELOFOLIES"
-  },
-  {
-    "partner": "SUPRABAZAR",
-    "filename": "SUPRABAZAR"
-  },
-  {
-    "partner": "WEVELGEM",
-    "filename": "WEVELGEM"
-  },
-  {
-    "partner": "GROWEBO",
-    "filename": "GROWEBO"
-  },
-  {
-    "partner": "TURISME VALENCIA",
-    "filename": "TURISME_VALENCIA"
-  },
-  {
-    "partner": "FRISTADS",
-    "filename": "FRISTADS"
-  },
-  {
-    "partner": "FLANDRIEN SUPER8",
-    "filename": "FLANDRIEN_SUPER8"
-  },
-  {
-    "partner": "IKO",
-    "filename": "IKO"
-  },
-  {
-    "partner": "RABOBANK",
-    "filename": "RABOBANK"
-  },
-  {
-    "partner": "TOVERTUIN",
-    "filename": "TOVERTUIN"
-  },
-  {
-    "partner": "WOENSDRECHT",
-    "filename": "WOENSDRECHT"
-  },
-  {
-    "partner": "BRABANT SPORT",
-    "filename": "BRABANT_SPORT"
-  },
-  {
-    "partner": "FRISIA",
-    "filename": "FRISIA"
-  },
-  {
-    "partner": "TUMMERS",
-    "filename": "TUMMERS"
-  },
-  {
-    "partner": "REO",
-    "filename": "REO"
-  },
-  {
-    "partner": "BILZEN HOESELT",
-    "filename": "BILZEN_HOESELT"
-  },
-  {
-    "partner": "BE BRUSSELS",
-    "filename": "BE_BRUSSELS"
-  },
-  {
-    "partner": "ENECO",
-    "filename": "ENECO"
-  },
-  {
-    "partner": "AMSTEL",
-    "filename": "AMSTEL"
-  },
-  {
-    "partner": "BOELS",
-    "filename": "BOELS"
-  },
-  {
-    "partner": "BRUSSEL",
-    "filename": "BRUSSEL"
-  },
-  {
-    "partner": "CYCLING IN FLANDERS",
-    "filename": "CYCLING_IN_FLANDERS"
-  },
-  {
-    "partner": "HASSELT",
-    "filename": "HASSELT"
-  },
-  {
-    "partner": "IEPER",
-    "filename": "IEPER"
-  },
-  {
-    "partner": "DOLMANS",
-    "filename": "DOLMANS"
-  },
-  {
-    "partner": "GENT",
-    "filename": "GENT"
-  },
-  {
-    "partner": "IMMOWEB NEG",
-    "filename": "IMMOWEB_NEG"
-  },
-  {
-    "partner": "IMMOWEB POS",
-    "filename": "IMMOWEB_POS"
-  },
-  {
-    "partner": "KBC",
-    "filename": "KBC"
-  },
-  {
-    "partner": "KPMG",
-    "filename": "KPMG"
-  },
-  {
-    "partner": "KWAREMONT",
-    "filename": "KWAREMONT"
-  },
-  {
-    "partner": "LA DERNIERE HEURE",
-    "filename": "LA_DERNIERE_HEURE"
-  },
-  {
-    "partner": "LA LORAINE",
-    "filename": "LA_LORAINE"
-  },
-  {
-    "partner": "LENNIK",
-    "filename": "LENNIK"
-  },
-  {
-    "partner": "LIDL",
-    "filename": "LIDL"
-  },
-  {
-    "partner": "LIMBURG CYCLING",
-    "filename": "LIMBURG_CYCLING"
-  },
-  {
-    "partner": "LOCAL",
-    "filename": "LOCAL"
-  },
-  {
-    "partner": "LOTTO",
-    "filename": "LOTTO"
-  },
-  {
-    "partner": "MAASTRICHT",
-    "filename": "MAASTRICHT"
-  },
-  {
-    "partner": "MIDDELKERKE",
-    "filename": "MIDDELKERKE"
-  },
-  {
-    "partner": "NIEUWSBLAD",
-    "filename": "NIEUWSBLAD"
-  },
-  {
-    "partner": "NINOVE",
-    "filename": "NINOVE"
-  },
-  {
-    "partner": "OOST VLAANDEREN",
-    "filename": "OOST_VLAANDEREN"
-  },
-  {
-    "partner": "OUDENAARDE",
-    "filename": "OUDENAARDE"
-  },
-  {
-    "partner": "POSTNL",
-    "filename": "POSTNL"
-  },
-  {
-    "partner": "PROXIMUS",
-    "filename": "PROXIMUS"
-  },
-  {
-    "partner": "ROESELARE",
-    "filename": "ROESELARE"
-  },
-  {
-    "partner": "SCHOTEN",
-    "filename": "SCHOTEN"
-  },
-  {
-    "partner": "SHIMANO",
-    "filename": "SHIMANO"
-  },
-  {
-    "partner": "SHIMANO EXPERIENCE CENTER",
-    "filename": "SHIMANO_EXPERIENCE_CENTER"
-  },
-  {
-    "partner": "STAATSLOTERIJ",
-    "filename": "STAATSLOTERIJ"
-  },
-  {
-    "partner": "TERNEUZEN",
-    "filename": "TERNEUZEN"
-  },
-  {
-    "partner": "TONGEREN BORGLOON",
-    "filename": "TONGEREN_BORGLOON"
-  },
-  {
-    "partner": "TUDOR",
-    "filename": "TUDOR"
-  },
-  {
-    "partner": "VALKENBURG",
-    "filename": "VALKENBURG"
-  },
-  {
-    "partner": "VLAAMS BRABANT",
-    "filename": "VLAAMS_BRABANT"
-  },
-  {
-    "partner": "WAREGEM",
-    "filename": "WAREGEM"
-  },
-  {
-    "partner": "ZEELAND",
-    "filename": "ZEELAND"
-  },
-  {
-    "partner": "BEERSEL",
-    "filename": "BEERSEL"
-  },
-  {
-    "partner": "LAZER",
-    "filename": "LAZER"
-  },
-  {
-    "partner": "PROVINCIE LIMBURG NL",
-    "filename": "PROVINCIE_LIMBURG_NL"
-  },
-  {
-    "partner": "L1 NIEUWS",
-    "filename": "L1_NIEUWS"
-  },
-  {
-    "partner": "NOS",
-    "filename": "NOS"
-  },
-  {
-    "partner": "DE LIMBURGER",
-    "filename": "DE_LIMBURGER"
-  },
-  {
-    "partner": "WIELERFLITS",
-    "filename": "WIELERFLITS"
-  },
-  {
-    "partner": "SKODA WHEELER",
-    "filename": "SKODA_WHEELER"
-  }
-]
+[  {    "partner": "226ERS",    "filename": "226ERS"  },  {    "partner": "A WARE",    "filename": "A_WARE"  },  {    "partner": "AARS",    "filename": "AARS"  },  {    "partner": "ACEG",    "filename": "ACEG"  },  {    "partner": "AD GARAGE",    "filename": "AD_GARAGE"  },  {    "partner": "ADEPS PRO",    "filename": "ADEPS_PRO"  },  {    "partner": "ALICANTE",    "filename": "ALICANTE"  },  {    "partner": "ANTARGAZ",    "filename": "ANTARGAZ"  },  {    "partner": "ANTWERPEN",    "filename": "ANTWERPEN"  },  {    "partner": "ASSA ABLOY",    "filename": "ASSA_ABLOY"  },  {    "partner": "BELORTA",    "filename": "BELORTA"  },  {    "partner": "BENIDORM",    "filename": "BENIDORM"  },  {    "partner": "BINGOAL FUN",    "filename": "BINGOAL_FUN"  },  {    "partner": "BOB DEFRAEYE",    "filename": "BOB_DEFRAEYE"  },  {    "partner": "BRANDHOUT GIGANT",    "filename": "BRANDHOUT_GIGANT"  },  {    "partner": "CAENEN",    "filename": "CAENEN"  },  {    "partner": "CDSCA OCASC",    "filename": "CDSCA_OCASC"  },  {    "partner": "CCEC",    "filename": "CCEC"  },  {    "partner": "CIRCUIT ZOLDER",    "filename": "CIRCUIT_ZOLDER"  },  {    "partner": "COCA COLA",    "filename": "COCA_COLA"  },  {    "partner": "COFIDIS",    "filename": "COFIDIS"  },  {    "partner": "COUREUR",    "filename": "COUREUR"  },  {    "partner": "CRAZY WHEELS",    "filename": "CRAZY_WHEELS"  },  {    "partner": "CREDIT MUTUEL",    "filename": "CREDIT_MUTUEL"  },  {    "partner": "CSC",    "filename": "CSC"  },  {    "partner": "DE CEUSTER",    "filename": "DE_CEUSTER"  },  {    "partner": "DELRUE",    "filename": "DELRUE"  },  {    "partner": "DIEGEM",    "filename": "DIEGEM"  },  {    "partner": "DOB",    "filename": "DOB"  },  {    "partner": "DEFENSIE",    "filename": "DEFENSIE"  },  {    "partner": "EBEM",    "filename": "EBEM"  },  {    "partner": "ELECTRO DEPOT",    "filename": "ELECTRO_DEPOT"  },  {    "partner": "ESPRIT ICT",    "filename": "ESPRIT_ICT"  },  {    "partner": "ETHIAS",    "filename": "ETHIAS"  },  {    "partner": "EXACT",    "filename": "EXACT"  },  {    "partner": "FERO GROUP",    "filename": "FERO_GROUP"  },  {    "partner": "FLAMANVILLE",    "filename": "FLAMANVILLE"  },  {    "partner": "FLOREAL HOLIDAYS",    "filename": "FLOREAL_HOLIDAYS"  },  {    "partner": "FRIESLAND CAMPINA",    "filename": "FRIESLAND_CAMPINA"  },  {    "partner": "GARAGE MERCKX",    "filename": "GARAGE_MERCKX"  },  {    "partner": "GAVERE",    "filename": "GAVERE"  },  {    "partner": "GROUP BRS",    "filename": "GROUP_BRS"  },  {    "partner": "HAROL",    "filename": "HAROL"  },  {    "partner": "HEUSDEN ZOLDER",    "filename": "HEUSDEN_ZOLDER"  },  {    "partner": "HEYLEN VASTGOED",    "filename": "HEYLEN_VASTGOED"  },  {    "partner": "HITEC",    "filename": "HITEC"  },  {    "partner": "HOOGSTRATEN",    "filename": "HOOGSTRATEN"  },  {    "partner": "INFRASPORTS",    "filename": "INFRASPORTS"  },  {    "partner": "INTERMARCHE",    "filename": "INTERMARCHE"  },  {    "partner": "ISOLATIE STOCK",    "filename": "ISOLATIE_STOCK"  },  {    "partner": "JANEV",    "filename": "JANEV"  },  {    "partner": "JIHOCESKY KRAJ",    "filename": "JIHOCESKY_KRAJ"  },  {    "partner": "KARCHER",    "filename": "KARCHER"  },  {    "partner": "KOKSIJDE",    "filename": "KOKSIJDE"  },  {    "partner": "KW",    "filename": "KW"  },  {    "partner": "LA MANCHE",    "filename": "LA_MANCHE"  },  {    "partner": "LE COTENTIN",    "filename": "LE_COTENTIN"  },  {    "partner": "LSO",    "filename": "LSO"  },  {    "partner": "MAASMECHELEN",    "filename": "MAASMECHELEN"  },  {    "partner": "MAES 00",    "filename": "MAES_00"  },  {    "partner": "MAES",    "filename": "MAES"  },  {    "partner": "MERCEDES VANS",    "filename": "MERCEDES_VANS"  },  {    "partner": "MERKSPLAS",    "filename": "MERKSPLAS"  },  {    "partner": "MGH",    "filename": "MGH"  },  {    "partner": "NAMUR",    "filename": "NAMUR"  },  {    "partner": "NCM",    "filename": "NCM"  },  {    "partner": "NIEL",    "filename": "NIEL"  },  {    "partner": "NSA",    "filename": "NSA"  },  {    "partner": "OMNICOL",    "filename": "OMNICOL"  },  {    "partner": "OOSTKAMP",    "filename": "OOSTKAMP"  },  {    "partner": "ORISTANO",    "filename": "ORISTANO"  },  {    "partner": "OVERIJSE",    "filename": "OVERIJSE"  },  {    "partner": "PAUWELS SAUZEN",    "filename": "PAUWELS_SAUZEN"  },  {    "partner": "PGS",    "filename": "PGS"  },  {    "partner": "PISSEI",    "filename": "PISSEI"  },  {    "partner": "POLYDAK",    "filename": "POLYDAK"  },  {    "partner": "PRIK EN TIK",    "filename": "PRIK_EN_TIK"  },  {    "partner": "RAS",    "filename": "RAS"  },  {    "partner": "REGION NORMANDIE",    "filename": "REGION_NORMANDIE"  },  {    "partner": "RENOTRAP",    "filename": "RENOTRAP"  },  {    "partner": "RODE KRUIS",    "filename": "RODE_KRUIS"  },  {    "partner": "SARDEGNA",    "filename": "SARDEGNA"  },  {    "partner": "SIMAC",    "filename": "SIMAC"  },  {    "partner": "SKODA",    "filename": "SKODA"  },  {    "partner": "SKUPINA CEZ",    "filename": "SKUPINA_CEZ"  },  {    "partner": "SPORT VLAANDEREN",    "filename": "SPORT_VLAANDEREN"  },  {    "partner": "SPORTLED",    "filename": "SPORTLED"  },  {    "partner": "STIHL",    "filename": "STIHL"  },  {    "partner": "SUNSEEKER",    "filename": "SUNSEEKER"  },  {    "partner": "TABOR",    "filename": "TABOR"  },  {    "partner": "TELENET",    "filename": "TELENET"  },  {    "partner": "TERRALBA",    "filename": "TERRALBA"  },  {    "partner": "TKF",    "filename": "TKF"  },  {    "partner": "TOI TOI",    "filename": "TOI_TOI"  },  {    "partner": "UCI CXWC TERRALBA",    "filename": "UCI_CXWC_TERRALBA"  },  {    "partner": "VALENCIA",    "filename": "VALENCIA"  },  {    "partner": "VANDAELE",    "filename": "VANDAELE"  },  {    "partner": "VARTA",    "filename": "VARTA"  },  {    "partner": "VELUX",    "filename": "VELUX"  },  {    "partner": "VIESSMANN",    "filename": "VIESSMANN"  },  {    "partner": "WERKKLEDIJ",    "filename": "WERKKLEDIJ"  },  {    "partner": "WHIM",    "filename": "WHIM"  },  {    "partner": "WILLY NAESSENS",    "filename": "WILLY_NAESSENS"  },  {    "partner": "X2O",    "filename": "X2O"  },  {    "partner": "YDES BOMENVERVOER",    "filename": "YDES_BOMENVERVOER"  },  {    "partner": "ZONHOVEN",    "filename": "ZONHOVEN"  },  {    "partner": "TEST",    "filename": "TEST"  },  {    "partner": "LIMAR",    "filename": "LIMAR"  },  {    "partner": "BIGMAT",    "filename": "BIGMAT"  },  {    "partner": "CAPELLE",    "filename": "CAPELLE"  },  {    "partner": "LIBIEZ",    "filename": "LIBIEZ"  },  {    "partner": "JAMOTTE",    "filename": "JAMOTTE"  },  {    "partner": "LUCY",    "filename": "LUCY"  },  {    "partner": "PIERRET",    "filename": "PIERRET"  },  {    "partner": "CIBEL",    "filename": "CIBEL"  },  {    "partner": "JOMA",    "filename": "JOMA"  },  {    "partner": "DENDERMONDE",    "filename": "DENDERMONDE"  },  {    "partner": "KONTRIMO",    "filename": "KONTRIMO"  },  {    "partner": "MEUBELEN DE MAN",    "filename": "MEUBELEN_DE_MAN"  },  {    "partner": "PEPSI",    "filename": "PEPSI"  },  {    "partner": "R2 PROJECTS",    "filename": "R2_PROJECTS"  },  {    "partner": "WALLONIE",    "filename": "WALLONIE"  },  {    "partner": "VELOFOLIES",    "filename": "VELOFOLIES"  },  {    "partner": "SUPRABAZAR",    "filename": "SUPRABAZAR"  },  {    "partner": "WEVELGEM",    "filename": "WEVELGEM"  },  {    "partner": "GROWEBO",    "filename": "GROWEBO"  },  {    "partner": "TURISME VALENCIA",    "filename": "TURISME_VALENCIA"  },  {    "partner": "FRISTADS",    "filename": "FRISTADS"  },  {    "partner": "FLANDRIEN SUPER8",    "filename": "FLANDRIEN_SUPER8"  },  {    "partner": "IKO",    "filename": "IKO"  },  {    "partner": "RABOBANK",    "filename": "RABOBANK"  },  {    "partner": "TOVERTUIN",    "filename": "TOVERTUIN"  },  {    "partner": "WOENSDRECHT",    "filename": "WOENSDRECHT"  },  {    "partner": "BRABANT SPORT",    "filename": "BRABANT_SPORT"  },  {    "partner": "FRISIA",    "filename": "FRISIA"  },  {    "partner": "TUMMERS",    "filename": "TUMMERS"  },  {    "partner": "REO",    "filename": "REO"  },  {    "partner": "BILZEN HOESELT",    "filename": "BILZEN_HOESELT"  },  {    "partner": "BE BRUSSELS",    "filename": "BE_BRUSSELS"  },  {    "partner": "ENECO",    "filename": "ENECO"  },  {    "partner": "AMSTEL",    "filename": "AMSTEL"  },  {    "partner": "BOELS",    "filename": "BOELS"  },  {    "partner": "BRUSSEL",    "filename": "BRUSSEL"  },  {    "partner": "CYCLING IN FLANDERS",    "filename": "CYCLING_IN_FLANDERS"  },  {    "partner": "HASSELT",    "filename": "HASSELT"  },  {    "partner": "IEPER",    "filename": "IEPER"  },  {    "partner": "DOLMANS",    "filename": "DOLMANS"  },  {    "partner": "GENT",    "filename": "GENT"  },  {    "partner": "IMMOWEB NEG",    "filename": "IMMOWEB_NEG"  },  {    "partner": "IMMOWEB POS",    "filename": "IMMOWEB_POS"  },  {    "partner": "KBC",    "filename": "KBC"  },  {    "partner": "KPMG",    "filename": "KPMG"  },  {    "partner": "KWAREMONT",    "filename": "KWAREMONT"  },  {    "partner": "LA DERNIERE HEURE",    "filename": "LA_DERNIERE_HEURE"  },  {    "partner": "LA LORAINE",    "filename": "LA_LORAINE"  },  {    "partner": "LENNIK",    "filename": "LENNIK"  },  {    "partner": "LIDL",    "filename": "LIDL"  },  {    "partner": "LIMBURG CYCLING",    "filename": "LIMBURG_CYCLING"  },  {    "partner": "LOCAL",    "filename": "LOCAL"  },  {    "partner": "LOTTO",    "filename": "LOTTO"  },  {    "partner": "MAASTRICHT",    "filename": "MAASTRICHT"  },  {    "partner": "MIDDELKERKE",    "filename": "MIDDELKERKE"  },  {    "partner": "NIEUWSBLAD",    "filename": "NIEUWSBLAD"  },  {    "partner": "NINOVE",    "filename": "NINOVE"  },  {    "partner": "OOST VLAANDEREN",    "filename": "OOST_VLAANDEREN"  },  {    "partner": "OUDENAARDE",    "filename": "OUDENAARDE"  },  {    "partner": "POSTNL",    "filename": "POSTNL"  },  {    "partner": "PROXIMUS",    "filename": "PROXIMUS"  },  {    "partner": "ROESELARE",    "filename": "ROESELARE"  },  {    "partner": "SCHOTEN",    "filename": "SCHOTEN"  },  {    "partner": "SHIMANO",    "filename": "SHIMANO"  },  {    "partner": "SHIMANO EXPERIENCE CENTER",    "filename": "SHIMANO_EXPERIENCE_CENTER"  },  {    "partner": "STAATSLOTERIJ",    "filename": "STAATSLOTERIJ"  },  {    "partner": "TERNEUZEN",    "filename": "TERNEUZEN"  },  {    "partner": "TONGEREN BORGLOON",    "filename": "TONGEREN_BORGLOON"  },  {    "partner": "TUDOR",    "filename": "TUDOR"  },  {    "partner": "VALKENBURG",    "filename": "VALKENBURG"  },  {    "partner": "VLAAMS BRABANT",    "filename": "VLAAMS_BRABANT"  },  {    "partner": "WAREGEM",    "filename": "WAREGEM"  },  {    "partner": "ZEELAND",    "filename": "ZEELAND"  },  {    "partner": "BEERSEL",    "filename": "BEERSEL"  },  {    "partner": "LAZER",    "filename": "LAZER"  },  {    "partner": "PROVINCIE LIMBURG NL",    "filename": "PROVINCIE_LIMBURG_NL"  },  {    "partner": "L1 NIEUWS",    "filename": "L1_NIEUWS"  },  {    "partner": "NOS",    "filename": "NOS"  },  {    "partner": "DE LIMBURGER",    "filename": "DE_LIMBURGER"  },  {    "partner": "WIELERFLITS",    "filename": "WIELERFLITS"  },  {    "partner": "SKODA WHEELER",    "filename": "SKODA_WHEELER"  },  { "partner": "AMSTEL 00", "filename": "AMSTEL_00" },  { "partner": "HBVL", "filename": "HBVL" }]

@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import sponsors from '../data/sponsors.json'
+import { logoUrl } from '../utils/logoUrl'
 
 const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
 

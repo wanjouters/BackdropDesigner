@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import sponsors from '../data/sponsors.json'
 
 import { parseBarPosition } from '../utils/barPosition'
+import { logoUrl } from '../utils/logoUrl'
 
 const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
 
@@ -12,7 +13,7 @@ function Cell({ x, y, width, height, value, index, isSelected, canvasBg, onSelec
   const sponsor = sponsorMap[value]
   const isBlank = !value || value === 'BLANK'
   const customSrc = customLogos && customLogos[value]
-  const localSrc = customSrc || (sponsor ? `/logos/${sponsor.filename}.png` : null)
+  const localSrc = customSrc || (sponsor ? logoUrl(sponsor.filename) : null)
 
   function handleDragOver(e) {
     if (!e.dataTransfer.types.includes('sponsor')) return

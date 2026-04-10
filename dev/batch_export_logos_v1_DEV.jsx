@@ -310,4 +310,15 @@
 
     alert(msg);
 
+    // ─── Upload naar Supabase Storage ─────────────────────────────────────────
+    // Roept het Node.js upload-script aan dat alle geëxporteerde bestanden
+    // naar de 'logos' bucket in Supabase stuurt.
+    if (exported.length > 0) {
+        var scriptDir = (new File($.fileName)).parent.fsName;
+        var uploadScript = scriptDir + '/upload-logos.js';
+        var cmd = 'node "' + uploadScript + '" "' + outputFolder.fsName + '" > /tmp/upload-logos.log 2>&1';
+        app.system(cmd);
+        alert('\u2713 Upload gestart naar Supabase Storage.\nLog: /tmp/upload-logos.log');
+    }
+
 })();
