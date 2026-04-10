@@ -311,14 +311,37 @@
     alert(msg);
 
     // ─── Upload naar Supabase Storage ─────────────────────────────────────────
-    // Roept het Node.js upload-script aan dat alle geëxporteerde bestanden
-    // naar de 'logos' bucket in Supabase stuurt.
+    // Schrijft een .command-bestand en voert het uit — werkt zowel via
+    // File > Scripts als via CEP-extensies (LoaderScriptPanel e.d.).
     if (exported.length > 0) {
         var scriptDir = (new File($.fileName)).parent.fsName;
         var uploadScript = scriptDir + '/upload-logos.js';
-        var cmd = 'node "' + uploadScript + '" "' + outputFolder.fsName + '" > /tmp/upload-logos.log 2>&1';
-        app.system(cmd);
-        alert('\u2713 Upload gestart naar Supabase Storage.\nLog: /tmp/upload-logos.log');
+        var cmdFile = new File('/tmp/bd_upload.command');
+        cmdFile.open('w');
+        cmdFile.writeln('#!/bin/bash');
+        cmdFile.writeln('node "' + uploadScript + '" "' + outputFolder.fsName + '" > /tmp/upload-logos.log 2>&1');
+        cmdFile.close();
+
+        // chmod +x zodat macOS het kan uitvoeren
+        try { system('chmod +x /tmp/bd_upload.command'); } catch (e) {}
+
+        var launched = false;
+        try {
+            // system() werkt bij directe scriptrun
+            system('/tmp/bd_upload.command');
+            launched = true;
+        } catch (e) {}
+
+        if (!launched) {
+            // Fallback voor CEP: open via Terminal
+            try { cmdFile.execute(); launched = true; } catch (e) {}
+        }
+
+        if (launched) {
+            alert('\u2713 Upload gestart naar Supabase Storage.\nLog: /tmp/upload-logos.log');
+        } else {
+            alert('\u26a0 Upload kon niet automatisch starten.\nRun handmatig in Terminal:\nnode "' + uploadScript + '" "' + outputFolder.fsName + '"');
+        }
     }
 
 })();
