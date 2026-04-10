@@ -12,9 +12,11 @@ BackdropDesigner is een React-webapp (Vite + Tailwind CSS v4) voor het visueel o
 |---|---|
 | Framework | React 19 + Vite |
 | Styling | Tailwind CSS v4 |
-| State | `useState` + `localStorage` (geen backend) |
+| State | `useState` + **Supabase** (PostgreSQL + Storage) |
 | Taal | JSX (geen TypeScript) |
 | Dev server | `npm run dev` → `http://localhost:5173` |
+| Hosting | Vercel (auto-deploy bij git push naar `main`) |
+| Database | Supabase — project `holypriabntrbxpnsjfe`, EU West |
 | Locatie | `apps/BackdropDesigner/dev/backdrop-designer/` |
 
 ---
@@ -39,12 +41,19 @@ apps/BackdropDesigner/
         ExportButton.jsx       — CSV-export knop
         CustomFormatModal.jsx  — Modal voor nieuw aangepast formaat
       utils/
-        sponsorTags.js         — Alle localStorage load/save functies
+        supabase.js            — Supabase client (createClient met env vars)
+        db.js                  — Alle async DB-functies (vervangt localStorage)
+        logoUrl.js             — Logo URL resolver: custom → Supabase Storage → null
+        sponsorTags.js         — Legacy localStorage functies (nog aanwezig, niet meer primair)
         exportJpeg.js          — JPEG-export logica
+        barPosition.js         — Gedeelde barPosition parser
       data/
-        sponsors.json          — Sponsordatabase (~188 sponsors, velden: partner + filename)
+        sponsors.json          — Sponsordatabase (velden: partner + filename)
         formats.json           — Alle gridformaten
+      scripts/
+        upload-logos-init.js   — Eenmalig bulk-upload script (193 logos → Supabase Storage)
     batch_export_logos_v1_DEV.jsx  — ExtendScript: batch export vanuit Illustrator
+    upload-logos.js            — Node.js script: uploadt geëxporteerde logos naar Supabase Storage
 ```
 
 ### sponsors.json formaat
@@ -54,30 +63,50 @@ apps/BackdropDesigner/
 ```
 
 - `partner`: weergavenaam (met spaties), sleutel voor alle tags/data in localStorage
-- `filename`: bestandsnaam zonder extensie → `public/logos/FILENAME.png`
+- `filename`: bestandsnaam zonder extensie → Supabase Storage URL via `logoUrl(filename)`
 - Geen `url`-veld meer (was FTP-pad uit oude Excel-workflow, niet meer nodig)
 - `BLANK` staat **niet** in de JSON — die is hardcoded in `App.jsx`
 
 ---
 
-## State & Persistentie (localStorage)
+## State & Persistentie (Supabase)
 
-Alle state wordt opgeslagen in `localStorage` via `src/utils/sponsorTags.js`.
+Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/utils/db.js`. Alle functies zijn `async` en worden fire-and-forget aangeroepen met `.catch(console.error)`.
 
-| Key | Inhoud |
+### Supabase tabellen
+
+| Tabel | Inhoud |
 |---|---|
-| `backdropDesigner_tags` | `{ [sponsorName]: string[] }` — welke events een sponsor heeft |
-| `backdropDesigner_sponsorCategories` | `{ [sponsorName]: { [event]: categoryName } }` |
-| `backdropDesigner_categoryList` | `string[]` — volgorde van categorieën (prioriteit) |
-| `backdropDesigner_events` | `string[]` — lijst van events (AGR, BCC, ROAD…) |
-| `backdropDesigner_eventGroups` | `{ [koepelName]: string[] }` — welke events onder een koepel vallen |
-| `backdropDesigner_sponsorGroups` | `{ [sponsorName]: { [koepelName]: categoryName } }` — koepelpartner-assignments |
-| `backdropDesigner_customLogos` | `{ [sponsorName]: dataUrl }` — logo-overrides voor bestaande sponsors |
-| `backdropDesigner_customSponsors` | `[{ id, partner, dataUrl }]` — volledig nieuwe (custom) sponsors met eigen logo |
-| `backdropDesigner_savedDesigns` | `[{ id, name, event, edition, formatCode, format, slots, savedAt, folder }]` — `event` en `edition` zijn nieuw; oude ontwerpen zonder deze velden verschijnen onder "Overig" |
-| `backdropDesigner_advanceDir` | `'r' \| 'l' \| 'd' \| 'u' \| 'dr' \| 'dl' \| 'ur' \| 'ul' \| 'none'` |
-| `backdropDesigner_staticImported` | `'true'` zodra alle statische presets zijn omgezet naar custom |
-| `backdropDesigner_customFormats` | `[{ ...format, _custom: true, id }]` — bewerkbare formaatpresets |
+| `designs` | Opgeslagen ontwerpen — `id, name, format_code, format, slots, folder, saved_at, updated_at` |
+| `events` | Eventcodes — `code, sort_order` |
+| `event_groups` | Koepels — `name, event_codes` |
+| `sponsor_event_tags` | Event-tags + categorie per sponsor per event — `sponsor_name, event_code, category` |
+| `sponsor_group_assignments` | Koepel-assignments — `sponsor_name, group_name, category` |
+| `settings` | Key-value opslag — `key, value` (o.a. `category_list`, `static_imported`, `default_aspect`) |
+| `custom_sponsors` | Sponsors toegevoegd via de app — `name, logo_data_url` |
+| `logo_overrides` | Custom logo-overrides voor bestaande sponsors — `sponsor_name, logo_data_url` |
+| `cell_presets` | Celdimensie-presets — `id, data` |
+| `canvas_presets` | Canvas-presets — `id, data` |
+| `format_presets` | Aangepaste gridformaten — `id, data` |
+
+Alle tabellen hebben een nullable `user_id uuid` kolom voor toekomstige multi-user migratie (RLS).
+
+### Kritisch patroon — gecombineerde tags + categorieën
+
+`sponsor_event_tags` slaat zowel event-tags als per-event categorieën op in dezelfde tabel. Gebruik altijd `saveSponsorEventData(tags, sponsorCategories)` — deze functie verwijdert alle bestaande rijen en herbouwt de tabel in één operatie. Nooit tags en categorieën apart opslaan.
+
+### Mount — parallel laden
+
+In `App.jsx` laadt een `useEffect` op mount alle 14 databronnen parallel via `Promise.all`. Pas daarna wordt `dbLoading` op `false` gezet.
+
+### Env vars (niet gecommit)
+
+```
+VITE_SUPABASE_URL=https://holypriabntrbxpnsjfe.supabase.co
+VITE_SUPABASE_ANON_KEY=<publishable anon key>
+```
+
+Instellen via `.env.local` (lokaal) en Vercel environment variables (productie).
 
 ---
 
@@ -176,17 +205,17 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 
 ---
 
-## Batch Export Script (Illustrator → App)
+## Batch Export Script (Illustrator → Supabase Storage)
 
 **Locatie:** `dev/batch_export_logos_v1_DEV.jsx`
 **Runnen:** Illustrator → File > Scripts > Other Script...
 
 ### Wat het doet
 1. Itereert alle artboards in het actieve AI-document
-2. Exporteert elk artboard als PNG of SVG naar `public/logos/`
+2. Exporteert elk artboard als PNG of SVG naar een lokale map (bv. `public/logos/`)
 3. Gebruikt de artboard-naam exact als bestandsnaam (= zelfde naam als Gridzilla verwacht)
-4. Leest `sponsors.json` en voegt ontbrekende sponsors toe
-5. Bestaande entries worden **nooit** gewijzigd — tags en event-data blijven intact
+4. Leest `sponsors.json` en voegt ontbrekende sponsors toe (bestaande entries nooit gewijzigd)
+5. Probeert na export automatisch `/tmp/bd_upload.command` te starten voor upload naar Supabase
 
 ### Regels
 - Artboard `BLANK` wordt altijd overgeslagen (hardcoded in app)
@@ -200,10 +229,38 @@ Logo aanpassen in Illustrator
         ↓
 Batch export script runnen (1 klik)
         ↓
-public/logos/NAAM.png overschreven
-App toont direct nieuw logo
-Alle tags/events/categorieën intact
+PNG's lokaal opgeslagen
+        ↓
+upload-logos.js uploadt naar Supabase Storage
+        ↓
+App laadt logo's via Supabase Storage URL
 ```
+
+### Auto-upload naar Supabase Storage
+
+Na de export schrijft het script `/tmp/bd_upload.command` en probeert het via `File.execute()` te starten. Dit vereist **eenmalig** in Terminal:
+```
+chmod +x /tmp/bd_upload.command
+```
+Daarna blijft de execute-bit bewaard (Unix-rechten op bestandsinhoud overschrijven).
+
+**Let op**: auto-upload werkt **niet** vanuit CEP-extensies (bv. LoaderScriptPanel). In dat geval toont het script een melding met het handmatige commando:
+```
+node "dev/upload-logos.js" "/pad/naar/exportmap"
+```
+
+### upload-logos.js
+Node.js ES module (`dev/upload-logos.js`). Neemt de exportmap als argument, leest alle PNG/SVG-bestanden en uploadt ze naar de `logos` bucket in Supabase Storage met `upsert: true`. Vereist `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` als omgevingsvariabelen (of in `.env` in de `dev/` map).
+
+### logoUrl.js
+Centrale URL-resolver voor alle logo-bronnen:
+```js
+logoUrl(filename, customSrc)
+// → customSrc als aanwezig
+// → Supabase Storage URL: VITE_SUPABASE_URL + '/storage/v1/object/public/logos/' + filename + '.png'
+// → null als filename leeg of 'BLANK'
+```
+Gebruikt in: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `exportJpeg.js`.
 
 ### SVG vs PNG
 - Huidig formaat: **PNG**
@@ -443,13 +500,44 @@ Alle tags/events/categorieën intact
 
 ---
 
+## Recente wijzigingen (sessie april 2026 — Supabase migratie)
+
+### Database migratie: localStorage → Supabase
+
+- **`src/utils/supabase.js`** (nieuw): Supabase client — `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`
+- **`src/utils/db.js`** (nieuw): alle async functies die `sponsorTags.js` vervangen — `loadDesigns`, `saveDesign`, `updateDesign`, `deleteDesign`, `loadEvents`, `saveEvents`, `loadEventGroups`, `saveEventGroups`, `loadTags`, `loadSponsorCategories`, `saveSponsorEventData` (gecombineerd!), `loadSponsorGroups`, `saveSponsorGroups`, `loadCustomSponsors`, `addCustomSponsor`, `deleteCustomSponsor`, `loadCustomLogos`, `saveCustomLogos`, `loadCellPresets`, `saveCellPresets`, `loadCanvasPresets`, `saveCanvasPresets`, `loadCustomFormats`, `saveCustomFormats`, `loadDesignFolders`, `saveDesignFolders`, `loadSetting`, `saveSetting`
+- **`App.jsx`**: state-initialisatie van `useState(() => loadXxx())` naar lege defaults + `useEffect` met `Promise.all` op mount; alle save-handlers async fire-and-forget
+- **`dbLoading` state**: `true` tijdens initieel laden, `false` erna
+
+### Logo storage: lokale bestanden → Supabase Storage
+
+- **Supabase Storage bucket `logos`**: public, RLS policies voor SELECT/INSERT/UPDATE
+- **URL-patroon**: `https://holypriabntrbxpnsjfe.supabase.co/storage/v1/object/public/logos/<FILENAME>.png`
+- **`src/utils/logoUrl.js`** (nieuw): centrale URL-resolver — `logoUrl(filename, customSrc)`
+- **Migratie van componenten**: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `exportJpeg.js` — allemaal bijgewerkt van `/logos/${filename}.png` naar `logoUrl(filename)`
+- **Initiële upload**: `scripts/upload-logos-init.js` heeft alle 193 logo's eenmalig geüpload
+
+### Illustrator → Supabase upload-pipeline
+
+- **`dev/upload-logos.js`** (nieuw): Node.js ES module — neemt exportmap als argument, uploadt alle PNG/SVG naar Supabase Storage (`upsert: true`)
+- **`batch_export_logos_v1_DEV.jsx`**: schrijft na export `/tmp/bd_upload.command` en probeert het te starten via `File.execute()`
+- **Beperking**: auto-upload werkt enkel bij directe scriptrun (File > Scripts). Via CEP-extensies (LoaderScriptPanel) werkt `File.execute()` niet op niet-executeerbare bestanden. Eenmalige fix: `chmod +x /tmp/bd_upload.command` in Terminal
+
+### Vercel deployment
+
+- Env vars ingesteld via Vercel CLI / dashboard: `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`
+- Auto-deploy bij push naar `main` via GitHub-integratie
+
+---
+
 ## Openstaande verbeterpunten
 
 | Punt | Beschrijving |
 |------|-------------|
-| **Toekomstig: backend/sync** | Designs staan nu in localStorage (apparaat-gebonden). Op termijn migratie naar Supabase voor gedeelde toegang. |
+| **Auto-upload vanuit CEP** | `File.execute()` werkt niet voor `.command` bestanden vanuit CEP-extensies (bv. LoaderScriptPanel). Handmatig commando als fallback. Te bekijken: alternatieve aanpak. |
 | **CSV-export escaping** | Sponsornamen met komma's of aanhalingstekens breken het CSV-formaat. |
 | **FormatPickerModal UI** | "Annuleren" krijgt focus-ring bij klikken (lichte blauwe gloed). |
+| **Multi-user / login** | Alle tabellen hebben al `user_id uuid` (nullable). RLS + authenticatie toe te voegen wanneer nodig. |
 
 ---
 
@@ -473,16 +561,15 @@ Alle tags/events/categorieën intact
 
 ## Toekomstvisie — Hosting, login & Gridzilla-integratie
 
-### Fase 1 — Online hosting (kort termijn)
-- App hosten via **Vercel** (gratis, automatische deploy bij git push)
-- Vereist: logo's in de repo aanwezig (`public/logos/`)
-- Geen backend nodig — app blijft puur client-side met localStorage
+### Fase 1 — Online hosting ✅ GEDAAN
+- App gehost via **Vercel** (automatische deploy bij git push naar `main`)
+- Logo's via **Supabase Storage** (public bucket `logos`) — niet meer in de repo
 
-### Fase 2 — Login & gedeelde data (middellange termijn)
-- Authenticatie + database via **Supabase** (gratis tier, PostgreSQL)
-- Ontwerpen opgeslagen in de cloud i.p.v. localStorage
-- Collega's kunnen elkaars ontwerpen zien en bewerken
-- Hosting blijft op Vercel
+### Fase 2 — Database & gedeelde data ✅ GEDAAN (single-user)
+- Alle data via **Supabase PostgreSQL** (`db.js`)
+- Logo's via **Supabase Storage** (`logoUrl.js`)
+- Ontwerpen, events, tags, categorieën, presets — alles in de cloud
+- Multi-user / login: structuur aanwezig (`user_id` kolom), authenticatie nog niet geïmplementeerd
 
 ### Fase 3 — Gridzilla rechtstreeks gekoppeld aan de app (lange termijn)
 
