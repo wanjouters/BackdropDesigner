@@ -311,36 +311,35 @@
     alert(msg);
 
     // ─── Upload naar Supabase Storage ─────────────────────────────────────────
-    // Schrijft een .command-bestand en voert het uit — werkt zowel via
-    // File > Scripts als via CEP-extensies (LoaderScriptPanel e.d.).
+    // Schrijft een .command-bestand en opent het via Terminal.
+    // Eerste keer: eenmalig chmod +x vereist (zie melding hieronder).
+    // Daarna: rechten blijven bewaard op hetzelfde pad → upload start automatisch.
     if (exported.length > 0) {
         var scriptDir = (new File($.fileName)).parent.fsName;
         var uploadScript = scriptDir + '/upload-logos.js';
+
         var cmdFile = new File('/tmp/bd_upload.command');
         cmdFile.open('w');
         cmdFile.writeln('#!/bin/bash');
         cmdFile.writeln('node "' + uploadScript + '" "' + outputFolder.fsName + '" > /tmp/upload-logos.log 2>&1');
+        cmdFile.writeln('echo "Upload klaar. Log: /tmp/upload-logos.log"');
         cmdFile.close();
 
-        // chmod +x zodat macOS het kan uitvoeren
-        try { system('chmod +x /tmp/bd_upload.command'); } catch (e) {}
-
+        // execute() geeft true als het bestand al executable is (na eenmalige chmod +x)
         var launched = false;
-        try {
-            // system() werkt bij directe scriptrun
-            system('/tmp/bd_upload.command');
-            launched = true;
-        } catch (e) {}
-
-        if (!launched) {
-            // Fallback voor CEP: open via Terminal
-            try { cmdFile.execute(); launched = true; } catch (e) {}
-        }
+        try { launched = cmdFile.execute(); } catch (e) {}
 
         if (launched) {
             alert('\u2713 Upload gestart naar Supabase Storage.\nLog: /tmp/upload-logos.log');
         } else {
-            alert('\u26a0 Upload kon niet automatisch starten.\nRun handmatig in Terminal:\nnode "' + uploadScript + '" "' + outputFolder.fsName + '"');
+            alert(
+                '\u2139 Eenmalige instelling vereist.\n\n' +
+                'Voer dit \u00e9\u00e9n keer uit in Terminal:\n\n' +
+                '    chmod +x /tmp/bd_upload.command\n\n' +
+                'Daarna start de upload automatisch bij elke export.\n\n' +
+                'Of upload nu handmatig:\n' +
+                '    node "' + uploadScript + '" "' + outputFolder.fsName + '"'
+            );
         }
     }
 
