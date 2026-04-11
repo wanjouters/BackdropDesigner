@@ -4,6 +4,7 @@ import LogosSection from './sections/LogosSection'
 import EventsSection from './sections/EventsSection'
 import CategorieenSection from './sections/CategorieenSection'
 import PresetsSection from './sections/PresetsSection'
+import GebruikersSection from './sections/GebruikersSection'
 
 const NAV = [
   {
@@ -43,6 +44,16 @@ const NAV = [
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
           d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+      </svg>
+    ),
+  },
+  {
+    id: 'gebruikers',
+    label: 'Gebruikers',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
     ),
   },
@@ -133,6 +144,7 @@ export default function AdminLayout({ session }) {
           {active === 'events' && <EventsSection {...sectionProps} />}
           {active === 'categorieen' && <CategorieenSection {...sectionProps} />}
           {active === 'presets' && <PresetsSection {...sectionProps} />}
+          {active === 'gebruikers' && <GebruikersSection {...sectionProps} />}
         </div>
       </div>
 
