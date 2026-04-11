@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd dev/backdrop-designer && npm install && npm run build",
-  "outputDirectory": "dev/backdrop-designer/dist",
-  "framework": null
-}
