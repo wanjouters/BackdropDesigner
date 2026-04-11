@@ -35,8 +35,12 @@ export default function GebruikersSection({ showToast }) {
 
   async function loadUsers() {
     try {
-      const { users } = await callEdge('list')
-      setUsers(users.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)))
+      const data = await callEdge('list')
+      const list = data?.users ?? data ?? []
+      const sorted = Array.isArray(list)
+        ? list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        : []
+      setUsers(sorted)
     } catch (e) {
       showToast('Laden mislukt: ' + e.message, 'error')
     } finally {
