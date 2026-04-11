@@ -52,8 +52,8 @@ apps/BackdropDesigner/
         formats.json           — Alle gridformaten
       scripts/
         upload-logos-init.js   — Eenmalig bulk-upload script (193 logos → Supabase Storage)
+        upload-logos.js        — Node.js script: uploadt geëxporteerde logos naar Supabase Storage
     batch_export_logos_v1_DEV.jsx  — ExtendScript: batch export vanuit Illustrator
-    upload-logos.js            — Node.js script: uploadt geëxporteerde logos naar Supabase Storage
 ```
 
 ### sponsors.json formaat
@@ -250,7 +250,7 @@ node "dev/upload-logos.js" "/pad/naar/exportmap"
 ```
 
 ### upload-logos.js
-Node.js ES module (`dev/upload-logos.js`). Neemt de exportmap als argument, leest alle PNG/SVG-bestanden en uploadt ze naar de `logos` bucket in Supabase Storage met `upsert: true`. Vereist `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` als omgevingsvariabelen (of in `.env` in de `dev/` map).
+Node.js ES module (`dev/backdrop-designer/scripts/upload-logos.js`). Neemt de exportmap als argument, leest alle PNG/SVG-bestanden en uploadt ze naar de `logos` bucket in Supabase Storage met `upsert: true`. Vereist `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` als omgevingsvariabelen (of in `.env` in de `dev/` map).
 
 ### logoUrl.js
 Centrale URL-resolver voor alle logo-bronnen:

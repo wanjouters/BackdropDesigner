@@ -316,7 +316,7 @@
     // Daarna: rechten blijven bewaard op hetzelfde pad → upload start automatisch.
     if (exported.length > 0) {
         var scriptDir = (new File($.fileName)).parent.fsName;
-        var uploadScript = scriptDir + '/upload-logos.js';
+        var uploadScript = scriptDir + '/backdrop-designer/scripts/upload-logos.js';
 
         var cmdFile = new File('/tmp/bd_upload.command');
         cmdFile.open('w');
