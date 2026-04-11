@@ -4,7 +4,6 @@ import allStaticFormats from './data/backdropFormats.json'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
 import FrequencyPanel from './components/FrequencyPanel'
-import FormatPickerModal from './components/FormatPickerModal'
 import LogoLibrary from './components/LogoLibrary'
 import SettingsModal from './components/SettingsModal'
 import GridToolbar from './components/GridToolbar'
@@ -508,8 +507,6 @@ export default function App() {
   const [selectedFormat, setSelectedFormat] = useState(null)
   const [editedFormat, setEditedFormat] = useState(null)
   const [slots, setSlots] = useState([])
-  const [showCustomModal, setShowCustomModal] = useState(false)
-  const [editingFormat, setEditingFormat] = useState(null)
   const [staticImported, setStaticImported] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState(new Set())
   const [view, setView] = useState('preview') // 'grid' | 'preview'
@@ -1402,11 +1399,7 @@ export default function App() {
                 <GridTypeSelector
                   selected={selectedFormat}
                   onSelect={handleSelectFormat}
-                  staticFormats={staticImported ? [] : allStaticFormats}
-                  customFormats={customFormats}
-                  onDeleteCustomFormat={handleDeleteCustomFormat}
-                  onCustom={() => setShowCustomModal(true)}
-                  onEdit={f => setEditingFormat(f)}
+                  formats={customFormats.length > 0 ? customFormats : (staticImported ? [] : allStaticFormats)}
                 />
               )}
               {leftPanel === 'adjust' && format && (
@@ -1663,18 +1656,6 @@ export default function App() {
         />
       )}
 
-      {(showCustomModal || editingFormat) && (
-        <FormatPickerModal
-          staticFormats={staticImported ? [] : allStaticFormats}
-          customFormats={customFormats}
-          initialFormat={editingFormat || null}
-          editMode={!!editingFormat}
-          onConfirm={format => { setShowCustomModal(false); setEditingFormat(null); handleSelectFormat(format) }}
-          onSaveCustom={handleSaveCustomFormat}
-          onDeleteCustom={handleDeleteCustomFormat}
-          onClose={() => { setShowCustomModal(false); setEditingFormat(null) }}
-        />
-      )}
 
       {showSettings && (
         <SettingsModal

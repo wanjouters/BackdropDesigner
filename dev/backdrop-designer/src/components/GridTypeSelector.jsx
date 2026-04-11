@@ -1,39 +1,37 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 
-export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit, staticFormats = [], customFormats = [], onDeleteCustomFormat }) {
-  const STATIC_CATEGORIES = useMemo(() => [...new Set(staticFormats.map(f => f.Categorie))].sort(), [staticFormats])
-  const [activeCategory, setActiveCategory] = useState('ALL')
+export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
+  const [activeTag, setActiveTag] = useState('ALL')
   const [query, setQuery] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
 
-  const allCategories = useMemo(() => {
-    const cats = [{ id: 'ALL', label: 'Alle' }]
-    if (STATIC_CATEGORIES.length > 0) cats.push(...STATIC_CATEGORIES.map(c => ({ id: c, label: c })))
-    if (customFormats.length > 0) cats.push({ id: 'OPGESLAGEN', label: `Opgeslagen (${customFormats.length})` })
-    return cats
-  }, [STATIC_CATEGORIES, customFormats.length])
+  // Collect all unique tags across all formats, sorted alphabetically
+  const allTags = useMemo(() => {
+    const tagSet = new Set()
+    formats.forEach(f => (f.tags || []).forEach(t => tagSet.add(t)))
+    return [...tagSet].sort()
+  }, [formats])
 
-  const activeCategoryLabel = allCategories.find(c => c.id === activeCategory)?.label || 'Alle'
+  const filterOptions = useMemo(() => [
+    { id: 'ALL', label: 'Alle' },
+    ...allTags.map(t => ({ id: t, label: t })),
+  ], [allTags])
+
+  const activeCategoryLabel = filterOptions.find(c => c.id === activeTag)?.label || 'Alle'
+  const hasFilter = activeTag !== 'ALL'
 
   const visibleFormats = useMemo(() => {
-    const customCodes = new Set(customFormats.map(f => f.Code))
-    const dedupedStatic = staticFormats.filter(f => !customCodes.has(f.Code))
-    const base = activeCategory === 'OPGESLAGEN'
-      ? customFormats
-      : activeCategory === 'ALL'
-        ? [...dedupedStatic, ...customFormats]
-        : dedupedStatic.filter(f => f.Categorie === activeCategory)
+    const base = activeTag === 'ALL'
+      ? formats
+      : formats.filter(f => (f.tags || []).includes(activeTag))
     if (!query.trim()) return base
     const q = query.trim().toLowerCase()
     return base.filter(f =>
-      (f.Code || '').toLowerCase().includes(q) ||
-      (f.Beschrijving || '').toLowerCase().includes(q)
+      (f.Beschrijving || '').toLowerCase().includes(q) ||
+      (f.Code || '').toLowerCase().includes(q)
     )
-  }, [activeCategory, staticFormats, customFormats, query])
-
-  const isCustomCategory = activeCategory === 'OPGESLAGEN'
-  const hasFilter = activeCategory !== 'ALL'
+  }, [activeTag, formats, query])
 
   useEffect(() => {
     if (!filterOpen) return
@@ -64,7 +62,7 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit,
         )}
       </div>
 
-      {/* Category filter */}
+      {/* Tag filter */}
       <div className="relative mb-3" ref={filterRef}>
         <button
           onClick={() => setFilterOpen(v => !v)}
@@ -81,22 +79,20 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit,
         </button>
         {filterOpen && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 overflow-y-auto max-h-48">
-            {allCategories.map(cat => (
-              <button key={cat.id}
-                onClick={() => { setActiveCategory(cat.id); setFilterOpen(false) }}
+            {filterOptions.map(opt => (
+              <button key={opt.id}
+                onClick={() => { setActiveTag(opt.id); setFilterOpen(false) }}
                 className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${
-                  activeCategory === cat.id
-                    ? cat.id === 'OPGESLAGEN' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'
-                    : cat.id === 'OPGESLAGEN' ? 'text-amber-600 hover:bg-amber-50' : 'text-gray-600 hover:bg-gray-50'
+                  activeTag === opt.id ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
                 }`}>
-                {cat.label}
+                {opt.label}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Format list — fills remaining space */}
+      {/* Format list */}
       <div className="flex-1 overflow-y-auto space-y-0.5 min-h-0">
         {visibleFormats.length === 0 && (
           <p className="text-xs text-gray-400 italic py-2 text-center">Geen formaten.</p>
@@ -104,55 +100,30 @@ export default function GridTypeSelector({ selected, onSelect, onCustom, onEdit,
         {visibleFormats.map(f => {
           const isActive = selected?.Code === f.Code
           return (
-            <div key={f.id || f.Code} className="flex items-center group">
-              <button
-                onClick={() => onSelect(f)}
-                title={f.Beschrijving || f.Code}
-                className={`flex-1 text-left px-3 py-1.5 rounded-lg transition-colors overflow-hidden ${
-                  isActive ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1 min-w-0">
-                  <span className={`font-medium text-xs truncate min-w-0 ${isActive ? 'text-white' : 'text-gray-700'}`}>
-                    {f.Beschrijving || f.Code}
-                  </span>
-                  <span className={`text-[10px] flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-300'}`}>
-                    {f.Cols}×{f.Rows}
-                  </span>
-                </div>
-                {isActive && (f.Categorie || f.EventStyle) && (
-                  <p className="text-[10px] text-blue-200 truncate mt-0.5">
-                    {[f.Categorie, f.EventStyle].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </button>
-              {onEdit && (
-                <button onClick={e => { e.stopPropagation(); onEdit(f) }} title="Preset aanpassen"
-                  className="ml-1 flex-shrink-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-blue-500 rounded">
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8 1l3 3-7 7H1V8l7-7z"/>
-                  </svg>
-                </button>
+            <button
+              key={f.id || f.Code}
+              onClick={() => onSelect(f)}
+              title={f.Beschrijving || f.Code}
+              className={`w-full text-left px-3 py-1.5 rounded-lg transition-colors overflow-hidden ${
+                isActive ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 min-w-0">
+                <span className={`font-medium text-xs truncate min-w-0 ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                  {f.Beschrijving || f.Code}
+                </span>
+                <span className={`text-[10px] flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-300'}`}>
+                  {f.Cols}×{f.Rows}
+                </span>
+              </div>
+              {isActive && f.tags?.length > 0 && (
+                <p className="text-[10px] text-blue-200 truncate mt-0.5">
+                  {f.tags.join(' · ')}
+                </p>
               )}
-              {isCustomCategory && onDeleteCustomFormat && (
-                <button onClick={e => { e.stopPropagation(); onDeleteCustomFormat(f) }} title="Verwijderen"
-                  className="ml-1 flex-shrink-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-red-500 rounded">
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/>
-                  </svg>
-                </button>
-              )}
-            </div>
+            </button>
           )
         })}
-      </div>
-
-      {/* Footer */}
-      <div className="pt-3 mt-3 border-t border-gray-100 flex-shrink-0">
-        <button onClick={onCustom}
-          className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-          + Nieuw formaat aanmaken
-        </button>
       </div>
     </div>
   )
