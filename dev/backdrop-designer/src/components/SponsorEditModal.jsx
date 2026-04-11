@@ -22,7 +22,7 @@ export default function SponsorEditModal({
 }) {
   const fileRef = useRef(null)
   const sp = sponsorMap[sponsorName]
-  const defaultSrc = sp ? `/logos/${sp.filename}.png` : null
+  const defaultSrc = sp ? logoUrl(sp.filename) : null
   const currentSrc = customLogos[sponsorName] || defaultSrc
   const sponsorEvents = tags[sponsorName] || []
 

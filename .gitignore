@@ -15,3 +15,7 @@ npm-debug.log*
 # Local env
 *.local
 .env
+
+# Logo bestanden — worden beheerd via Supabase Storage
+dev/backdrop-designer/public/logos/
+input/Logos/
