@@ -21,10 +21,11 @@ export default function AdminLogin() {
     if (!email) { setError('Vul eerst je e-mailadres in.'); return }
     setLoading(true)
     setError(null)
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/admin',
     })
     setLoading(false)
+    if (error) { setError(error.message); return }
     setResetSent(true)
   }
 
