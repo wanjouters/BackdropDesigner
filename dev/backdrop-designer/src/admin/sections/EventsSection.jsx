@@ -13,7 +13,7 @@ function GripIcon() {
 
 // ─── Eenvoudige sorteerbare lijst met HTML5 drag ──────────────────────────────
 
-function SortableList({ items, onReorder, onDelete, onAdd, placeholder, label }) {
+function SortableList({ items, onReorder, onDelete, onAdd, placeholder }) {
   const [newItem, setNewItem] = useState('')
   const [dragIdx, setDragIdx] = useState(null)
   const [overIdx, setOverIdx] = useState(null)
@@ -39,7 +39,6 @@ function SortableList({ items, onReorder, onDelete, onAdd, placeholder, label })
 
   return (
     <div>
-      {label && <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{label}</h3>}
       <div className="space-y-1 mb-3">
         {items.map((item, i) => (
           <div
@@ -148,25 +147,27 @@ function KoepelEditor({ name, eventCodes, allEvents, onChange, onDelete, onRenam
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-          <p className="text-xs text-gray-500 mb-2">Welke events vallen onder deze koepel?</p>
+          <p className="text-xs text-gray-400 mb-3">Klik op een event om het toe te voegen of te verwijderen.</p>
           <div className="flex flex-wrap gap-2">
-            {allEvents.map(code => (
-              <label key={code} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs cursor-pointer transition-colors ${
-                eventCodes.includes(code)
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
-              }`}>
-                <input
-                  type="checkbox"
-                  checked={eventCodes.includes(code)}
-                  onChange={() => toggleEvent(code)}
-                  className="hidden"
-                />
-                {code}
-              </label>
-            ))}
+            {allEvents.map(code => {
+              const active = eventCodes.includes(code)
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => toggleEvent(code)}
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors ${
+                    active
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-600 bg-white'
+                  }`}
+                >
+                  {active && '✓ '}{code}
+                </button>
+              )
+            })}
             {allEvents.length === 0 && (
-              <p className="text-xs text-gray-400">Voeg eerst events toe</p>
+              <p className="text-xs text-gray-400">Voeg eerst events toe in de linkerkolom.</p>
             )}
           </div>
         </div>
@@ -239,9 +240,9 @@ export default function EventsSection({ showToast }) {
     <div className="p-8 grid grid-cols-2 gap-8 items-start">
       {/* Events */}
       <div>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Events</h3>
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <SortableList
-            label="Events"
             items={events}
             placeholder="AGR, BCC, ROAD…"
             onReorder={persistEvents}
