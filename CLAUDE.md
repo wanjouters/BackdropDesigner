@@ -581,6 +581,23 @@ Gebruikt in: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `ex
 
 ---
 
+## Recente wijzigingen (sessie april 2026 — gebruikersbeheer)
+
+### Gebruikersnaam en rol
+
+- **Edge Function `admin-users` (v3)**: `verify_jwt: false` — verificatie gebeurt intern via `supabaseAdmin.auth.getUser(token)`. Acties: `list`, `invite`, `delete`, `update`.
+- **`update`-actie**: slaat `name` op in `user_metadata` en `role` in `app_metadata` via `supabaseAdmin.auth.admin.updateUserById(userId, { user_metadata: { name }, app_metadata: { role } })`.
+- **`list`-actie**: geeft nu ook `name` (uit `user_metadata`) en `role` (uit `app_metadata`, default `'gebruiker'`) terug per gebruiker.
+- **`GebruikersSection.jsx`**: inline bewerken per gebruiker via potloodicoon — naam-inputveld + roldropdown (`admin` / `gebruiker`). Avatar toont eerste letter van naam (of email als fallback). Rol-badge zichtbaar per rij.
+- **`AdminLayout.jsx`**: sidebar-footer toont naam (wit), email (grijs) en een paarse Admin-badge als `app_metadata.role === 'admin'`.
+- **`callEdge` foutafhandeling**: checkt `res.ok` zodat HTTP-fouten (bv. 401) altijd als error gegooid worden.
+
+### Waarom `verify_jwt: false` op de Edge Function
+
+De Supabase JWT-verificatielaag (`verify_jwt: true`) gaf consistent 401-fouten terug, maar de foutrespons had geen `error`-veld — waardoor de frontend de fout stilzwijgend als lege lijst behandelde. Oplossing: verificatie uitgeschakeld op gateway-niveau en intern afgehandeld met `supabaseAdmin.auth.getUser(token)`. Dit is robuuster en geeft duidelijkere foutmeldingen.
+
+---
+
 ## Openstaande verbeterpunten
 
 | Punt | Beschrijving |
