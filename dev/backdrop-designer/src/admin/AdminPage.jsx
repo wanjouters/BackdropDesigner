@@ -89,17 +89,22 @@ function PasswordResetForm() {
 export default function AdminPage() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [isRecovery, setIsRecovery] = useState(false)
+  // Check URL hash immediately — Supabase puts #type=recovery in the URL on reset links
+  const [isRecovery, setIsRecovery] = useState(
+    () => window.location.hash.includes('type=recovery')
+  )
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
+      else if (event === 'USER_UPDATED') { setIsRecovery(false); window.location.hash = '' }
       setSession(session)
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
-      else if (event === 'USER_UPDATED') setIsRecovery(false)
+    // Trigger initial session load
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setLoading(false)
     })
     return () => subscription.unsubscribe()
   }, [])
