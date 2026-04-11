@@ -12,6 +12,7 @@ import PreviewCanvas from './components/PreviewCanvas'
 import { exportJpeg } from './utils/exportJpeg'
 import { saveDraft, loadDraft, clearDraft } from './utils/sponsorTags'
 import * as db from './utils/db'
+import { supabase } from './utils/supabase'
 
 const DEFAULT_CATEGORIES = ['Titelsponsor', 'Co-sponsor', 'Partner', 'Leverancier', 'Mediapartner']
 const DEFAULT_CELL_PRESETS = [
@@ -542,6 +543,9 @@ export default function App() {
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
   const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'adjust' | 'frequency'
+  const [authSession, setAuthSession] = useState(null)
+  const [authMenuOpen, setAuthMenuOpen] = useState(false)
+  const authMenuRef = useRef(null)
   const hasMounted = useRef(false)
   const skipNextDirtyMark = useRef(false)
 
@@ -554,6 +558,22 @@ export default function App() {
   function showToast(message, type = 'success') {
     setToast({ message, type })
   }
+
+  // ─── Auth state ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setAuthSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAuthSession(session))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Sluit auth menu bij klik buiten
+  useEffect(() => {
+    function handleOutside(e) {
+      if (authMenuRef.current && !authMenuRef.current.contains(e.target)) setAuthMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
 
   // ─── Auto-save draft + dirty tracking ────────────────────────────────────
   useEffect(() => {
@@ -1169,31 +1189,87 @@ export default function App() {
           </div>
         </div>
 
-        {format && (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="flex items-center justify-end gap-1.5">
-                <p className="text-sm font-semibold text-gray-800">
-                  {loadedDesignId
-                    ? (savedDesigns.find(d => d.id === loadedDesignId) || {}).name || format.Code
-                    : format.Code}
+        <div className="flex items-center gap-3">
+          {format && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="flex items-center justify-end gap-1.5">
+                  <p className="text-sm font-semibold text-gray-800">
+                    {loadedDesignId
+                      ? (savedDesigns.find(d => d.id === loadedDesignId) || {}).name || format.Code
+                      : format.Code}
+                  </p>
+                  {isDirty && (
+                    <span title="Niet-opgeslagen wijzigingen" className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-400">
+                  {loadedDesignId ? format.Code + ' · ' : ''}{format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
+                  {selectionCount > 0 && (
+                    <span className="ml-2 text-blue-500">
+                      · {selectionCount} {selectionCount === 1 ? 'slot' : 'slots'} geselecteerd
+                    </span>
+                  )}
                 </p>
-                {isDirty && (
-                  <span title="Niet-opgeslagen wijzigingen" className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
-                )}
               </div>
-              <p className="text-xs text-gray-400">
-                {loadedDesignId ? format.Code + ' · ' : ''}{format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
-                {selectionCount > 0 && (
-                  <span className="ml-2 text-blue-500">
-                    · {selectionCount} {selectionCount === 1 ? 'slot' : 'slots'} geselecteerd
-                  </span>
-                )}
-              </p>
+              <ExportMenu format={format} slots={slots} customLogos={customLogos} onImportJson={handleImportJson} />
             </div>
-            <ExportMenu format={format} slots={slots} customLogos={customLogos} onImportJson={handleImportJson} />
+          )}
+
+          {/* Account widget */}
+          <div className="relative" ref={authMenuRef}>
+            {authSession ? (
+              <>
+                <button
+                  onClick={() => setAuthMenuOpen(o => !o)}
+                  title={authSession.user.email}
+                  className="w-8 h-8 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center hover:bg-gray-700 transition-colors"
+                >
+                  {authSession.user.email[0].toUpperCase()}
+                </button>
+                {authMenuOpen && (
+                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50" style={{ minWidth: 180 }}>
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-xs text-gray-400 truncate">{authSession.user.email}</p>
+                    </div>
+                    <a
+                      href="/admin"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Admin panel
+                    </a>
+                    <button
+                      onClick={() => { supabase.auth.signOut(); setAuthMenuOpen(false) }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Uitloggen
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <a
+                href="/admin"
+                title="Inloggen"
+                className="w-8 h-8 rounded-full border border-gray-200 text-gray-400 flex items-center justify-center hover:border-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </a>
+            )}
           </div>
-        )}
+        </div>
       </header>
 
       {/* Main layout */}
