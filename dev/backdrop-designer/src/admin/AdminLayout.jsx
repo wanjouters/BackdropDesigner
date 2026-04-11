@@ -1,5 +1,56 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../utils/supabase'
+
+function ChangePasswordModal({ onClose, showToast }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (password !== confirm) { showToast('Wachtwoorden komen niet overeen', 'error'); return }
+    if (password.length < 8) { showToast('Wachtwoord moet minstens 8 tekens zijn', 'error'); return }
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    setLoading(false)
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Wachtwoord ingesteld')
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+        <h3 className="text-base font-bold text-gray-800 mb-4">Wachtwoord instellen</h3>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="Minstens 8 tekens" required autoComplete="new-password"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
+            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+              placeholder="Herhaal wachtwoord" required autoComplete="new-password"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+              Annuleren
+            </button>
+            <button type="submit" disabled={loading || !password || !confirm}
+              className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-40">
+              {loading ? 'Opslaan…' : 'Opslaan'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 import LogosSection from './sections/LogosSection'
 import EventsSection from './sections/EventsSection'
 import CategorieenSection from './sections/CategorieenSection'
@@ -72,6 +123,7 @@ const NAV = [
 
 export default function AdminLayout({ session }) {
   const [active, setActive] = useState('logos')
+  const [showChangePassword, setShowChangePassword] = useState(false)
   const [toast, setToast] = useState(null)
 
   const showToast = useCallback((message, type = 'success') => {
@@ -116,7 +168,26 @@ export default function AdminLayout({ session }) {
 
         {/* Footer */}
         <div className="p-3 border-t border-gray-700">
-          <div className="text-gray-500 text-xs px-2 mb-2 truncate">{session.user.email}</div>
+          <div className="px-2 mb-2">
+            {session.user.user_metadata?.name
+              ? <p className="text-white text-xs font-medium truncate">{session.user.user_metadata.name}</p>
+              : null
+            }
+            <p className="text-gray-500 text-xs truncate">{session.user.email}</p>
+            {session.user.app_metadata?.role === 'admin' && (
+              <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded bg-purple-900/60 text-purple-300 font-medium">Admin</span>
+            )}
+          </div>
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            Wachtwoord instellen
+          </button>
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
