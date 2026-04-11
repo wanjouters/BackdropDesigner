@@ -33,13 +33,24 @@ apps/BackdropDesigner/
         LogoLibrary.jsx        — Rechterpaneel: sponsorbibliotheek, filters, instellingen
         GridCanvas.jsx         — Rasterweergave met klikbare slots
         PreviewCanvas.jsx      — Schaalbare JPEG-achtige preview
-        GridTypeSelector.jsx   — Linkerpaneel: formatenlijst + filters
+        GridTypeSelector.jsx   — Linkerpaneel: formatenlijst + tag-filter (alleen lezen)
         GridToolbar.jsx        — Kolommen/rijen/cel-instellingen boven het grid
         SponsorEditModal.jsx   — Popup voor per-sponsor event/categorie-instellingen
         SlotCell.jsx           — Individueel gridvak
         FrequencyPanel.jsx     — Frequentietelling sponsors
         ExportButton.jsx       — CSV-export knop
-        CustomFormatModal.jsx  — Modal voor nieuw aangepast formaat
+      admin/
+        AdminPage.jsx          — Auth-guard: toont AdminLogin of AdminLayout
+        AdminLogin.jsx         — Magic link login-formulier
+        AdminLayout.jsx        — Sidebar-nav + sectie-routing
+        sections/
+          LogosSection.jsx     — Logo-beheer: upload, tags, event-koppeling
+          FormatenSection.jsx  — Formaatbeheer: CRUD, tags, drag-reorder, import
+          FormatEditModal.jsx  — Volledig formulier voor formaatbeheer (alle velden)
+          EventsSection.jsx    — Events + Koepels beheren
+          CategorieenSection.jsx — Categorie-volgorde beheren
+          PresetsSection.jsx   — Cel/Canvas presets beheren
+          GebruikersSection.jsx — Gebruikers uitnodigen/beheren via Edge Function
       utils/
         supabase.js            — Supabase client (createClient met env vars)
         db.js                  — Alle async DB-functies (vervangt localStorage)
@@ -49,11 +60,12 @@ apps/BackdropDesigner/
         barPosition.js         — Gedeelde barPosition parser
       data/
         sponsors.json          — Sponsordatabase (velden: partner + filename)
-        formats.json           — Alle gridformaten
+        backdropFormats.json   — Statische fallback-formaten (32 stuks); na admin-import niet meer actief
       scripts/
         upload-logos-init.js   — Eenmalig bulk-upload script (193 logos → Supabase Storage)
         upload-logos.js        — Node.js script: uploadt geëxporteerde logos naar Supabase Storage
     batch_export_logos_v1_DEV.jsx  — ExtendScript: batch export vanuit Illustrator
+  vercel.json                      — Vercel-configuratie: buildCommand, outputDirectory, SPA-rewrites
 ```
 
 ### sponsors.json formaat
@@ -87,7 +99,7 @@ Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/ut
 | `logo_overrides` | Custom logo-overrides voor bestaande sponsors — `sponsor_name, logo_data_url` |
 | `cell_presets` | Celdimensie-presets — `id, data` |
 | `canvas_presets` | Canvas-presets — `id, data` |
-| `format_presets` | Aangepaste gridformaten — `id, data` |
+| `format_presets` | Gridformaten — `id (text), data (jsonb), sort_order (int)` — `data` bevat alle formaatsvelden incl. `tags: []` |
 
 Alle tabellen hebben een nullable `user_id uuid` kolom voor toekomstige multi-user migratie (RLS).
 
@@ -180,11 +192,12 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 - Ontvangt `groupCategories` (= `categoryList`)
 
 ### `GridTypeSelector.jsx`
-- Enkelvoudige lijst van alle gridformaten (statisch + custom)
-- Zoekveld + categoriefilter (dropdown met ≡-icoon)
-- Geselecteerde rij toont subtitel: `Categorie · EventStyle`
-- Potlood-icoon op hover opent FormatPickerModal in editMode
-- `+ Nieuw formaat aanmaken` footer-knop
+- Enkelvoudige lijst van alle formaten (geladen vanuit Supabase via `customFormats` prop)
+- Gebruikers kunnen **alleen kiezen** — geen bewerken, aanmaken of verwijderen
+- Zoekveld + **tag-filter** (dropdown met ≡-icoon) — tags worden beheerd via admin
+- Geselecteerde rij toont tags als subtitel
+- Fallback: toont statische `backdropFormats.json` zolang Supabase nog geen formaten bevat
+- Props: `selected`, `onSelect`, `formats` (unified array)
 
 ### `GridToolbar.jsx`
 - Twee layouts: `horizontal` (boven het grid) en `vertical` (in het "Aanpassen" paneel)
@@ -196,7 +209,7 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 
 ## Ontwerpbeslissingen
 
-- **Geen backend**: alles client-side, persistentie via `localStorage`
+- **Supabase als backend**: alle data in PostgreSQL + Storage; `localStorage` enkel nog voor `advanceDir`
 - **Geen TypeScript**: bewuste keuze voor snelheid en leesbaarheid
 - **Één `categoryList`**: vroeger waren er twee aparte lijsten (per-event en per-koepel) — samengevoegd tot één
 - **ManageList defaultCollapsed**: nieuw toegevoegde prop zodat elk blok een eigen standaardtoestand heeft
@@ -246,7 +259,7 @@ Daarna blijft de execute-bit bewaard (Unix-rechten op bestandsinhoud overschrijv
 
 **Let op**: auto-upload werkt **niet** vanuit CEP-extensies (bv. LoaderScriptPanel). In dat geval toont het script een melding met het handmatige commando:
 ```
-node "dev/upload-logos.js" "/pad/naar/exportmap"
+node "dev/backdrop-designer/scripts/upload-logos.js" "/pad/naar/exportmap"
 ```
 
 ### upload-logos.js
@@ -266,6 +279,46 @@ Gebruikt in: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `ex
 - Huidig formaat: **PNG**
 - SVG is ondersteund in het script (aanbevolen voor toekomstige overstap)
 - Overstap = enkel andere radiobutton aanvinken in het dialoogvenster
+
+---
+
+## Recente wijzigingen (sessie april 2026 — formaatbeheer naar admin)
+
+### Formaatbeheer volledig naar admin verplaatst
+
+- **Admin: nieuwe sectie "Formaten"** (`FormatenSection.jsx` + `FormatEditModal.jsx`)
+  - Lijst van alle formaten met drag-to-reorder, zoekbalk, aanmaken/bewerken/verwijderen
+  - Eenmalige importknop: laadt alle 32 formaten uit `backdropFormats.json` in Supabase
+  - Tags per formaat: vrij te typen labels (chip-weergave), filterbaar in de main app
+  - Volledig formulier met alle velden in inklapbare secties: Naam & Tags / Canvas / Grid / Cel / Gutter / Marges / Header / Divider / Illustrator / Notities
+- **Main app vereenvoudigd**:
+  - `GridTypeSelector` toont alleen een lijst — geen potlood-icoon, geen "+ Nieuw formaat" knop
+  - Filter werkt nu op `tags` (beheerd via admin) i.p.v. `Categorie`/`EventStyle`
+  - `FormatPickerModal` volledig verwijderd uit main app
+  - `handleSaveCustomFormat`, `handleDeleteCustomFormat`, `handleImportAllFormats`, `handleCustomFormat` verwijderd uit `App.jsx`
+- **Supabase**: `sort_order integer` kolom toegevoegd aan `format_presets`
+- **db.js**: nieuwe functies `loadFormats()`, `upsertFormat()`, `deleteFormat()`, `bulkImportFormats()`, `reorderFormats()`
+
+### Vercel deployment gefixed
+
+- **Probleem**: Vercel deployde de repo root als lege statische site (`build . [0ms]`) → 404
+- **Oorzaak**: geen `vercel.json` aan de repo root; de config in `dev/backdrop-designer/` werd genegeerd
+- **Oplossing**: `vercel.json` toegevoegd aan de **repo root** met:
+  ```json
+  {
+    "installCommand": "cd dev/backdrop-designer && npm install",
+    "buildCommand": "cd dev/backdrop-designer && npm run build",
+    "outputDirectory": "dev/backdrop-designer/dist",
+    "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  }
+  ```
+- `routes` vervangen door `rewrites` — voorkomt conflict met Vite framework routing
+
+### Projectopkuis
+
+- `dev/upload-logos.js` verplaatst naar `dev/backdrop-designer/scripts/upload-logos.js`
+- Pad bijgewerkt in `batch_export_logos_v1_DEV.jsx`
+- Lege mappen (`stable/`, `archives/`, `experiments/`, `templates/`) verwijderd (stonden niet in git)
 
 ---
 
@@ -361,15 +414,13 @@ Gebruikt in: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `ex
 
 ---
 
-## Recente wijzigingen (sessie april 2026 — formaatbeheer)
+## Recente wijzigingen (sessie april 2026 — formaatbeheer, vervangen)
 
-### Formaatbeheer — statische JSON vervangen door bewerkbare presets
-- **Override-systeem**: custom format met zelfde Code als statisch preset verdringt de statische versie in alle lijsten (deduplicatie op Code)
-- **Potlood-icoon** op hover in GridTypeSelector — opent FormatPickerModal direct op level 2 (edit-modus)
-- **`editMode` prop** in FormatPickerModal: Code altijd bewerkbaar, "Opslaan als preset" voor statische presets, "Preset bijwerken" voor custom
-- **Eenmalige import**: "Importeer alle presets als bewerkbaar" converteert de volledige statische JSON naar custom presets in één klik; na import verdwijnt de statische lijst volledig
-- **`staticImported` flag** in localStorage (`backdropDesigner_staticImported`); als gezet, ontvangt GridTypeSelector en FormatPickerModal een lege `staticFormats=[]`
-- **`staticFormats` prop**: App.jsx importeert `backdropFormats.json` als `allStaticFormats` en geeft lege array door na import — componenten zijn niet meer hardgekoppeld aan de JSON
+> ⚠️ Deze sectie is achterhaald. Formaatbeheer is volledig verplaatst naar de admin (zie sectie hierboven). `FormatPickerModal` en de bijbehorende edit-UI in de main app bestaan niet meer.
+
+### Formaatbeheer — statische JSON vervangen door bewerkbare presets ~~(vervangen door admin)~~
+- ~~Potlood-icoon, FormatPickerModal, staticImported flag~~ → verwijderd
+- `backdropFormats.json` blijft als fallback als Supabase nog geen formaten bevat
 
 ### GridTypeSelector — volledige hoogte
 - Kaart-wrapper (`rounded-xl border`) verwijderd — component vult de volledige panelhoogte
