@@ -89,24 +89,24 @@ function PasswordResetForm() {
 export default function AdminPage() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  // Check URL hash immediately — Supabase puts #type=recovery in the URL on reset links
-  const [isRecovery, setIsRecovery] = useState(
-    () => window.location.hash.includes('type=recovery')
-  )
+  // Check URL immediately (PKCE: query params; implicit: hash)
+  const [isRecovery, setIsRecovery] = useState(() => {
+    const search = new URLSearchParams(window.location.search)
+    return search.get('type') === 'recovery' ||
+           window.location.hash.includes('type=recovery')
+  })
 
   useEffect(() => {
+    // onAuthStateChange handles ALL auth events incl. PASSWORD_RECOVERY after PKCE exchange
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
-      else if (event === 'USER_UPDATED') { setIsRecovery(false); window.location.hash = '' }
+      if (event === 'USER_UPDATED') setIsRecovery(false)
       setSession(session)
       setLoading(false)
     })
-    // Trigger initial session load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-    return () => subscription.unsubscribe()
+    // Fallback: als onAuthStateChange niet vuurt (statische sessie zonder auth-actie)
+    const fallback = setTimeout(() => setLoading(false), 3000)
+    return () => { subscription.unsubscribe(); clearTimeout(fallback) }
   }, [])
 
   if (loading) {
@@ -117,7 +117,8 @@ export default function AdminPage() {
     )
   }
 
-  if (!session) return <AdminLogin />
+  // Recovery check VÓÓR session check — recovery heeft een sessie maar wil geen admin tonen
   if (isRecovery) return <PasswordResetForm />
+  if (!session) return <AdminLogin />
   return <AdminLayout session={session} />
 }
