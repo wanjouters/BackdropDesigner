@@ -1,0 +1,8 @@
+{
+  "installCommand": "cd dev/backdrop-designer && npm install",
+  "buildCommand": "cd dev/backdrop-designer && npm run build",
+  "outputDirectory": "dev/backdrop-designer/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
