@@ -35,14 +35,21 @@ export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
       style={{ top: '100%', left: 0, marginTop: 4 }}
     >
       <div className="p-2 border-b border-gray-100">
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Zoek sponsor..."
-          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Zoek sponsor..."
+            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {query && (
+            <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+            </button>
+          )}
+        </div>
       </div>
       <div className="overflow-y-auto max-h-72">
         {filtered.length === 0 && (

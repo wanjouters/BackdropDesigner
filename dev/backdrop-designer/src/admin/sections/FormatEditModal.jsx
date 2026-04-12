@@ -1,5 +1,82 @@
 import { useState } from 'react'
 
+// ─── HEX → CMYK (benadering, zonder kleurprofiel) ────────────────────────────
+function hexToCmyk(hex) {
+  if (!hex || hex.length < 7) return { c: 0, m: 0, y: 0, k: 100 }
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const k = 1 - Math.max(r, g, b)
+  if (k >= 1) return { c: 0, m: 0, y: 0, k: 100 }
+  return {
+    c: Math.round((1 - r - k) / (1 - k) * 100),
+    m: Math.round((1 - g - k) / (1 - k) * 100),
+    y: Math.round((1 - b - k) / (1 - k) * 100),
+    k: Math.round(k * 100),
+  }
+}
+
+// ─── Format preview SVG ───────────────────────────────────────────────────────
+function FormatPreview({ form }) {
+  const W = form.ArtboardWidth_mm
+  const H = form.ArtboardHeight_mm
+  if (!W || !H || W <= 0 || H <= 0) return null
+
+  const s = form.Scale || 0.1
+  const containerW = 480
+  const containerH = Math.max(30, Math.round(containerW * H / W))
+  const px = containerW / W
+
+  const cellW = (form.CellW_mm || 0) * s * px
+  const cellH = (form.CellH_mm || 0) * s * px
+  const gutX  = (form.GutterX_mm || 0) * s * px
+  const gutY  = (form.GutterY_mm || 0) * s * px
+  const marL  = (form.MarginLeft_mm || 0) * s * px
+  const marT  = (form.MarginTop_mm || 0) * s * px
+  const bleed = (form.Bleed_mm || 0) * s * px
+  const cols  = form.Cols || 0
+  const rows  = form.Rows || 0
+  const bg    = form.BackgroundColor_Hex || '#050703'
+
+  const cells = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      cells.push({
+        x: marL + c * (cellW + gutX),
+        y: marT + r * (cellH + gutY),
+        w: cellW,
+        h: cellH,
+      })
+    }
+  }
+
+  return (
+    <div className="rounded-lg overflow-hidden bg-gray-100 p-2">
+      <svg
+        width="100%"
+        viewBox={`${-bleed} ${-bleed} ${containerW + 2 * bleed} ${containerH + 2 * bleed}`}
+        style={{ display: 'block' }}
+      >
+        {bleed > 0 && (
+          <rect x={-bleed} y={-bleed} width={containerW + 2 * bleed} height={containerH + 2 * bleed}
+            fill={bg} opacity={0.35} />
+        )}
+        <rect x={0} y={0} width={containerW} height={containerH} fill={bg} />
+        {cells.map((cell, i) => (
+          <rect key={i} x={cell.x} y={cell.y} width={cell.w} height={cell.h}
+            fill="white" opacity={0.2} rx={1} />
+        ))}
+        {/* Artboard border */}
+        <rect x={0} y={0} width={containerW} height={containerH}
+          fill="none" stroke="white" strokeOpacity={0.15} strokeWidth={1} />
+      </svg>
+      <p className="text-[10px] text-gray-400 text-center mt-1">
+        {form.Cols}×{form.Rows} · {form.CanvasWidth_mm}×{form.CanvasHeight_mm} mm
+      </p>
+    </div>
+  )
+}
+
 function autoCode(str) {
   return (str || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')
 }
@@ -122,6 +199,7 @@ export default function FormatEditModal({ format, onSave, onClose }) {
     Scale: 0.1,
     Bleed_mm: 10,
     BackgroundColor_Hex: '#050703',
+    BackgroundColor_Cmyk: { c: 0, m: 0, y: 0, k: 97 },
     HeaderType: 'NONE',
     HeaderHeight_mm: null,
     HeaderMargin_mm: null,
@@ -142,6 +220,8 @@ export default function FormatEditModal({ format, onSave, onClose }) {
     Notes: '',
     ...format,
     tags: format?.tags || [],
+    BackgroundColor_Cmyk: format?.BackgroundColor_Cmyk
+      || hexToCmyk(format?.BackgroundColor_Hex || '#050703'),
   })
 
   const [gutterLinked, setGutterLinked] = useState(false)
@@ -282,35 +362,77 @@ export default function FormatEditModal({ format, onSave, onClose }) {
           {/* Canvas */}
           <Section title="Canvas" defaultOpen={true}>
             <div className="space-y-3">
+
+              {/* Afmetingen */}
               <div className="flex items-end gap-2">
                 <NumField label="Breedte" value={form.CanvasWidth_mm} onChange={v => set('CanvasWidth_mm', v)} step={10} unit="mm" />
                 <LinkBtn linked={canvasLinked} onToggle={() => setCanvasLinked(v => !v)} />
                 <NumField label="Hoogte" value={form.CanvasHeight_mm} onChange={v => set('CanvasHeight_mm', v)} step={10} unit="mm" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1">
+
+              {/* Schaal + Bleed */}
+              <div className="grid grid-cols-2 gap-3">
+                <NumField label="Schaal" value={form.Scale} onChange={v => set('Scale', v)} step={0.01} min={0.01} />
+                <NumField label="Bleed" value={form.Bleed_mm} onChange={v => set('Bleed_mm', v)} step={1} unit="mm" />
+              </div>
+
+              {/* Achtergrond */}
+              <div className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
                   <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Achtergrond</label>
+                  <button
+                    type="button"
+                    onClick={() => set('BackgroundColor_Cmyk', hexToCmyk(form.BackgroundColor_Hex))}
+                    className="text-[10px] text-blue-500 hover:text-blue-700 underline"
+                  >
+                    CMYK berekenen van HEX
+                  </button>
+                </div>
+                {/* HEX */}
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">HEX <span className="font-normal text-gray-300">(online weergave)</span></p>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={form.BackgroundColor_Hex || '#050703'}
                       onChange={e => set('BackgroundColor_Hex', e.target.value)}
-                      className="w-8 h-8 rounded border border-gray-200 cursor-pointer p-0.5"
+                      className="w-8 h-8 rounded border border-gray-200 cursor-pointer p-0.5 flex-shrink-0"
                     />
                     <input
                       type="text"
                       value={form.BackgroundColor_Hex || ''}
                       onChange={e => set('BackgroundColor_Hex', e.target.value)}
-                      className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono"
+                      className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono bg-white"
                     />
                   </div>
                 </div>
-                <NumField label="Schaal" value={form.Scale} onChange={v => set('Scale', v)} step={0.01} min={0.01} />
-                <NumField label="Bleed" value={form.Bleed_mm} onChange={v => set('Bleed_mm', v)} step={1} unit="mm" />
+                {/* CMYK */}
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">CMYK <span className="font-normal text-gray-300">(export / druk)</span></p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['c', 'm', 'y', 'k'].map(ch => (
+                      <div key={ch} className="flex flex-col gap-1">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{ch}</label>
+                        <input
+                          type="number"
+                          min={0} max={100} step={1}
+                          value={form.BackgroundColor_Cmyk?.[ch] ?? 0}
+                          onChange={e => set('BackgroundColor_Cmyk', {
+                            ...form.BackgroundColor_Cmyk,
+                            [ch]: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)),
+                          })}
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              {/* Artboard (readonly) */}
               <div className="grid grid-cols-2 gap-3">
-                <NumField label="Artboard breedte" value={form.ArtboardWidth_mm} onChange={v => set('ArtboardWidth_mm', v)} step={10} unit="mm" readOnly />
-                <NumField label="Artboard hoogte" value={form.ArtboardHeight_mm} onChange={v => set('ArtboardHeight_mm', v)} step={10} unit="mm" readOnly />
+                <NumField label="Artboard breedte" value={form.ArtboardWidth_mm} onChange={() => {}} step={10} unit="mm" readOnly />
+                <NumField label="Artboard hoogte" value={form.ArtboardHeight_mm} onChange={() => {}} step={10} unit="mm" readOnly />
               </div>
               <p className="text-[10px] text-gray-300">Artboard-afmetingen worden automatisch berekend (Canvas × Schaal).</p>
             </div>

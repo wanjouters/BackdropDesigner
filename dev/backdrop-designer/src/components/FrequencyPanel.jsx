@@ -102,14 +102,21 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
               {isReplacing && (
                 <div className="mt-1.5 mb-2 ml-2 border border-blue-200 rounded-lg bg-blue-50 p-2">
                   <p className="text-[10px] text-blue-500 font-semibold mb-1.5 uppercase tracking-wide">Vervangen door:</p>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={replaceQuery}
-                    onChange={e => setReplaceQuery(e.target.value)}
-                    placeholder="Zoek sponsor..."
-                    className="w-full text-xs border border-blue-200 rounded-md px-2 py-1 mb-1.5 bg-white focus:outline-none focus:border-blue-400"
-                  />
+                  <div className="relative mb-1.5">
+                    <input
+                      autoFocus
+                      type="text"
+                      value={replaceQuery}
+                      onChange={e => setReplaceQuery(e.target.value)}
+                      placeholder="Zoek sponsor..."
+                      className="w-full text-xs border border-blue-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:border-blue-400"
+                    />
+                    {replaceQuery && (
+                      <button onClick={() => setReplaceQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-500">
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+                      </button>
+                    )}
+                  </div>
                   <div className="max-h-32 overflow-y-auto space-y-0.5">
                     {filteredReplacements.slice(0, 40).map(n => (
                       <button

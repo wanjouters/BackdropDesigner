@@ -95,7 +95,7 @@ Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/ut
 | `sponsor_event_tags` | Event-tags + categorie per sponsor per event — `sponsor_name, event_code, category` |
 | `sponsor_group_assignments` | Koepel-assignments — `sponsor_name, group_name, category` |
 | `settings` | Key-value opslag — `key, value` (o.a. `category_list`, `static_imported`, `default_aspect`) |
-| `custom_sponsors` | Sponsors toegevoegd via de app — `name, logo_data_url` |
+| `custom_sponsors` | Sponsors toegevoegd via de admin — `name, logo_data_url` |
 | `logo_overrides` | Custom logo-overrides voor bestaande sponsors — `sponsor_name, logo_data_url` |
 | `cell_presets` | Celdimensie-presets — `id, data` |
 | `canvas_presets` | Canvas-presets — `id, data` |
@@ -103,9 +103,14 @@ Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/ut
 
 Alle tabellen hebben een nullable `user_id uuid` kolom voor toekomstige multi-user migratie (RLS).
 
-### Kritisch patroon — gecombineerde tags + categorieën
+### Kritisch patroon — per-sponsor saves
 
-`sponsor_event_tags` slaat zowel event-tags als per-event categorieën op in dezelfde tabel. Gebruik altijd `saveSponsorEventData(tags, sponsorCategories)` — deze functie verwijdert alle bestaande rijen en herbouwt de tabel in één operatie. Nooit tags en categorieën apart opslaan.
+`sponsor_event_tags` slaat zowel event-tags als per-event categorieën op in dezelfde tabel. Gebruik altijd de **per-sponsor** functies:
+
+- **`saveSponsorTags(sponsorName, eventCodes, categoryMap)`** — verwijdert alle rijen voor die sponsor, voegt de nieuwe in. Raakt andere sponsors niet aan.
+- **`saveSponsorGroup(sponsorName, groupMap)`** — idem voor `sponsor_group_assignments`.
+
+**Nooit** meer `saveSponsorEventData(tags, sponsorCategories)` gebruiken voor nieuwe code. Die functie doet een DELETE WHERE sponsor_name != '' (= alles), gevolgd door een INSERT van de volledige `tags` state. Als `tags = {}` (stale state bij snel opslaan) wist dit de hele tabel. De functie bestaat nog in `db.js` voor backwards compat maar is deprecated.
 
 ### Mount — parallel laden
 
@@ -171,25 +176,17 @@ Na het toewijzen van een logo aan een slot springt de selectie automatisch naar 
 - **`SavedDesignsPanel`**: ingebouwde component — gegroepeerd op event → editie, zoekveld, dupliceer/hernoem/verwijder per rij; "Huidig ontwerp opslaan" knop bovenaan (enkel als formaat geladen)
 
 ### `LogoLibrary.jsx`
-- Rechterpaneel: zoekbalk (met × wis-knop), event-filter dropdown, richtingskiezer
-- `ManageList`: herbruikbare component voor CRUD + drag-and-drop herordening van lijsten
-  - Props: `title`, `color`, `items`, `onRename`, `onDelete`, `onAdd`, `onReorder`, `defaultCollapsed`
-  - Kleuren: `orange`, `purple`, `indigo`, `teal`
-  - Drag-handle: 6-dots grip SVG, drop-target highlight
-  - Collapse/expand per sectie via interne state
-- Beheerpaneel (tandwiel): toont Koepels / Events / Categorieën als inklappende secties
-  - Koepels: standaard ingeklapt
-  - Events: standaard uitgeklapt
-  - Categorieën: standaard ingeklapt
-- Events-sectie heeft koepelfilter-chips + per-event koepeldropdown (alleen in edit-mode)
-- `buildGroups()`: groepeert gefilterde sponsors per categorie
-- Wanneer beheerpaneel open is, verbergt het logo-grid (mutueel exclusief)
+- Rechterpaneel: **alleen-lezen sponsorbibliotheek** — geen beheer meer (geen tags, geen toevoegen/verwijderen)
+- Zoekbalk (met × wis-knop), event-filter dropdown, richtingskiezer
+- `buildGroups()`: groepeert gefilterde sponsors per categorie wanneer event-filter actief is
+- `SponsorCard`: klikbaar/sleepbaar logo-kaartje — geen tag-icoon, geen delete-checkbox
+- `storageFilenames` check: enkel sponsors tonen waarvan het logo-bestand in Supabase Storage staat
+- Alle tag/koepel/categorieën-beheer is verplaatst naar de **admin** (`LogosSection.jsx`)
 
 ### `SponsorEditModal.jsx`
-- Popup voor per-sponsor instellingen
-- Toont event-checkboxes + categorie-dropdown per event
-- Scroll-safe: `maxHeight: calc(100vh - 48px)`
-- Ontvangt `groupCategories` (= `categoryList`)
+- ⚠️ **Niet meer actief in de main app** — tag- en koepelbeheer is volledig verplaatst naar de admin
+- Component bestaat nog in de codebase maar wordt nergens meer geïmporteerd in `App.jsx` of `LogoLibrary.jsx`
+- Beheer van event-tags en categorieën verloopt nu via `TagEditor` in `LogosSection.jsx` (admin)
 
 ### `GridTypeSelector.jsx`
 - Enkelvoudige lijst van alle formaten (geladen vanuit Supabase via `customFormats` prop)
@@ -319,6 +316,41 @@ Gebruikt in: `PreviewCanvas.jsx`, `LogoLibrary.jsx`, `SponsorEditModal.jsx`, `ex
 - `dev/upload-logos.js` verplaatst naar `dev/backdrop-designer/scripts/upload-logos.js`
 - Pad bijgewerkt in `batch_export_logos_v1_DEV.jsx`
 - Lege mappen (`stable/`, `archives/`, `experiments/`, `templates/`) verwijderd (stonden niet in git)
+
+---
+
+## Recente wijzigingen (sessie april 2026 — tag/logo beheer naar admin)
+
+### Tag- en logobeheer volledig naar admin verplaatst
+
+- **`LogoLibrary.jsx` vereenvoudigd tot alleen-lezen browsepaneel**
+  - Verwijderd: `AddSponsorModal`, `CheckSection`, tag-icoon op sponsor-kaartjes, delete-mode (prullenbak-toggle + bevestigingsbalk)
+  - Verwijderd: props `onTagsChange`, `onCategoryChange`, `onSponsorGroupsChange`, `onCustomLogoChange`, `onAddCustomSponsor`, `onDeleteCustomSponsor`, `onOpenSettings`
+  - `SponsorCard` toont enkel logo + naam — klikbaar en sleepbaar, geen verdere acties
+- **`SponsorEditModal.jsx`** niet meer geïmporteerd in main app — werd al alleen voor tags gebruikt
+- **Admin `LogosSection.jsx`**: alle event- en koepel-tagbeheer via `TagEditor` component — per sponsor
+
+### Per-sponsor save functies in `db.js`
+
+Twee nieuwe functies vervangen de gevaarlijke globale `saveSponsorEventData`:
+
+```js
+saveSponsorTags(sponsorName, eventCodes, categoryMap)
+// DELETE WHERE sponsor_name = X, dan INSERT voor die sponsor
+
+saveSponsorGroup(sponsorName, groupMap)
+// DELETE WHERE sponsor_name = X, dan INSERT voor die sponsor
+```
+
+`saveSponsorEventData` is deprecated maar blijft in `db.js` voor backwards compat. Gebruik het niet meer.
+
+### Koepel- vs event-logica — datastructuur
+
+- `sponsor_event_tags`: directe event-koppeling per sponsor (bv. sponsor X → RONDE VAN LIMBURG)
+- `sponsor_group_assignments`: koepel-koppeling (bv. sponsor X → "Spring Classics")
+- `event_groups`: welke events zitten in welke koepel (bv. "Spring Classics" → RONDE VAN LIMBURG + BRUSSELS CYCLING CLASSIC)
+- Filterlogica in `LogoLibrary` gebruikt beide tabellen: koepelpartners zijn zichtbaar bij elk event dat in die koepel zit
+- Let op naamgeving: "Spring Classics" ≠ "Classic Series" — beide zijn koepels met eigen events
 
 ---
 
