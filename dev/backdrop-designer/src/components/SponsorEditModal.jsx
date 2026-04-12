@@ -173,7 +173,7 @@ export default function SponsorEditModal({
                           onChange={e => toggleEvent(ev, e.target.checked)}
                           className="w-4 h-4 accent-blue-600"
                         />
-                        <span className={`text-xs font-bold w-12 ${checked ? 'text-blue-700' : 'text-gray-400'}`}>{ev}</span>
+                        <span className={`text-xs font-bold shrink-0 ${checked ? 'text-blue-700' : 'text-gray-400'}`}>{ev}</span>
                       </label>
                       <select
                         value={cat}
