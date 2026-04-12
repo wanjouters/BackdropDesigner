@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import sponsors from '../data/sponsors.json'
 import SponsorEditModal from './SponsorEditModal'
 import { logoUrl } from '../utils/logoUrl'
+import { supabase } from '../utils/supabase'
 
 const BLANK = { partner: 'BLANK', filename: 'BLANK' }
 const STATIC_SPONSORS = [BLANK, ...sponsors]
@@ -221,6 +222,18 @@ export default function LogoLibrary({
 }) {
   const [query, setQuery] = useState('')
   const [imgErrors, setImgErrors] = useState({})
+  const [storageFilenames, setStorageFilenames] = useState(null)
+
+  useEffect(() => {
+    async function fetchStorageFiles() {
+      const { data } = await supabase.storage.from('logos').list('', { limit: 1000 })
+      if (data) {
+        const names = new Set(data.map(f => f.name.replace(/\.(png|svg)$/i, '')))
+        setStorageFilenames(names)
+      }
+    }
+    fetchStorageFiles()
+  }, [])
   const [eventFilter, setEventFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
@@ -248,11 +261,14 @@ export default function LogoLibrary({
     setDeleteMode(false)
   }
 
-  // Merge static and custom sponsors; custom sponsors added at the end
+  // Merge static and custom sponsors; filter static op beschikbare Storage-bestanden
   const allSponsors = useMemo(() => {
     const customEntries = customSponsors.map(s => ({ ...s, _custom: true }))
-    return [...STATIC_SPONSORS, ...customEntries]
-  }, [customSponsors])
+    const filteredStatic = storageFilenames === null
+      ? STATIC_SPONSORS  // nog niet geladen: toon alles
+      : STATIC_SPONSORS.filter(s => s.filename === 'BLANK' || storageFilenames.has(s.filename))
+    return [...filteredStatic, ...customEntries]
+  }, [customSponsors, storageFilenames])
 
   // Merged customLogos: combines uploaded overrides with dataUrls from customSponsors
   // so SponsorEditModal can show the preview for custom sponsors
