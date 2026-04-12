@@ -236,6 +236,7 @@ export default function LogosSection({ showToast }) {
     if (error) { showToast('Verwijderen mislukt: ' + error.message, 'error'); return }
     showToast(`Logo van ${sponsor.partner} verwijderd`)
     setDeleteConfirm(null)
+    setAllSponsors(prev => prev.filter(s => s.partner !== sponsor.partner))
   }
 
   async function handleSaveTags(newTags, newCats) {
