@@ -630,6 +630,51 @@ De Supabase JWT-verificatielaag (`verify_jwt: true`) gaf consistent 401-fouten t
 
 ---
 
+## Recente wijzigingen (sessie april 2026 — admin UX, modal fixes, autocomplete)
+
+### Admin LogosSection — filter + bulk delete
+
+- **Filter op event/koepel**: dropdown met optgroups ("─ Events ─" en "─ Koepels ─") naast de zoekbalk
+  - Event-filter toont sponsors met directe event-tag **of** sponsors in een koepel die dat event bevat (zelfde logica als main app `buildGroups`)
+  - Koepel-filter toont sponsors die direct aan die koepel zijn toegewezen
+  - Filter en zoekbalk werken samen (stapelbaar)
+- **Bulk delete modus**: "Logo's verwijderen" knop (rechts naast uploadknop) activeert selectiemodus
+  - Kaarten tonen checkbox; klikken selecteert/deselecteert
+  - Rode bevestigingsbalk onderaan toont aantal geselecteerde + "Verwijder X logo's" knop
+  - Na verwijderen: modus automatisch uit, kaarten verdwijnen uit grid
+  - Verwijderknop van individuele kaarten verwijderd — verwijderen enkel via bulk-modus
+- **Kaartopkuis**: event-tags (blauwe chips) verwijderd van sponsor-kaartjes — niet nodig met filter
+
+### FormatEditModal — achtergrond CMYK + tag autocomplete
+
+- **Achtergrondkleur uitgebreid**:
+  - HEX-veld (bestaand, voor online weergave) op eigen rij
+  - CMYK-velden C/M/Y/K (0–100) op tweede rij (voor export/druk)
+  - "CMYK berekenen van HEX" knop — benaderende conversie via RGB-formule (zonder kleurprofiel)
+  - `BackgroundColor_Cmyk: { c, m, y, k }` opgeslagen in `format_presets.data` (JSONB)
+  - `hexToCmyk()` hulpfunctie toegevoegd in `FormatEditModal.jsx`
+  - `FormatPreview` SVG component aanwezig maar voorlopig verborgen (te groot)
+- **Tag autocomplete**:
+  - `FormatenSection` berekent `allTags` (deduplicated, gesorteerd) uit alle formaten en geeft ze als prop door
+  - Bij focus of typen in het tag-veld verschijnt een dropdown met overeenkomende bestaande tags
+  - Tags die al zijn toegevoegd worden uitgefilterd uit de suggesties
+  - Klikken op suggestie voegt tag direct toe; Enter voegt vrije tekst toe
+
+### Modal bug — tekst selecteren sluit venster
+
+- **Probleem**: bij het slepen om tekst te selecteren in een inputveld kon het venster onverwacht sluiten
+- **Oorzaak**: `mousedown` op input + `mouseup` buiten modal → browser vuurt `click` op de backdrop → `e.target === e.currentTarget` → `onClose()`
+- **Fix**: `onMouseDown` i.p.v. `onClick` op de backdrop + `onMouseDown={e => e.stopPropagation()}` op de modal content
+- **Toegepast in**: `FormatEditModal.jsx` en `TagEditor` in `LogosSection.jsx`
+
+### × wis-knoppen uitgebreid
+
+- Toegevoegd aan `SponsorPicker.jsx` ("Zoek sponsor..." bij slot-klik)
+- Toegevoegd aan `FrequencyPanel.jsx` ("Zoek sponsor..." in vervang-paneel)
+- `App.jsx`, `LogoLibrary.jsx`, `GridTypeSelector.jsx`, `FormatenSection.jsx` hadden al een × wis-knop
+
+---
+
 ## Openstaande verbeterpunten
 
 | Punt | Beschrijving |
