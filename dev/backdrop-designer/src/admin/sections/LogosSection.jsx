@@ -3,7 +3,7 @@ import { supabase } from '../../utils/supabase'
 import { logoUrl, STORAGE_BASE } from '../../utils/logoUrl'
 import {
   loadTags, loadSponsorCategories, saveSponsorEventData,
-  loadEvents, loadSetting,
+  loadEvents, loadSetting, loadEventGroups, loadSponsorGroups, saveSponsorGroups,
 } from '../../utils/db'
 import sponsors from '../../data/sponsors.json'
 
@@ -11,86 +11,138 @@ const DEFAULT_CATEGORIES = ['Titel', 'Goud', 'Zilver', 'Brons', 'Partner', 'Leve
 
 // ─── Sponsor tag editor modal ────────────────────────────────────────────────
 
-function TagEditor({ sponsor, events, categoryList, tags, sponsorCategories, onSave, onClose }) {
+function TagEditor({ sponsor, events, categoryList, tags, sponsorCategories, eventGroups, sponsorGroups, onSave, onClose }) {
   const [selectedEvents, setSelectedEvents] = useState(tags[sponsor.partner] || [])
   const [categories, setCategories] = useState(sponsorCategories[sponsor.partner] || {})
+  const [groupData, setGroupData] = useState(sponsorGroups[sponsor.partner] || {})
 
-  function toggleEvent(code) {
-    setSelectedEvents(prev =>
-      prev.includes(code) ? prev.filter(e => e !== code) : [...prev, code]
-    )
-  }
-
-  function setCategory(eventCode, cat) {
-    setCategories(prev => ({ ...prev, [eventCode]: cat }))
+  function toggleEvent(code, checked) {
+    setSelectedEvents(prev => checked ? [...new Set([...prev, code])] : prev.filter(e => e !== code))
+    if (!checked) setCategories(prev => { const n = { ...prev }; delete n[code]; return n })
   }
 
   async function handleSave() {
     const newTags = { ...tags, [sponsor.partner]: selectedEvents }
-    const newCats = { ...sponsorCategories, [sponsor.partner]: categories }
-    // Verwijder events die niet meer geselecteerd zijn uit categories
     const cleanedCats = {}
     for (const ev of selectedEvents) {
       if (categories[ev]) cleanedCats[ev] = categories[ev]
     }
-    newCats[sponsor.partner] = cleanedCats
-    await onSave(newTags, newCats)
+    const newCats = { ...sponsorCategories, [sponsor.partner]: cleanedCats }
+    const newGroups = { ...sponsorGroups, [sponsor.partner]: groupData }
+    await onSave(newTags, newCats, newGroups)
   }
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
-            <h2 className="font-semibold text-gray-900">{sponsor.partner}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Events & categorieën</p>
+            <h2 className="text-base font-bold text-gray-800">{sponsor.partner}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Sponsor bewerken</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M2 2l12 12M14 2L2 14"/>
             </svg>
           </button>
         </div>
 
-        <div className="p-6 space-y-2">
-          {events.length === 0 && (
-            <p className="text-sm text-gray-400">Geen events beschikbaar. Voeg eerst events toe.</p>
-          )}
-          {events.map(code => (
-            <div key={code} className="rounded-lg border border-gray-100 overflow-hidden">
-              <label className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50">
-                <input
-                  type="checkbox"
-                  checked={selectedEvents.includes(code)}
-                  onChange={() => toggleEvent(code)}
-                  className="accent-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">{code}</span>
-              </label>
-              {selectedEvents.includes(code) && (
-                <div className="px-4 pb-3 pt-0 bg-blue-50/50 border-t border-blue-100">
-                  <label className="text-xs text-gray-500 block mb-1">Categorie</label>
-                  <select
-                    value={categories[code] || ''}
-                    onChange={e => setCategory(code, e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white"
-                  >
-                    <option value="">— geen categorie —</option>
-                    {categoryList.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="overflow-y-auto flex-1">
+          {/* Koepels */}
+          <div className="px-5 py-4 border-b border-gray-100">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Koepels (koepelpartner)</p>
+            {Object.keys(eventGroups || {}).length === 0 ? (
+              <p className="text-xs text-gray-400">Geen koepels gedefinieerd. Voeg koepels toe via de app-instellingen.</p>
+            ) : (
+              <div className="space-y-2">
+                {Object.keys(eventGroups).map(groupName => {
+                  const checked = groupName in groupData
+                  const cat = groupData[groupName] || ''
+                  return (
+                    <div key={groupName} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${checked ? 'bg-teal-50' : 'bg-gray-50'}`}>
+                      <label className="flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={e => {
+                            setGroupData(prev => {
+                              const n = { ...prev }
+                              if (e.target.checked) n[groupName] = ''
+                              else delete n[groupName]
+                              return n
+                            })
+                          }}
+                          className="w-4 h-4 accent-teal-600"
+                        />
+                        <span className={`text-xs font-bold ${checked ? 'text-teal-700' : 'text-gray-400'}`}>{groupName}</span>
+                      </label>
+                      <select
+                        value={cat}
+                        onChange={e => setGroupData(prev => ({ ...prev, [groupName]: e.target.value }))}
+                        disabled={!checked}
+                        className={`flex-1 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-400 transition-colors ${
+                          checked ? 'border-teal-200 bg-white text-gray-700' : 'border-gray-200 bg-gray-100 text-gray-300 cursor-not-allowed'
+                        }`}
+                      >
+                        <option value="">— categorie —</option>
+                        {categoryList.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Events */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Events & categorie</p>
+            {events.length === 0 ? (
+              <p className="text-xs text-gray-400">Geen events beschikbaar. Voeg eerst events toe.</p>
+            ) : (
+              <div className="space-y-2">
+                {events.map(ev => {
+                  const checked = selectedEvents.includes(ev)
+                  const cat = categories[ev] || ''
+                  return (
+                    <div key={ev} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${checked ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                      <label className="flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={e => toggleEvent(ev, e.target.checked)}
+                          className="w-4 h-4 accent-blue-600"
+                        />
+                        <span className={`text-xs font-bold w-12 ${checked ? 'text-blue-700' : 'text-gray-400'}`}>{ev}</span>
+                      </label>
+                      <select
+                        value={cat}
+                        onChange={e => setCategories(prev => ({ ...prev, [ev]: e.target.value }))}
+                        disabled={!checked}
+                        className={`flex-1 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 transition-colors ${
+                          checked ? 'border-blue-200 bg-white text-gray-700' : 'border-gray-200 bg-gray-100 text-gray-300 cursor-not-allowed'
+                        }`}
+                      >
+                        <option value="">— categorie —</option>
+                        {categoryList.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <p className="text-[10px] text-gray-400 mt-3">Sponsors zonder events zijn zichtbaar bij alle events.</p>
+          </div>
         </div>
 
-        <div className="flex gap-2 p-6 pt-0">
-          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-gray-100 flex gap-2 justify-end">
+          <button onClick={onClose} className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
             Annuleren
           </button>
-          <button onClick={handleSave} className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+          <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
             Opslaan
           </button>
         </div>
@@ -174,6 +226,8 @@ export default function LogosSection({ showToast }) {
   const [allSponsors, setAllSponsors] = useState([])
   const [tags, setTags] = useState({})
   const [sponsorCategories, setSponsorCategories] = useState({})
+  const [sponsorGroups, setSponsorGroups] = useState({})
+  const [eventGroups, setEventGroups] = useState({})
   const [events, setEvents] = useState([])
   const [categoryList, setCategoryList] = useState(DEFAULT_CATEGORIES)
   const [search, setSearch] = useState('')
@@ -186,14 +240,18 @@ export default function LogosSection({ showToast }) {
   useEffect(() => {
     async function load() {
       try {
-        const [tagsData, catsData, eventsData, catList] = await Promise.all([
+        const [tagsData, catsData, eventsData, catList, groupsData, eventGroupsData] = await Promise.all([
           loadTags(),
           loadSponsorCategories(),
           loadEvents(),
           loadSetting('category_list', DEFAULT_CATEGORIES),
+          loadSponsorGroups(),
+          loadEventGroups(),
         ])
         setTags(tagsData)
         setSponsorCategories(catsData)
+        setSponsorGroups(groupsData)
+        setEventGroups(eventGroupsData)
         setEvents(eventsData)
         setCategoryList(catList)
         // Merge sponsors.json with Storage
@@ -239,11 +297,15 @@ export default function LogosSection({ showToast }) {
     setAllSponsors(prev => prev.filter(s => s.partner !== sponsor.partner))
   }
 
-  async function handleSaveTags(newTags, newCats) {
+  async function handleSaveTags(newTags, newCats, newGroups) {
     try {
-      await saveSponsorEventData(newTags, newCats)
+      await Promise.all([
+        saveSponsorEventData(newTags, newCats),
+        saveSponsorGroups(newGroups),
+      ])
       setTags(newTags)
       setSponsorCategories(newCats)
+      setSponsorGroups(newGroups)
       setEditingSponsor(null)
       showToast('Opgeslagen')
     } catch (e) {
@@ -322,6 +384,8 @@ export default function LogosSection({ showToast }) {
           categoryList={categoryList}
           tags={tags}
           sponsorCategories={sponsorCategories}
+          eventGroups={eventGroups}
+          sponsorGroups={sponsorGroups}
           onSave={handleSaveTags}
           onClose={() => setEditingSponsor(null)}
         />
