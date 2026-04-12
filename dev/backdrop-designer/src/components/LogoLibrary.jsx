@@ -265,9 +265,11 @@ export default function LogoLibrary({
   const allSponsors = useMemo(() => {
     const customEntries = customSponsors.map(s => ({ ...s, _custom: true }))
     const filteredStatic = storageFilenames === null
-      ? STATIC_SPONSORS  // nog niet geladen: toon alles
+      ? STATIC_SPONSORS
       : STATIC_SPONSORS.filter(s => s.filename === 'BLANK' || storageFilenames.has(s.filename))
-    return [...filteredStatic, ...customEntries]
+    const [blank, ...rest] = filteredStatic
+    rest.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+    return [blank, ...rest, ...customEntries]
   }, [customSponsors, storageFilenames])
 
   // Merged customLogos: combines uploaded overrides with dataUrls from customSponsors
