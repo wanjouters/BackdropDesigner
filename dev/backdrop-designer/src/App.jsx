@@ -503,7 +503,7 @@ function ConfirmModal({ message, confirmLabel = 'Verwijderen', variant = 'danger
   )
 }
 
-export default function App() {
+export default function App({ session: initialSession }) {
   const [selectedFormat, setSelectedFormat] = useState(null)
   const [editedFormat, setEditedFormat] = useState(null)
   const [slots, setSlots] = useState([])
@@ -540,7 +540,7 @@ export default function App() {
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
   const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'adjust' | 'frequency'
-  const [authSession, setAuthSession] = useState(null)
+  const [authSession, setAuthSession] = useState(initialSession ?? null)
   const [authMenuOpen, setAuthMenuOpen] = useState(false)
   const authMenuRef = useRef(null)
   const hasMounted = useRef(false)
@@ -558,7 +558,6 @@ export default function App() {
 
   // ─── Auth state ───────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setAuthSession(session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAuthSession(session))
     return () => subscription.unsubscribe()
   }, [])
@@ -1219,14 +1218,17 @@ export default function App() {
               <>
                 <button
                   onClick={() => setAuthMenuOpen(o => !o)}
-                  title={authSession.user.email}
+                  title={authSession.user.user_metadata?.name || authSession.user.email}
                   className="w-8 h-8 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center hover:bg-gray-700 transition-colors"
                 >
-                  {authSession.user.email[0].toUpperCase()}
+                  {(authSession.user.user_metadata?.name || authSession.user.email)[0].toUpperCase()}
                 </button>
                 {authMenuOpen && (
-                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50" style={{ minWidth: 180 }}>
+                  <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50" style={{ minWidth: 200 }}>
                     <div className="px-4 py-2 border-b border-gray-100">
+                      {authSession.user.user_metadata?.name && (
+                        <p className="text-xs font-medium text-gray-800 truncate">{authSession.user.user_metadata.name}</p>
+                      )}
                       <p className="text-xs text-gray-400 truncate">{authSession.user.email}</p>
                     </div>
                     <a
