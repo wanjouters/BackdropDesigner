@@ -106,8 +106,28 @@ export async function loadSponsorCategories() {
 }
 
 /**
+ * Per-sponsor save: verwijdert en herplaatst de rijen voor ÉÉN sponsor.
+ * Veilig te gebruiken vanuit de main app zonder risico op het wissen van andere sponsordata.
+ */
+export async function saveSponsorTags(sponsorName, eventCodes, categoryMap) {
+  const { error: delErr } = await supabase
+    .from('sponsor_event_tags')
+    .delete()
+    .eq('sponsor_name', sponsorName)
+  if (delErr) throw delErr
+  if (!eventCodes || eventCodes.length === 0) return
+  const rows = eventCodes.map(event_code => ({
+    sponsor_name: sponsorName,
+    event_code,
+    category: categoryMap?.[event_code] || null,
+  }))
+  const { error } = await supabase.from('sponsor_event_tags').insert(rows)
+  if (error) throw error
+}
+
+/**
  * Gecombineerde save: herplaatst alle (sponsor, event, category) rijen in één keer.
- * Gebruik dit altijd wanneer tags OF categorieën wijzigen, zodat er niets verloren gaat.
+ * Gebruik dit alleen vanuit de admin waar de volledige state geladen is.
  */
 export async function saveSponsorEventData(tags, sponsorCategories) {
   const { error: delErr } = await supabase.from('sponsor_event_tags').delete().neq('sponsor_name', '')
@@ -153,6 +173,25 @@ export async function saveSponsorGroups(groups) {
       rows.push({ sponsor_name, group_name, category })
     }
   }
+  if (rows.length === 0) return
+  const { error } = await supabase.from('sponsor_group_assignments').insert(rows)
+  if (error) throw error
+}
+
+/**
+ * Per-sponsor group save: verwijdert en herplaatst de groepsrijen voor ÉÉN sponsor.
+ */
+export async function saveSponsorGroup(sponsorName, groupMap) {
+  const { error: delErr } = await supabase
+    .from('sponsor_group_assignments')
+    .delete()
+    .eq('sponsor_name', sponsorName)
+  if (delErr) throw delErr
+  const rows = Object.entries(groupMap || {}).map(([group_name, category]) => ({
+    sponsor_name: sponsorName,
+    group_name,
+    category,
+  }))
   if (rows.length === 0) return
   const { error } = await supabase.from('sponsor_group_assignments').insert(rows)
   if (error) throw error

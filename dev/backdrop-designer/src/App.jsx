@@ -883,14 +883,19 @@ export default function App({ session: initialSession }) {
   function handleTagsChange(sponsorName, eventsArray) {
     const newTags = { ...tags, [sponsorName]: eventsArray }
     setTags(newTags)
-    db.saveSponsorEventData(newTags, sponsorCategories).catch(console.error)
+    // Per-sponsor save — veilig ook als andere sponsordata via admin werd ingesteld
+    const catMap = sponsorCategories[sponsorName] || {}
+    const filteredCatMap = {}
+    eventsArray.forEach(ev => { if (catMap[ev]) filteredCatMap[ev] = catMap[ev] })
+    db.saveSponsorTags(sponsorName, eventsArray, filteredCatMap).catch(console.error)
   }
 
   function handleCategoryChange(sponsorName, event, category) {
     const catCopy = { ...sponsorCategories, [sponsorName]: { ...(sponsorCategories[sponsorName] || {}), [event]: category } }
     if (category === '') delete catCopy[sponsorName][event]
     setSponsorCategories(catCopy)
-    db.saveSponsorEventData(tags, catCopy).catch(console.error)
+    // Per-sponsor save
+    db.saveSponsorTags(sponsorName, tags[sponsorName] || [], catCopy[sponsorName] || {}).catch(console.error)
   }
 
   function handleSponsorGroupsChange(sponsorName, groupData) {
@@ -1627,22 +1632,15 @@ export default function App({ session: initialSession }) {
             selectedSlots={selectedSlots}
             onAssign={handleAssignFromLibrary}
             customLogos={customLogos}
-            onCustomLogoChange={handleCustomLogoChange}
             advanceDir={advanceDir}
             onAdvanceDirChange={setAdvanceDir}
-            onOpenSettings={() => setShowSettings(true)}
             tags={tags}
             sponsorCategories={sponsorCategories}
             events={events}
             categoryList={categoryList}
             eventGroups={eventGroups}
             sponsorGroups={sponsorGroups}
-            onTagsChange={handleTagsChange}
-            onCategoryChange={handleCategoryChange}
-            onSponsorGroupsChange={handleSponsorGroupsChange}
             customSponsors={customSponsors}
-            onAddCustomSponsor={handleAddCustomSponsor}
-            onDeleteCustomSponsor={handleDeleteCustomSponsor}
           />
         </div>
 

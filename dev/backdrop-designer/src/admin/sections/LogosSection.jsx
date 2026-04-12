@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../utils/supabase'
 import { logoUrl, STORAGE_BASE } from '../../utils/logoUrl'
 import {
-  loadTags, loadSponsorCategories, saveSponsorEventData,
-  loadEvents, loadSetting, loadEventGroups, loadSponsorGroups, saveSponsorGroups,
+  loadTags, loadSponsorCategories,
+  saveSponsorTags, saveSponsorGroup,
+  loadEvents, loadSetting, loadEventGroups, loadSponsorGroups,
 } from '../../utils/db'
 import sponsors from '../../data/sponsors.json'
 
@@ -22,14 +23,11 @@ function TagEditor({ sponsor, events, categoryList, tags, sponsorCategories, eve
   }
 
   async function handleSave() {
-    const newTags = { ...tags, [sponsor.partner]: selectedEvents }
     const cleanedCats = {}
     for (const ev of selectedEvents) {
       if (categories[ev]) cleanedCats[ev] = categories[ev]
     }
-    const newCats = { ...sponsorCategories, [sponsor.partner]: cleanedCats }
-    const newGroups = { ...sponsorGroups, [sponsor.partner]: groupData }
-    await onSave(newTags, newCats, newGroups)
+    await onSave(sponsor.partner, selectedEvents, cleanedCats, groupData)
   }
 
   return (
@@ -297,15 +295,15 @@ export default function LogosSection({ showToast }) {
     setAllSponsors(prev => prev.filter(s => s.partner !== sponsor.partner))
   }
 
-  async function handleSaveTags(newTags, newCats, newGroups) {
+  async function handleSaveTags(sponsorName, evCodes, catMap, grpData) {
     try {
       await Promise.all([
-        saveSponsorEventData(newTags, newCats),
-        saveSponsorGroups(newGroups),
+        saveSponsorTags(sponsorName, evCodes, catMap),
+        saveSponsorGroup(sponsorName, grpData),
       ])
-      setTags(newTags)
-      setSponsorCategories(newCats)
-      setSponsorGroups(newGroups)
+      setTags(prev => ({ ...prev, [sponsorName]: evCodes }))
+      setSponsorCategories(prev => ({ ...prev, [sponsorName]: catMap }))
+      setSponsorGroups(prev => ({ ...prev, [sponsorName]: grpData }))
       setEditingSponsor(null)
       showToast('Opgeslagen')
     } catch (e) {
