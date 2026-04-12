@@ -176,7 +176,7 @@ function TextField({ label, value, onChange, placeholder }) {
   )
 }
 
-export default function FormatEditModal({ format, onSave, onClose }) {
+export default function FormatEditModal({ format, allTags = [], onSave, onClose }) {
   const isNew = !format?.id
   const [form, setForm] = useState({
     Beschrijving: '',
@@ -229,6 +229,7 @@ export default function FormatEditModal({ format, onSave, onClose }) {
   const [marginVLinked, setMarginVLinked] = useState(false)
   const [canvasLinked, setCanvasLinked] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const [tagSuggestOpen, setTagSuggestOpen] = useState(false)
   const [codeManual, setCodeManual] = useState(!isNew)
 
   function set(key, value) {
@@ -294,9 +295,10 @@ export default function FormatEditModal({ format, onSave, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}
+        onMouseDown={e => e.stopPropagation()}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
@@ -341,19 +343,47 @@ export default function FormatEditModal({ format, onSave, onClose }) {
                   ))}
                   {form.tags.length === 0 && <span className="text-xs text-gray-300 italic">Nog geen tags</span>}
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                    placeholder="Nieuw tag (Enter om toe te voegen)"
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                  />
-                  <button type="button" onClick={addTag}
-                    className="px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-lg hover:bg-gray-900 transition-colors">
-                    +
-                  </button>
+                <div className="relative">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={e => { setTagInput(e.target.value); setTagSuggestOpen(true) }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); addTag(); setTagSuggestOpen(false) }
+                        if (e.key === 'Escape') setTagSuggestOpen(false)
+                      }}
+                      onFocus={() => setTagSuggestOpen(true)}
+                      onBlur={() => setTimeout(() => setTagSuggestOpen(false), 150)}
+                      placeholder="Nieuw tag (Enter om toe te voegen)"
+                      className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    />
+                    <button type="button" onClick={() => { addTag(); setTagSuggestOpen(false) }}
+                      className="px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-lg hover:bg-gray-900 transition-colors">
+                      +
+                    </button>
+                  </div>
+                  {/* Autocomplete suggestions */}
+                  {tagSuggestOpen && (() => {
+                    const q = tagInput.trim().toLowerCase()
+                    const suggestions = allTags.filter(t =>
+                      !form.tags.includes(t) && (q === '' || t.includes(q))
+                    ).slice(0, 8)
+                    return suggestions.length > 0 ? (
+                      <div className="absolute z-10 top-full left-0 right-8 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                        {suggestions.map(t => (
+                          <button
+                            key={t}
+                            type="button"
+                            onMouseDown={e => { e.preventDefault(); set('tags', [...form.tags, t]); setTagInput(''); setTagSuggestOpen(false) }}
+                            className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
                 </div>
               </div>
             </div>

@@ -255,6 +255,7 @@ export default function FormatenSection({ showToast }) {
       {editingFormat && (
         <FormatEditModal
           format={editingFormat === 'new' ? null : editingFormat}
+          allTags={[...new Set(formats.flatMap(f => f.tags || []))].sort()}
           onSave={handleSave}
           onClose={() => setEditingFormat(null)}
         />

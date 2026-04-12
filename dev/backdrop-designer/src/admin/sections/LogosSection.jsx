@@ -31,8 +31,10 @@ function TagEditor({ sponsor, events, categoryList, tags, sponsorCategories, eve
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}
+        onMouseDown={e => e.stopPropagation()}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
