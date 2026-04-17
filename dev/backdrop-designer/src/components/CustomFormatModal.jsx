@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { modalVariants, backdropVariants } from '../utils/animations'
 
 export default function CustomFormatModal({ onConfirm, onClose }) {
   const [code, setCode] = useState('')
@@ -21,8 +23,17 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+    <AnimatePresence>
+    <motion.div
+      variants={backdropVariants}
+      initial="hidden" animate="visible" exit="exit"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+    >
+      <motion.div
+        variants={modalVariants}
+        initial="hidden" animate="visible" exit="exit"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm"
+      >
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Nieuw formaat</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
@@ -37,7 +48,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
               onChange={e => setCode(e.target.value)}
               placeholder="bv. MIJN_BACKDROP_10x6"
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
             />
           </div>
           <div>
@@ -48,7 +59,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="bv. Backstage custom"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
             />
           </div>
           <div className="flex gap-3">
@@ -62,7 +73,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
                 max={30}
                 value={cols}
                 onChange={e => setCols(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
               />
             </div>
             <div className="flex-1">
@@ -75,7 +86,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
                 max={20}
                 value={rows}
                 onChange={e => setRows(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
               />
             </div>
           </div>
@@ -92,13 +103,14 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
             </button>
             <button
               type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
             >
               Aanmaken
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   )
 }

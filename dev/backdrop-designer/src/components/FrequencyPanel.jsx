@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { listContainerVariants, listItemVariants } from '../utils/animations'
 import sponsors from '../data/sponsors.json'
 
 const validNames = new Set(sponsors.map(s => s.partner))
@@ -38,6 +40,8 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
     setReplaceQuery('')
   }
 
+  const maxCount = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 1
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
@@ -59,15 +63,21 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
         </div>
       )}
 
-      <div className="space-y-1 max-h-96 overflow-y-auto">
+      <motion.div
+        className="space-y-1 max-h-96 overflow-y-auto"
+        variants={listContainerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {entries.length === 0 && (
           <p className="text-xs text-gray-300 text-center py-4">Nog geen sponsors toegewezen</p>
         )}
         {entries.map(([name, count]) => {
           const isInvalid = !validNames.has(name)
           const isReplacing = replacing === name
+          const widthPct = Math.min(100, (count / maxCount) * 100)
           return (
-            <div key={name}>
+            <motion.div key={name} variants={listItemVariants}>
               <div className="flex items-center gap-2 group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
@@ -80,7 +90,7 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                       <button
                         onClick={() => { setReplacing(isReplacing ? null : name); setReplaceQuery('') }}
                         title={`Vervang alle ${name}`}
-                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-gray-100 ${isReplacing ? 'opacity-100 text-blue-500' : 'text-gray-400'}`}
+                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-gray-100 ${isReplacing ? 'opacity-100 text-red-500' : 'text-gray-400'}`}
                       >
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M1 4h8a4 4 0 010 8H1"/>
@@ -91,49 +101,59 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                     </div>
                   </div>
                   <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${isInvalid ? 'bg-red-300' : 'bg-blue-400'}`}
-                      style={{ width: `${Math.min(100, (count / Math.max(...Object.values(counts))) * 100)}%` }}
+                    <motion.div
+                      className={`h-full rounded-full ${isInvalid ? 'bg-red-300' : 'bg-red-400'}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${widthPct}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
                     />
                   </div>
                 </div>
               </div>
 
-              {isReplacing && (
-                <div className="mt-1.5 mb-2 ml-2 border border-blue-200 rounded-lg bg-blue-50 p-2">
-                  <p className="text-[10px] text-blue-500 font-semibold mb-1.5 uppercase tracking-wide">Vervangen door:</p>
-                  <div className="relative mb-1.5">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={replaceQuery}
-                      onChange={e => setReplaceQuery(e.target.value)}
-                      placeholder="Zoek sponsor..."
-                      className="w-full text-xs border border-blue-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:border-blue-400"
-                    />
-                    {replaceQuery && (
-                      <button onClick={() => setReplaceQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-500">
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-32 overflow-y-auto space-y-0.5">
-                    {filteredReplacements.slice(0, 40).map(n => (
-                      <button
-                        key={n}
-                        onClick={() => handlePickReplacement(n)}
-                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-100 text-gray-700 transition-colors"
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              <AnimatePresence>
+                {isReplacing && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="mt-1.5 mb-2 ml-2 border border-red-200 rounded-lg bg-red-50 p-2 overflow-hidden"
+                  >
+                    <p className="text-[10px] text-red-500 font-semibold mb-1.5 uppercase tracking-wide">Vervangen door:</p>
+                    <div className="relative mb-1.5">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={replaceQuery}
+                        onChange={e => setReplaceQuery(e.target.value)}
+                        placeholder="Zoek sponsor..."
+                        className="w-full text-xs border border-red-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:border-red-400"
+                      />
+                      {replaceQuery && (
+                        <button onClick={() => setReplaceQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-500">
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-32 overflow-y-auto space-y-0.5">
+                      {filteredReplacements.slice(0, 40).map(n => (
+                        <button
+                          key={n}
+                          onClick={() => handlePickReplacement(n)}
+                          className="w-full text-left text-xs px-2 py-1 rounded hover:bg-red-100 text-gray-700 transition-colors"
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           )
         })}
-      </div>
+      </motion.div>
     </div>
   )
 }

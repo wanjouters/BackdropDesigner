@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { listContainerVariants, listItemVariants } from '../utils/animations'
 import sponsors from '../data/sponsors.json'
 import { logoUrl } from '../utils/logoUrl'
 import { supabase } from '../utils/supabase'
@@ -77,7 +79,7 @@ export default function LogoLibrary({
         return (info.tier === 'group' || info.tier === 'event') && info.cat === cat
       })
       if (matching.length) {
-        groups.push({ key: cat, label: cat, color: 'blue', sponsors: matching })
+        groups.push({ key: cat, label: cat, color: 'red', sponsors: matching })
         matching.forEach(s => placed.add(s.partner))
       }
     }
@@ -140,7 +142,7 @@ export default function LogoLibrary({
           <input
             type="text" value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Zoek sponsor..."
-            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
           />
           {query && (
             <button
@@ -161,7 +163,7 @@ export default function LogoLibrary({
         <div className="relative mt-2" ref={filterRef}>
           <button
             onClick={() => setFilterOpen(v => !v)}
-            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors w-full ${eventFilter !== 'ALL' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'}`}
+            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors w-full ${eventFilter !== 'ALL' ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'}`}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 3h10M3 6h6M5 9h2"/>
@@ -171,26 +173,34 @@ export default function LogoLibrary({
               <path d="M2 3.5l3 3 3-3"/>
             </svg>
           </button>
-          {filterOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 overflow-y-auto max-h-48">
-              <button
-                onClick={() => { setEventFilter('ALL'); setFilterOpen(false) }}
-                className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === 'ALL' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
-              >Alle events</button>
-              {events.map(ev => (
-                <button key={ev}
-                  onClick={() => { setEventFilter(ev); setFilterOpen(false) }}
-                  className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === ev ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-blue-50'}`}
-                >{ev}</button>
-              ))}
-            </div>
-          )}
+          <AnimatePresence>
+            {filterOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                transition={{ duration: 0.12 }}
+                className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 overflow-y-auto max-h-48"
+              >
+                <button
+                  onClick={() => { setEventFilter('ALL'); setFilterOpen(false) }}
+                  className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === 'ALL' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                >Alle events</button>
+                {events.map(ev => (
+                  <button key={ev}
+                    onClick={() => { setEventFilter(ev); setFilterOpen(false) }}
+                    className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === ev ? 'bg-red-600 text-white' : 'text-gray-600 hover:bg-red-50'}`}
+                  >{ev}</button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Slot info + direction picker */}
         <div className="flex items-center justify-between mt-2">
           {hasSlot ? (
-            <p className="text-xs text-blue-600 font-medium">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
+            <p className="text-xs text-red-600 font-medium">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
           ) : (
             <p className="text-xs text-gray-400">Klik of sleep een logo</p>
           )}
@@ -203,10 +213,10 @@ export default function LogoLibrary({
                   title={dir === 'none' ? 'Geen vooruitgang' : `Richting: ${dir}`}
                   className={`w-4 h-4 flex items-center justify-center rounded text-[10px] transition-colors leading-none
                     ${advanceDir === dir
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-red-600 text-white'
                       : dir === 'none'
                         ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                        : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600'
+                        : 'bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-600'
                     }`}
                 >{DIR_ARROWS[dir]}</button>
               )))}
@@ -224,12 +234,14 @@ export default function LogoLibrary({
             const hasError = !customSrc && !s.dataUrl && imgErrors[s.filename]
 
             return (
-              <div
+              <motion.div
                 draggable
                 onDragStart={e => handleDragStart(e, s.partner)}
                 onClick={() => { if (hasSlot) onAssign(s.partner) }}
                 title={s.partner}
-                className="relative flex flex-col items-center gap-1 p-2 rounded-lg border text-center transition-all select-none border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
+                whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.10)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="relative flex flex-col items-center gap-1 p-2 rounded-lg border text-center select-none border-gray-200 hover:border-red-400 hover:bg-red-50 cursor-grab active:cursor-grabbing"
               >
                 {localSrc && !hasError ? (
                   <img src={localSrc} alt={s.partner} loading="lazy"
@@ -242,14 +254,14 @@ export default function LogoLibrary({
                   </div>
                 )}
                 <span className="text-[10px] text-gray-500 leading-tight line-clamp-2 w-full pointer-events-none">{s.partner}</span>
-              </div>
+              </motion.div>
             )
           }
 
           if (eventFilter !== 'ALL' && !searchActive) {
             const headerColors = {
               teal: 'text-teal-700 bg-teal-50 border-teal-200',
-              blue: 'text-blue-700 bg-blue-50 border-blue-200',
+              red: 'text-red-700 bg-red-50 border-red-200',
               gray: 'text-gray-500 bg-gray-50 border-gray-200',
             }
             return groups.length === 0 ? (
@@ -258,12 +270,21 @@ export default function LogoLibrary({
               <div className="space-y-3">
                 {groups.map(group => (
                   <div key={group.key}>
-                    <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border mb-1.5 ${headerColors[group.color]}`}>
+                    <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border mb-1.5 ${headerColors[group.color] || headerColors.gray}`}>
                       {group.label} <span className="font-normal opacity-60">({group.sponsors.length})</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {group.sponsors.map(s => <SponsorCard key={s.partner} s={s} />)}
-                    </div>
+                    <motion.div
+                      className="grid grid-cols-2 gap-1.5"
+                      variants={listContainerVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {group.sponsors.map(s => (
+                        <motion.div key={s.partner} variants={listItemVariants}>
+                          <SponsorCard s={s} />
+                        </motion.div>
+                      ))}
+                    </motion.div>
                   </div>
                 ))}
               </div>
@@ -271,9 +292,18 @@ export default function LogoLibrary({
           }
 
           return (
-            <div className="grid grid-cols-2 gap-1.5">
-              {filtered.map(s => <SponsorCard key={s.partner} s={s} />)}
-            </div>
+            <motion.div
+              className="grid grid-cols-2 gap-1.5"
+              variants={listContainerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filtered.map(s => (
+                <motion.div key={s.partner} variants={listItemVariants}>
+                  <SponsorCard s={s} />
+                </motion.div>
+              ))}
+            </motion.div>
           )
         })()}
       </div>

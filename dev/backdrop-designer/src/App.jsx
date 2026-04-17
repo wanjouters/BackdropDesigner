@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { slideFromRightVariants, slideInVariants, modalVariants, backdropVariants } from './utils/animations'
 import './index.css'
 import allStaticFormats from './data/backdropFormats.json'
 import GridTypeSelector from './components/GridTypeSelector'
@@ -43,7 +45,7 @@ function resizeSlots(oldSlots, oldCols, newCols, newRows) {
 function DesignRow({ d, renamingDesign, isLoaded, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
   const inputRef = { current: null }
   return (
-    <div className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ml-2 ${isLoaded ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+    <div className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ml-2 ${isLoaded ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
       {renamingDesign === d.id ? (
         <div className="flex items-center gap-1 flex-1">
           <input
@@ -54,20 +56,20 @@ function DesignRow({ d, renamingDesign, isLoaded, onLoad, onDelete, onRename, on
               if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
               if (e.key === 'Escape') onStartRename(null)
             }}
-            className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+            className="flex-1 text-xs px-2 py-0.5 border border-red-400 rounded focus:outline-none"
           />
-          <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+          <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-red-600 font-semibold">OK</button>
           <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
         </div>
       ) : (
         <>
           <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
-            <p className={`text-xs font-medium truncate ${isLoaded ? 'text-blue-700' : 'text-gray-800'}`}>{d.name}</p>
+            <p className={`text-xs font-medium truncate ${isLoaded ? 'text-red-700' : 'text-gray-800'}`}>{d.name}</p>
             <p className="text-[10px] text-gray-400">{d.formatCode}{d.formatCode ? ' · ' : ''}{new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
           </button>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
             <button onClick={e => { e.stopPropagation(); onDuplicate(d) }} title="Dupliceren"
-              className="p-1 text-gray-300 hover:text-blue-500 rounded transition-colors">
+              className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="4" y="4" width="7" height="7" rx="1"/><path d="M1 8V2a1 1 0 011-1h6"/>
               </svg>
@@ -99,14 +101,21 @@ function SaveModal({ events, defaults, onConfirm, onCancel }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+    <AnimatePresence>
+    <motion.div
+      variants={backdropVariants} initial="hidden" animate="visible" exit="exit"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+    >
+      <motion.div
+        variants={modalVariants} initial="hidden" animate="visible" exit="exit"
+        className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6"
+      >
         <h2 className="text-sm font-semibold text-gray-800 mb-4">Ontwerp opslaan</h2>
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Event</label>
             <select value={event} onChange={e => setEvent(e.target.value)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-300 bg-white">
               <option value="">Geen event</option>
               {events.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
@@ -115,7 +124,7 @@ function SaveModal({ events, defaults, onConfirm, onCancel }) {
             <label className="block text-xs text-gray-500 mb-1">Editie (jaar)</label>
             <input type="number" value={edition}
               onChange={e => setEdition(parseInt(e.target.value, 10) || currentYear)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-300"
               min={2000} max={2100}
             />
           </div>
@@ -124,7 +133,7 @@ function SaveModal({ events, defaults, onConfirm, onCancel }) {
             <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); if (e.key === 'Escape') onCancel() }}
               placeholder="Bijv. Startpodium — Variant A"
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-300"
             />
           </div>
         </div>
@@ -134,12 +143,13 @@ function SaveModal({ events, defaults, onConfirm, onCancel }) {
             Annuleren
           </button>
           <button onClick={handleConfirm} disabled={!name.trim()}
-            className="text-xs px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="text-xs px-4 py-1.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             Opslaan
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   )
 }
 
@@ -227,7 +237,7 @@ function SavedDesignsPanel({ designs, events, renamingDesign, loadedDesignId, on
       <div className="relative mb-2 flex-shrink-0">
         <input type="text" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Zoek ontwerp..."
-          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-red-300"
         />
         {query && (
           <button onClick={() => setQuery('')}
@@ -311,19 +321,24 @@ function Toast({ message, type = 'success', onDone }) {
   const s = styles[type] || styles.success
 
   return (
-    <div style={{
-      position: 'fixed', bottom: 28, right: 28, zIndex: 400,
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '10px 16px', borderRadius: 10,
-      background: s.bg,
-      color: 'white', fontSize: 13, fontWeight: 600,
-      boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
-      pointerEvents: 'none',
-      animation: 'toastIn 0.18s ease',
-    }}>
+    <motion.div
+      variants={slideFromRightVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      style={{
+        position: 'fixed', bottom: 28, right: 28, zIndex: 400,
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '10px 16px', borderRadius: 10,
+        background: s.bg,
+        color: 'white', fontSize: 13, fontWeight: 600,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
+        pointerEvents: 'none',
+      }}
+    >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">{s.icon}</svg>
       {message}
-    </div>
+    </motion.div>
   )
 }
 
@@ -1132,7 +1147,9 @@ export default function App({ session: initialSession }) {
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
 
       {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      <AnimatePresence>
+        {toast && <Toast key={toast.message + toast.type} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      </AnimatePresence>
 
       {/* Confirm modal */}
       {confirmAction && (
@@ -1176,7 +1193,7 @@ export default function App({ session: initialSession }) {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
               <rect x="1" y="1" width="5" height="5" rx="1"/>
               <rect x="8" y="1" width="5" height="5" rx="1"/>
@@ -1207,7 +1224,7 @@ export default function App({ session: initialSession }) {
                 <p className="text-xs text-gray-400">
                   {loadedDesignId ? format.Code + ' · ' : ''}{format.Cols}×{format.Rows} = {format.Cols * format.Rows} slots
                   {selectionCount > 0 && (
-                    <span className="ml-2 text-blue-500">
+                    <span className="ml-2 text-red-500">
                       · {selectionCount} {selectionCount === 1 ? 'slot' : 'slots'} geselecteerd
                     </span>
                   )}
@@ -1334,7 +1351,7 @@ export default function App({ session: initialSession }) {
                 disabled
                   ? 'text-gray-600 cursor-not-allowed'
                   : leftPanel === id
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-red-600 text-white'
                     : 'text-gray-400 hover:text-white hover:bg-gray-700'
               }`}
             >
@@ -1359,8 +1376,25 @@ export default function App({ session: initialSession }) {
         </div>
 
         {/* ── Side panel — conditional ── */}
+        <AnimatePresence initial={false}>
         {leftPanel && (
-          <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 overflow-hidden">
+          <motion.div
+            key="side-panel"
+            initial={{ width: 0 }}
+            animate={{ width: 256 }}
+            exit={{ width: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="bg-white border-r border-gray-200 flex-shrink-0 overflow-hidden"
+          >
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={leftPanel}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
+            className="w-64 flex flex-col h-full"
+          >
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
                 {leftPanel === 'designs' && 'Opgeslagen'}
@@ -1380,7 +1414,7 @@ export default function App({ session: initialSession }) {
                   {format && (
                     <button
                       onClick={() => { setSaveModalDefaults(null); setShowSaveModal(true) }}
-                      className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-2 font-semibold transition-colors flex-shrink-0"
+                      className="flex items-center gap-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded-lg px-3 py-2 font-semibold transition-colors flex-shrink-0"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
@@ -1434,8 +1468,11 @@ export default function App({ session: initialSession }) {
                 <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} />
               )}
             </div>
-          </div>
+          </motion.div>
+          </AnimatePresence>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Center + right — with padding */}
         <div className="flex-1 flex gap-4 p-4 overflow-hidden min-h-0 min-w-0">
@@ -1451,7 +1488,7 @@ export default function App({ session: initialSession }) {
                   onClick={() => setView('grid')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     view === 'grid'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-red-600 text-white'
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
@@ -1467,7 +1504,7 @@ export default function App({ session: initialSession }) {
                   onClick={() => setView('preview')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     view === 'preview'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-red-600 text-white'
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
@@ -1485,7 +1522,7 @@ export default function App({ session: initialSession }) {
                     onClick={() => setShowRuler(v => !v)}
                     title={showRuler ? 'Liniaal verbergen' : 'Liniaal tonen'}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      showRuler ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                      showRuler ? 'bg-red-600 text-white' : 'text-gray-500 hover:bg-gray-100'
                     }`}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -1518,7 +1555,7 @@ export default function App({ session: initialSession }) {
                     onClick={() => setActiveOverlay('person')}
                     title="Referentiepersoon (180 cm)"
                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                      activeOverlay === 'person' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
+                      activeOverlay === 'person' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-100'
                     }`}
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -1530,7 +1567,7 @@ export default function App({ session: initialSession }) {
                     onClick={() => setActiveOverlay('chair')}
                     title="Referentiestoel"
                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                      activeOverlay === 'chair' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
+                      activeOverlay === 'chair' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-100'
                     }`}
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -1548,7 +1585,7 @@ export default function App({ session: initialSession }) {
                   <button
                     onClick={handleUpdateDesign}
                     title="Bestaand ontwerp overschrijven"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M2 1h7l2 2v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
@@ -1589,7 +1626,7 @@ export default function App({ session: initialSession }) {
                   ) : (
                     <button
                       onClick={() => setLeftPanel('formats')}
-                      className="mt-3 text-xs text-blue-500 hover:text-blue-600 font-semibold transition-colors"
+                      className="mt-3 text-xs text-red-500 hover:text-red-600 font-semibold transition-colors"
                     >
                       Formaten bekijken →
                     </button>

@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from './utils/supabase'
 import App from './App'
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+
+function Spinner() {
+  return (
+    <svg className="animate-spin w-5 h-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+  )
+}
 
 // ─── Wachtwoord herstellen ───────────────────────────────────────────────────
 
@@ -25,7 +37,12 @@ function PasswordResetForm() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+        className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-sm border border-gray-100"
+      >
         <div className="flex items-center gap-3 mb-8">
           <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,22 +69,22 @@ function PasswordResetForm() {
               <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="Minstens 8 tekens" required autoComplete="new-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
               <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
                 placeholder="Herhaal wachtwoord" required autoComplete="new-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading || !password || !confirm}
-              className="w-full bg-gray-900 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-40 hover:bg-gray-700 transition-colors">
-              {loading ? 'Opslaan…' : 'Wachtwoord instellen'}
+              className="w-full bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+              {loading ? <><Spinner /><span>Opslaan…</span></> : 'Wachtwoord instellen'}
             </button>
           </form>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -104,24 +121,28 @@ function AppLogin() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-sm">
-
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+        className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-sm border border-gray-100"
+      >
         {/* Logo */}
         <div className="mb-8">
-          <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center mb-4">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">BackdropDesigner</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Flanders Classics</p>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">BackdropDesigner</h1>
+          <p className="text-sm text-gray-400 mt-0.5 font-medium">Flanders Classics</p>
         </div>
 
         {resetSent ? (
           <div className="text-center py-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -135,18 +156,18 @@ function AppLogin() {
               <label className="block text-xs font-medium text-gray-500 mb-1">E-mailadres</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="naam@flandersclassics.be" required autoComplete="email"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Wachtwoord</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" required autoComplete="current-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading || !email || !password}
-              className="w-full bg-gray-900 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-40 hover:bg-gray-700 transition-colors">
-              {loading ? 'Inloggen…' : 'Inloggen'}
+              className="w-full bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mt-1">
+              {loading ? <><Spinner /><span>Inloggen…</span></> : 'Inloggen'}
             </button>
             <button type="button" onClick={handleForgotPassword} disabled={loading}
               className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors pt-1">
@@ -154,7 +175,7 @@ function AppLogin() {
             </button>
           </form>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -181,8 +202,11 @@ export default function AppPage() {
   }, [])
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-gray-50 text-gray-400 text-sm">
-      Laden…
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex flex-col items-center gap-3">
+        <Spinner />
+        <p className="text-sm text-gray-400">Laden…</p>
+      </div>
     </div>
   )
   if (isRecovery) return <PasswordResetForm />

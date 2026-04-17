@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Helper: parse DefaultBarPosition string → { type, row }
 function parseBarPosition(val) {
@@ -33,7 +34,7 @@ function NumInput({ label, value, onChange, unit = 'mm', min, step = 1, readOnly
             ${wide ? 'w-full' : 'w-14'}
             ${readOnly
               ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-default'
-              : 'border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400'
+              : 'border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-red-300'
             }`}
         />
         {unit && <span className="text-[9px] text-gray-300">{unit}</span>}
@@ -57,7 +58,7 @@ function IntInput({ label, value, onChange, min = 1, max, wide }) {
           const clamped = max !== undefined ? Math.min(v, max) : v
           onChange(Math.max(min, clamped))
         }}
-        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right tabular-nums ${wide ? 'w-full' : 'w-12'}`}
+        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300 text-right tabular-nums ${wide ? 'w-full' : 'w-12'}`}
       />
     </label>
   )
@@ -70,7 +71,7 @@ function SelectInput({ label, value, options, onChange, wide }) {
       <select
         value={value ?? 'NONE'}
         onChange={e => onChange(e.target.value)}
-        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 ${wide ? 'w-full' : ''}`}
+        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300 ${wide ? 'w-full' : ''}`}
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -86,7 +87,7 @@ function LinkBtn({ linked, onToggle, title, vertical }) {
       title={title}
       className={`flex-shrink-0 p-1 rounded transition-colors ${vertical ? 'self-end mb-1' : 'self-end mb-1'}
         ${linked
-          ? 'text-blue-500 bg-blue-50 hover:bg-blue-100'
+          ? 'text-red-500 bg-red-50 hover:bg-red-100'
           : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
         }`}
     >
@@ -158,7 +159,7 @@ function BgColorInput({ format, set }) {
             onBlur={handleHexBlur}
             spellCheck={false}
             maxLength={7}
-            className="text-xs font-mono px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-20"
+            className="text-xs font-mono px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300 w-20"
           />
         </div>
       </label>
@@ -173,7 +174,7 @@ function BgColorInput({ format, set }) {
                   type="number" min={0} max={100} step={1}
                   value={format['BackgroundColor_' + ch] ?? ''}
                   onChange={e => handleCmyk(ch, e.target.value)}
-                  className="text-xs px-1 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-full text-right tabular-nums"
+                  className="text-xs px-1 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300 w-full text-right tabular-nums"
                 />
               </label>
             )
@@ -211,11 +212,21 @@ function VSection({ label, children, defaultOpen = true }) {
           <path d="M2 3.5l3 3 3-3"/>
         </svg>
       </button>
-      {open && (
-        <div className="flex flex-col gap-2 px-3 pb-3 pt-1 border-t border-gray-100 bg-white">
-          {children}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-col gap-2 px-3 pb-3 pt-1 border-t border-gray-100 bg-white">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -413,7 +424,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
                   const p = canvasPresets.find(x => x.id === e.target.value)
                   if (p) onChange({ ...format, CanvasWidth_mm: p.CanvasWidth_mm, CanvasHeight_mm: p.CanvasHeight_mm })
                 }}
-                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300"
               >
                 <option value="">— Aangepast —</option>
                 {canvasPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -444,7 +455,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
               <select
                 value={findMatchingPreset()}
                 onChange={e => applyPreset(e.target.value)}
-                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300"
               >
                 <option value="">— Aangepast —</option>
                 {cellPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -542,7 +553,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
               <select
                 value={findMatchingPreset()}
                 onChange={e => applyPreset(e.target.value)}
-                className="text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 max-w-[120px]"
+                className="text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-300 max-w-[120px]"
               >
                 <option value="">— Aangepast —</option>
                 {cellPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}

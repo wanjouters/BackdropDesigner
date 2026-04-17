@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { slideFromRightVariants } from '../utils/animations'
 import { supabase } from '../utils/supabase'
 
 function ChangePasswordModal({ onClose, showToast }) {
@@ -28,13 +30,13 @@ function ChangePasswordModal({ onClose, showToast }) {
             <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Minstens 8 tekens" required autoComplete="new-password"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
             <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
               placeholder="Herhaal wachtwoord" required autoComplete="new-password"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500" />
           </div>
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
@@ -156,7 +158,7 @@ export default function AdminLayout({ session }) {
               onClick={() => setActive(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
                 active === item.id
-                  ? 'bg-white/10 text-white'
+                  ? 'bg-red-600 text-white'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -232,13 +234,21 @@ export default function AdminLayout({ session }) {
       </div>
 
       {/* Toast */}
-      {toast && (
-        <div className={`fixed bottom-6 right-6 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white z-50 transition-all ${
-          toast.type === 'error' ? 'bg-red-600' : 'bg-gray-900'
-        }`}>
-          {toast.message}
-        </div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            variants={slideFromRightVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className={`fixed bottom-6 right-6 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white z-50 ${
+              toast.type === 'error' ? 'bg-red-600' : 'bg-gray-900'
+            }`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

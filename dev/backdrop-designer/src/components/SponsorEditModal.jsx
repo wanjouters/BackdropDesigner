@@ -83,7 +83,7 @@ export default function SponsorEditModal({
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => fileRef.current.click()}
-                  className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
                 >
                   Afbeelding vervangen
                 </button>
@@ -97,7 +97,7 @@ export default function SponsorEditModal({
                 )}
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 {customLogos[sponsorName] && (
-                  <span className="text-[10px] text-blue-500 font-medium">Aangepast logo actief</span>
+                  <span className="text-[10px] text-red-500 font-medium">Aangepast logo actief</span>
                 )}
               </div>
             </div>
@@ -165,22 +165,22 @@ export default function SponsorEditModal({
                   const checked = sponsorEvents.includes(ev)
                   const cat = (sponsorCategories[sponsorName] || {})[ev] || ''
                   return (
-                    <div key={ev} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${checked ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                    <div key={ev} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${checked ? 'bg-red-50' : 'bg-gray-50'}`}>
                       <label className="flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={e => toggleEvent(ev, e.target.checked)}
-                          className="w-4 h-4 accent-blue-600"
+                          className="w-4 h-4 accent-red-600"
                         />
-                        <span className={`text-xs font-bold shrink-0 ${checked ? 'text-blue-700' : 'text-gray-400'}`}>{ev}</span>
+                        <span className={`text-xs font-bold shrink-0 ${checked ? 'text-red-700' : 'text-gray-400'}`}>{ev}</span>
                       </label>
                       <select
                         value={cat}
                         onChange={e => setCategory(ev, e.target.value)}
                         disabled={!checked}
-                        className={`flex-1 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 transition-colors ${
-                          checked ? 'border-blue-200 bg-white text-gray-700' : 'border-gray-200 bg-gray-100 text-gray-300 cursor-not-allowed'
+                        className={`flex-1 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-300 transition-colors ${
+                          checked ? 'border-red-200 bg-white text-gray-700' : 'border-gray-200 bg-gray-100 text-gray-300 cursor-not-allowed'
                         }`}
                       >
                         <option value="">— categorie —</option>

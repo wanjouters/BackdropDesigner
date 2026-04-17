@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import SponsorPicker from './SponsorPicker'
@@ -58,23 +59,26 @@ export default function SlotCell({ id, index, value, onAssign, onDropSponsor, co
       style={style}
       className="relative"
     >
-      <div
+      <motion.div
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        whileHover={!isDragging ? { scale: 1.03 } : {}}
+        whileTap={!isDragging ? { scale: 0.97 } : {}}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={`
-          relative border rounded-lg cursor-pointer select-none transition-all
+          relative border rounded-lg cursor-pointer select-none
           flex flex-col items-center justify-center gap-1 p-1
           min-h-[72px]
           ${isDragOver
-            ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-400 scale-105'
+            ? 'border-red-500 bg-red-100 ring-2 ring-red-400'
             : isSelected
-              ? 'border-blue-500 ring-2 ring-blue-300 bg-blue-50'
+              ? 'border-red-500 ring-2 ring-red-300 bg-red-50'
               : isBlank
                 ? 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
-                : 'border-gray-200 bg-gray-100 hover:border-blue-300'
+                : 'border-gray-200 bg-gray-100 hover:border-red-300'
           }
           ${isDragging ? 'shadow-lg' : ''}
         `}
@@ -105,7 +109,7 @@ export default function SlotCell({ id, index, value, onAssign, onDropSponsor, co
             {value}
           </span>
         )}
-      </div>
+      </motion.div>
 
       {pickerOpen && (
         <SponsorPicker

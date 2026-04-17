@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { modalVariants, backdropVariants } from '../utils/animations'
 
 const TABS = ['Celdimensies', 'Canvas', 'Events & Koepels', 'Categorieën']
 
@@ -12,10 +14,10 @@ function ManageList({ title, color, items, onRename, onDelete, onAdd, onReorder,
   const renameRef = useRef(null)
 
   const colors = {
-    orange: { bg: 'bg-orange-50', border: 'border-orange-100', title: 'text-orange-700', badge: 'bg-orange-100 text-orange-800', btn: 'text-orange-400 hover:text-orange-600', del: 'text-orange-300 hover:text-red-500', input: 'border-orange-200 focus:ring-orange-400', add: 'bg-orange-500 hover:bg-orange-600', over: 'border-orange-400' },
+    orange: { bg: 'bg-orange-50', border: 'border-orange-100', title: 'text-orange-700', badge: 'bg-orange-100 text-orange-800', btn: 'text-orange-400 hover:text-orange-600', del: 'text-orange-300 hover:text-red-500', input: 'border-orange-200 focus:ring-red-300', add: 'bg-orange-500 hover:bg-orange-600', over: 'border-orange-400' },
     purple: { bg: 'bg-purple-50', border: 'border-purple-100', title: 'text-purple-700', badge: 'bg-purple-100 text-purple-800', btn: 'text-purple-400 hover:text-purple-600', del: 'text-purple-300 hover:text-red-500', input: 'border-purple-200 focus:ring-purple-400', add: 'bg-purple-500 hover:bg-purple-600', over: 'border-purple-400' },
     indigo: { bg: 'bg-indigo-50', border: 'border-indigo-100', title: 'text-indigo-700', badge: 'bg-indigo-100 text-indigo-800', btn: 'text-indigo-400 hover:text-indigo-600', del: 'text-indigo-300 hover:text-red-500', input: 'border-indigo-200 focus:ring-indigo-400', add: 'bg-indigo-500 hover:bg-indigo-600', over: 'border-indigo-400' },
-    teal: { bg: 'bg-teal-50', border: 'border-teal-100', title: 'text-teal-700', badge: 'bg-teal-100 text-teal-800', btn: 'text-teal-400 hover:text-teal-600', del: 'text-teal-300 hover:text-red-500', input: 'border-teal-200 focus:ring-teal-400', add: 'bg-teal-500 hover:bg-teal-600', over: 'border-teal-400' },
+    teal: { bg: 'bg-teal-50', border: 'border-teal-100', title: 'text-teal-700', badge: 'bg-teal-100 text-teal-800', btn: 'text-teal-400 hover:text-teal-600', del: 'text-teal-300 hover:text-red-500', input: 'border-teal-200 focus:ring-red-300', add: 'bg-teal-500 hover:bg-teal-600', over: 'border-teal-400' },
   }
   const c = colors[color]
 
@@ -64,9 +66,9 @@ function ManageList({ title, color, items, onRename, onDelete, onAdd, onReorder,
                         if (e.key === 'Enter') { onRename(item, renameRef.current.value); setRenaming(null) }
                         if (e.key === 'Escape') setRenaming(null)
                       }}
-                      className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                      className="flex-1 text-xs px-2 py-0.5 border border-red-300 rounded focus:outline-none"
                     />
-                    <button onMouseDown={e => { e.preventDefault(); onRename(item, renameRef.current.value); setRenaming(null) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+                    <button onMouseDown={e => { e.preventDefault(); onRename(item, renameRef.current.value); setRenaming(null) }} className="text-[10px] text-red-600 font-semibold">OK</button>
                     <button onMouseDown={() => setRenaming(null)} className="text-[10px] text-gray-400">✕</button>
                   </>
                 ) : (
@@ -117,7 +119,7 @@ function PresetLinkBtn({ linked, onToggle }) {
       onClick={onToggle}
       title={linked ? 'Horiz en Vert gelinkt — klik om los te koppelen' : 'Horiz en Vert los — klik om te linken'}
       className={`self-center p-0.5 rounded transition-colors ${
-        linked ? 'text-blue-500 hover:bg-blue-100' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
+        linked ? 'text-red-500 hover:bg-red-100' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
       }`}
     >
       {linked ? (
@@ -181,16 +183,16 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
   return (
     <div>
       {/* ── Standaard aspect ratio ── */}
-      <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-5">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700 mb-2">
+      <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 mb-5">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-red-700 mb-2">
           Standaard aspect ratio
         </p>
-        <p className="text-xs text-blue-500 mb-3">
+        <p className="text-xs text-red-400 mb-3">
           De aspect ratio die gebruikt wordt bij "Aangepast" modus (geen preset). Wijzigen past ook het huidig geladen formaat aan.
         </p>
         <div className="flex items-center gap-3">
           <label className="flex flex-col gap-0.5">
-            <span className="text-[9px] uppercase tracking-wide text-blue-400 leading-none">Aspect (B÷H)</span>
+            <span className="text-[9px] uppercase tracking-wide text-red-400 leading-none">Aspect (B÷H)</span>
             <div className="flex items-center gap-1">
               <input
                 type="number"
@@ -198,14 +200,14 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
                 step={0.001}
                 min={0.1}
                 onChange={e => onDefaultAspectChange(parseFloat(e.target.value) || 1.667)}
-                className="w-20 text-sm px-2 py-1.5 border border-blue-200 rounded text-right tabular-nums font-semibold focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                className="w-20 text-sm px-2 py-1.5 border border-red-200 rounded text-right tabular-nums font-semibold focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
               />
             </div>
           </label>
-          <div className="text-xs text-blue-400">
-            <span className="font-semibold text-blue-600">{defaultAspect}</span> ≈ {Math.round(defaultAspect * 100)}:100
+          <div className="text-xs text-red-400">
+            <span className="font-semibold text-red-600">{defaultAspect}</span> ≈ {Math.round(defaultAspect * 100)}:100
           </div>
-          <div className="ml-auto flex gap-3 text-xs text-blue-400">
+          <div className="ml-auto flex gap-3 text-xs text-red-400">
             {[
               { label: '16:9', val: 1.778 },
               { label: '4:3', val: 1.333 },
@@ -215,8 +217,8 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
               <button key={label} onClick={() => onDefaultAspectChange(val)}
                 className={`px-2 py-1 rounded border transition-colors font-semibold ${
                   Math.abs(defaultAspect - val) < 0.002
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-blue-200 hover:border-blue-400 hover:text-blue-600'
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'border-red-200 hover:border-red-400 hover:text-red-600'
                 }`}
               >{label}</button>
             ))}
@@ -260,7 +262,7 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
                   const v = e.target.value === '' ? null : parseFloat(e.target.value)
                   updatePreset(p.id, field, v)
                 }}
-                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white placeholder-gray-300"
+                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white placeholder-gray-300"
               />
             )
           }
@@ -272,7 +274,7 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
                 type="text"
                 value={p.name}
                 onChange={e => updatePreset(p.id, 'name', e.target.value)}
-                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-400 focus:outline-none w-full"
+                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-400 focus:outline-none w-full"
               />
               <div className="flex items-center gap-1">
                 <input
@@ -281,7 +283,7 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
                   step={1}
                   min={1}
                   onChange={e => updatePreset(p.id, 'CellW_mm', parseFloat(e.target.value) || 1)}
-                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
                 />
                 <span className="text-[10px] text-gray-400 flex-shrink-0">mm</span>
               </div>
@@ -291,7 +293,7 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
                 step={0.001}
                 min={0.1}
                 onChange={e => updatePreset(p.id, 'CellAspect', parseFloat(e.target.value) || 1)}
-                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
               />
               <div className="text-xs text-gray-400 tabular-nums text-right">{h}<span className="text-[10px] ml-0.5">mm</span></div>
               {numField('GutterX_mm', p.GutterX_mm, 0.5, '—')}
@@ -309,7 +311,7 @@ function CelDimensiesTab({ cellPresets, onCellPresetsChange, defaultAspect, onDe
       </div>
       <button
         onClick={addPreset}
-        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold border border-blue-200 hover:border-blue-400 rounded-lg px-4 py-2 transition-colors"
+        className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:border-red-400 rounded-lg px-4 py-2 transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 1v10M1 6h10"/>
@@ -342,19 +344,19 @@ function CanvasTab({ canvasPresets, onCanvasPresetsChange }) {
                 type="text"
                 value={p.name}
                 onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, name: e.target.value } : x))}
-                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-400 focus:outline-none w-full"
+                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-400 focus:outline-none w-full"
               />
               <div className="flex items-center gap-1">
                 <input type="number" value={p.CanvasWidth_mm} step={1} min={1}
                   onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, CanvasWidth_mm: parseFloat(e.target.value) || 1 } : x))}
-                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
                 />
                 <span className="text-[10px] text-gray-400 flex-shrink-0">mm</span>
               </div>
               <div className="flex items-center gap-1">
                 <input type="number" value={p.CanvasHeight_mm} step={1} min={1}
                   onChange={e => onCanvasPresetsChange(canvasPresets.map(x => x.id === p.id ? { ...x, CanvasHeight_mm: parseFloat(e.target.value) || 1 } : x))}
-                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                  className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
                 />
                 <span className="text-[10px] text-gray-400 flex-shrink-0">mm</span>
               </div>
@@ -373,7 +375,7 @@ function CanvasTab({ canvasPresets, onCanvasPresetsChange }) {
       )}
       <button
         onClick={() => onCanvasPresetsChange([...canvasPresets, { id: `canvas_${Date.now()}`, name: 'Nieuw preset', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 }])}
-        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold border border-blue-200 hover:border-blue-400 rounded-lg px-4 py-2 transition-colors"
+        className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:border-red-400 rounded-lg px-4 py-2 transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 1v10M1 6h10"/>
@@ -425,11 +427,11 @@ function KoepelsList({ eventGroups, events, onAdd, onRename, onDelete, onSetEven
                         if (e.key === 'Enter') { onRename(grp, renameRef.current.value); setRenaming(null) }
                         if (e.key === 'Escape') setRenaming(null)
                       }}
-                      className="flex-1 text-sm font-bold px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                      className="flex-1 text-sm font-bold px-2 py-0.5 border border-red-300 rounded focus:outline-none"
                     />
                     <button
                       onMouseDown={e => { e.preventDefault(); onRename(grp, renameRef.current.value); setRenaming(null) }}
-                      className="text-[10px] text-blue-600 font-semibold"
+                      className="text-[10px] text-red-600 font-semibold"
                     >OK</button>
                     <button onMouseDown={() => setRenaming(null)} className="text-[10px] text-gray-400">✕</button>
                   </>
@@ -474,7 +476,7 @@ function KoepelsList({ eventGroups, events, onAdd, onRename, onDelete, onSetEven
                   <select
                     value=""
                     onChange={e => { if (e.target.value) onSetEventKoepel(e.target.value, grp) }}
-                    className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-teal-300 text-teal-500 bg-white focus:outline-none focus:ring-1 focus:ring-teal-400 cursor-pointer"
+                    className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-teal-300 text-teal-500 bg-white focus:outline-none focus:ring-1 focus:ring-red-300 cursor-pointer"
                   >
                     <option value="">+ event toevoegen</option>
                     {available.map(ev => <option key={ev} value={ev}>{ev}</option>)}
@@ -493,7 +495,7 @@ function KoepelsList({ eventGroups, events, onAdd, onRename, onDelete, onSetEven
             onChange={e => setNewVal(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && newVal.trim()) { onAdd(newVal.trim()); setNewVal('') } }}
             placeholder="Nieuw..."
-            className="flex-1 text-xs px-2 py-1 border border-teal-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white"
+            className="flex-1 text-xs px-2 py-1 border border-teal-200 rounded focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
           />
           <button
             onClick={() => { if (newVal.trim()) { onAdd(newVal.trim()); setNewVal('') } }}
@@ -577,9 +579,9 @@ function EventsKoepelsTab({ events, onAddEvent, onDeleteEvent, onRenameEvent, ev
                           if (e.key === 'Enter') { onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }
                           if (e.key === 'Escape') setRenamingEvent(null)
                         }}
-                        className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
+                        className="flex-1 text-xs px-2 py-0.5 border border-red-300 rounded focus:outline-none"
                       />
-                      <button onMouseDown={e => { e.preventDefault(); onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
+                      <button onMouseDown={e => { e.preventDefault(); onRenameEvent(ev, renamingEventRef.current.value); setRenamingEvent(null) }} className="text-[10px] text-red-600 font-semibold">OK</button>
                       <button onMouseDown={() => setRenamingEvent(null)} className="text-[10px] text-gray-400">✕</button>
                     </div>
                   ) : (
@@ -588,7 +590,7 @@ function EventsKoepelsTab({ events, onAddEvent, onDeleteEvent, onRenameEvent, ev
                       <select
                         value={getEventKoepel(ev)}
                         onChange={e => onSetEventKoepel(ev, e.target.value)}
-                        className="text-xs px-1.5 py-0.5 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-teal-400 bg-white text-gray-700"
+                        className="text-xs px-1.5 py-0.5 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-red-300 bg-white text-gray-700"
                       >
                         <option value="">— geen koepel —</option>
                         {Object.keys(eventGroups).map(grp => <option key={grp} value={grp}>{grp}</option>)}
@@ -635,7 +637,7 @@ function EventsKoepelsTab({ events, onAddEvent, onDeleteEvent, onRenameEvent, ev
               onChange={e => setNewEventVal(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { onAddEvent(newEventVal); setNewEventVal('') } }}
               placeholder="Nieuw event (bijv. AGR)..."
-              className="flex-1 text-xs px-2 py-1 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 bg-white"
+              className="flex-1 text-xs px-2 py-1 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
             />
             <button
               onClick={() => { onAddEvent(newEventVal); setNewEventVal('') }}
@@ -695,8 +697,16 @@ export default function SettingsModal({
   const [activeTab, setActiveTab] = useState('Celdimensies')
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-[680px] max-h-[85vh] flex flex-col">
+    <AnimatePresence>
+    <motion.div
+      variants={backdropVariants} initial="hidden" animate="visible" exit="exit"
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <motion.div
+        variants={modalVariants} initial="hidden" animate="visible" exit="exit"
+        className="bg-white rounded-2xl shadow-2xl w-[680px] max-h-[85vh] flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2.5">
@@ -721,7 +731,7 @@ export default function SettingsModal({
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px ${
                 activeTab === tab
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}
             >{tab}</button>
@@ -767,7 +777,8 @@ export default function SettingsModal({
             />
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   )
 }
