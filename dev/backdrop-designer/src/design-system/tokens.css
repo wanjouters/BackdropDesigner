@@ -1,0 +1,190 @@
+/**
+ * Design Tokens — BackdropDesigner / Flanders Classics
+ *
+ * Eén bron van waarheid voor alle visuele waarden.
+ * Framework-agnostisch: werkt met Tailwind, Ant Design of eigen componenten.
+ *
+ * Gebruik:
+ *   CSS            → var(--color-brand)
+ *   Tailwind v4    → bg-brand, text-brand, border-brand  (via @theme hieronder)
+ *   Ant Design     → ConfigProvider theme={{ token: { colorPrimary: '#2563EB' } }}
+ */
+
+/* ─── Raw palette ────────────────────────────────────────────────────────────
+   Primitieve waarden — gebruik deze niet rechtstreeks in componenten.
+   Verwijs altijd naar de semantische tokens hieronder.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Blue */
+  --palette-blue-50:  #EFF6FF;
+  --palette-blue-100: #DBEAFE;
+  --palette-blue-200: #BFDBFE;
+  --palette-blue-400: #60A5FA;
+  --palette-blue-500: #3B82F6;
+  --palette-blue-600: #2563EB;
+  --palette-blue-700: #1D4ED8;
+
+  /* Red */
+  --palette-red-50:  #FEF2F2;
+  --palette-red-100: #FEE2E2;
+  --palette-red-500: #EF4444;
+  --palette-red-600: #DC2626;
+  --palette-red-700: #B91C1C;
+
+  /* Orange / Warning */
+  --palette-orange-50:  #FFF7ED;
+  --palette-orange-100: #FFEDD5;
+  --palette-orange-200: #FED7AA;
+  --palette-orange-400: #FB923C;
+  --palette-orange-500: #F97316;
+  --palette-orange-600: #EA580C;
+  --palette-orange-700: #C2410C;
+  --palette-orange-800: #9A3412;
+
+  /* Amber */
+  --palette-amber-400: #FBBF24;
+  --palette-amber-600: #D97706;
+
+  /* Green / Success */
+  --palette-green-50:  #F0FDF4;
+  --palette-green-100: #DCFCE7;
+  --palette-green-600: #16A34A;
+  --palette-green-700: #15803D;
+
+  /* Teal (Koepels) */
+  --palette-teal-50:  #F0FDFA;
+  --palette-teal-100: #CCFBF1;
+  --palette-teal-200: #99F6E4;
+  --palette-teal-300: #5EEAD4;
+  --palette-teal-400: #2DD4BF;
+  --palette-teal-500: #14B8A6;
+  --palette-teal-600: #0D9488;
+  --palette-teal-700: #0F766E;
+  --palette-teal-800: #115E59;
+
+  /* Purple (Categorieën) */
+  --palette-purple-50:  #FAF5FF;
+  --palette-purple-100: #F3E8FF;
+  --palette-purple-200: #E9D5FF;
+  --palette-purple-400: #C084FC;
+  --palette-purple-500: #A855F7;
+  --palette-purple-600: #9333EA;
+  --palette-purple-700: #7E22CE;
+  --palette-purple-800: #6B21A8;
+
+  /* Gray */
+  --palette-gray-50:  #F9FAFB;
+  --palette-gray-100: #F3F4F6;
+  --palette-gray-200: #E5E7EB;
+  --palette-gray-300: #D1D5DB;
+  --palette-gray-400: #9CA3AF;
+  --palette-gray-500: #6B7280;
+  --palette-gray-600: #4B5563;
+  --palette-gray-700: #374151;
+  --palette-gray-800: #1F2937;
+  --palette-gray-900: #111827;
+
+  /* White / Black */
+  --palette-white: #FFFFFF;
+  --palette-black: #000000;
+}
+
+/* ─── Semantische tokens ─────────────────────────────────────────────────────
+   Dit zijn de tokens die je in componenten gebruikt.
+   Wissel je design system? Pas alleen deze waarden aan.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Brand / Primary action */
+  --color-brand:        var(--palette-blue-600);
+  --color-brand-hover:  var(--palette-blue-700);
+  --color-brand-light:  var(--palette-blue-50);
+  --color-brand-border: var(--palette-blue-200);
+  --color-brand-muted:  var(--palette-blue-400);
+
+  /* Destructive / Delete */
+  --color-destructive:        var(--palette-red-600);
+  --color-destructive-hover:  var(--palette-red-700);
+  --color-destructive-light:  var(--palette-red-50);
+  --color-destructive-border: var(--palette-red-100);
+
+  /* Warning */
+  --color-warning:        var(--palette-amber-600);
+  --color-warning-light:  var(--palette-orange-50);
+  --color-warning-border: var(--palette-orange-200);
+
+  /* Success */
+  --color-success:        var(--palette-green-600);
+  --color-success-hover:  var(--palette-green-700);
+  --color-success-light:  var(--palette-green-50);
+  --color-success-border: var(--palette-green-100);
+
+  /* Info (= brand, apart voor semantische duidelijkheid) */
+  --color-info:        var(--palette-blue-600);
+  --color-info-light:  var(--palette-blue-50);
+  --color-info-border: var(--palette-blue-100);
+
+  /* Neutral / Surface */
+  --color-bg:      #F9F9F9;
+  --color-surface: var(--palette-white);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text */
+  --color-text:          #1A1A1A;
+  --color-text-secondary: var(--palette-gray-500);
+  --color-text-muted:     var(--palette-gray-400);
+  --color-text-disabled:  var(--palette-gray-300);
+  --color-text-inverse:   var(--palette-white);
+
+  /* Borders */
+  --color-border:       var(--palette-gray-200);
+  --color-border-focus: var(--palette-blue-400);
+
+  /* Domain-specifieke accenten (Tailwind-kleuren blijven in componenten,
+     maar de semantische rol staat hier gedocumenteerd) */
+  --color-koepel:          var(--palette-teal-600);    /* event-groepen */
+  --color-event:           var(--palette-orange-600);  /* events */
+  --color-category:        var(--palette-purple-600);  /* categorieën */
+
+  /* ─── Typografie ───────────────────────────────────────────────────────── */
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* ─── Border radius ────────────────────────────────────────────────────── */
+  --radius-sm:   0.25rem;   /* 4px  — inputs, badges */
+  --radius-md:   0.5rem;    /* 8px  — buttons, cards */
+  --radius-lg:   0.75rem;   /* 12px — panels, dropdowns */
+  --radius-xl:   1rem;      /* 16px — modals, grote kaarten */
+  --radius-2xl:  1.25rem;   /* 20px — settings modal */
+  --radius-full: 9999px;    /* pills, chips */
+
+  /* ─── Shadows ──────────────────────────────────────────────────────────── */
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl:  0 16px 40px rgba(0, 0, 0, 0.16);
+  --shadow-2xl: 0 24px 56px rgba(0, 0, 0, 0.20);
+
+  /* Toast-specifiek (donkere achtergrond) */
+  --shadow-toast: 0 4px 24px rgba(0, 0, 0, 0.22);
+
+  /* Canvas preview (donkere backdrop) */
+  --shadow-canvas: 0 8px 40px rgba(0, 0, 0, 0.35);
+
+  /* ─── Z-index stack ────────────────────────────────────────────────────── */
+  --z-dropdown: 50;
+  --z-modal:    200;
+  --z-toast:    400;
+
+  /* ─── Transities ───────────────────────────────────────────────────────── */
+  --transition-fast:   100ms ease;
+  --transition-base:   150ms ease;
+  --transition-slow:   200ms ease;
+}
+
+/*
+   Tailwind v4 @theme — bewust weggelaten.
+   Tailwind's eigen kleurschaal (blue-600, gray-200, …) blijft volledig intact.
+   Tokens zijn beschikbaar als CSS custom properties via var(--color-brand) etc.
+   Zodra je eigen design system componenten bouwt, voeg je hier @theme entries toe
+   met statische waarden (geen var()-referenties) per semantische rol.
+*/

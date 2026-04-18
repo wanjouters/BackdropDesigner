@@ -1,15 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
-
-:root {
-  --color-brand: #2563EB;
-  --color-brand-hover: #1D4ED8;
-  --color-brand-light: #EFF6FF;
-  --color-brand-border: #BFDBFE;
-  --color-text: #1A1A1A;
-  --color-surface: #FFFFFF;
-  --color-bg: #F9F9F9;
-}
+@import "./design-system/tokens.css";
 
 * {
   box-sizing: border-box;
@@ -17,9 +8,9 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-  background: #F9F9F9;
-  color: #1A1A1A;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 @keyframes toastIn {

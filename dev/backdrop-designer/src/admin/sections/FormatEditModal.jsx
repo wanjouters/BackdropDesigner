@@ -318,6 +318,13 @@ export default function FormatEditModal({ format, allTags = [], onSave, onClose 
         {/* Body */}
         <div className="overflow-y-auto flex-1">
 
+          {/* Preview */}
+          {(form.ArtboardWidth_mm > 0 && form.ArtboardHeight_mm > 0) && (
+            <div className="px-6 pt-5 pb-2">
+              <FormatPreview form={form} />
+            </div>
+          )}
+
           {/* Naam & Tags */}
           <Section title="Naam & Tags" defaultOpen={true}>
             <div className="space-y-4">

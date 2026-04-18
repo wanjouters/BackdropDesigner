@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import allStaticFormats from '../../data/backdropFormats.json'
-import { loadFormats, upsertFormat, deleteFormat, bulkImportFormats, reorderFormats } from '../../utils/db'
+import { loadFormats, upsertFormat, deleteFormat, bulkImportFormats, reorderFormats, saveSetting } from '../../utils/db'
 import FormatEditModal from './FormatEditModal'
 
 function GripIcon() {
@@ -89,6 +89,7 @@ export default function FormatenSection({ showToast }) {
       await bulkImportFormats(allStaticFormats)
       const imported = await loadFormats()
       setFormats(imported)
+      await saveSetting('static_imported', true)
       showToast(`${imported.length} formaten geïmporteerd`)
     } catch (e) {
       showToast('Importeren mislukt: ' + e.message, 'error')

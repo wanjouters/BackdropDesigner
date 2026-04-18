@@ -1,29 +1,22 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { slideFromRightVariants, slideInVariants, modalVariants, backdropVariants } from './utils/animations'
 import './index.css'
 import allStaticFormats from './data/backdropFormats.json'
 import GridTypeSelector from './components/GridTypeSelector'
 import GridCanvas from './components/GridCanvas'
 import FrequencyPanel from './components/FrequencyPanel'
 import LogoLibrary from './components/LogoLibrary'
-import SettingsModal from './components/SettingsModal'
 import GridToolbar from './components/GridToolbar'
 import PreviewCanvas from './components/PreviewCanvas'
-import { exportJpeg } from './utils/exportJpeg'
+import SavedDesignsPanel from './components/designs/SavedDesignsPanel'
+import SaveModal from './components/designs/SaveModal'
+import Toast from './components/shared/Toast'
+import ConfirmModal from './components/shared/ConfirmModal'
+import ExportMenu from './components/export/ExportMenu'
+import { useAuth } from './hooks/useAuth'
+import { useAppData } from './hooks/useAppData'
 import { saveDraft, loadDraft, clearDraft } from './utils/sponsorTags'
 import * as db from './utils/db'
-import { supabase } from './utils/supabase'
-
-const DEFAULT_CATEGORIES = ['Titelsponsor', 'Co-sponsor', 'Partner', 'Leverancier', 'Mediapartner']
-const DEFAULT_CELL_PRESETS = [
-  { id: 'default_1', name: 'Mixed Zone', CellW_mm: 356, CellAspect: 1.667, GutterX_mm: 80, GutterY_mm: 80 },
-  { id: 'default_2', name: 'Flash Interview', CellW_mm: 200, CellAspect: 1.667, GutterX_mm: 40, GutterY_mm: 40 },
-]
-const DEFAULT_CANVAS_PRESETS = [
-  { id: 'canvas_1', name: 'Mixed Zone (7900×2300)', CanvasWidth_mm: 7900, CanvasHeight_mm: 2300 },
-  { id: 'canvas_2', name: 'Flash (4000×2300)', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 },
-]
 
 function makeEmptySlots(cols, rows) {
   return Array(cols * rows).fill('BLANK')
@@ -40,524 +33,45 @@ function resizeSlots(oldSlots, oldCols, newCols, newRows) {
   }
   return next
 }
-
-
-function DesignRow({ d, renamingDesign, isLoaded, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
-  const inputRef = { current: null }
-  return (
-    <div className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ml-2 ${isLoaded ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-      {renamingDesign === d.id ? (
-        <div className="flex items-center gap-1 flex-1">
-          <input
-            ref={el => { inputRef.current = el }}
-            autoFocus
-            defaultValue={d.name}
-            onKeyDown={e => {
-              if (e.key === 'Enter') onRename(d.id, inputRef.current.value)
-              if (e.key === 'Escape') onStartRename(null)
-            }}
-            className="flex-1 text-xs px-2 py-0.5 border border-blue-400 rounded focus:outline-none"
-          />
-          <button onMouseDown={e => { e.preventDefault(); onRename(d.id, inputRef.current.value) }} className="text-[10px] text-blue-600 font-semibold">OK</button>
-          <button onMouseDown={() => onStartRename(null)} className="text-[10px] text-gray-400">✕</button>
-        </div>
-      ) : (
-        <>
-          <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
-            <p className={`text-xs font-medium truncate ${isLoaded ? 'text-blue-700' : 'text-gray-800'}`}>{d.name}</p>
-            <p className="text-[10px] text-gray-400">{d.formatCode}{d.formatCode ? ' · ' : ''}{new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
-          </button>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-            <button onClick={e => { e.stopPropagation(); onDuplicate(d) }} title="Dupliceren"
-              className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="4" y="4" width="7" height="7" rx="1"/><path d="M1 8V2a1 1 0 011-1h6"/>
-              </svg>
-            </button>
-            <button onClick={e => { e.stopPropagation(); onStartRename(d.id) }} title="Hernoemen"
-              className="p-1 text-gray-300 hover:text-gray-500 rounded transition-colors">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 1l3 3-7 7H1V8l7-7z"/></svg>
-            </button>
-            <button onClick={e => { e.stopPropagation(); onDelete(d.id) }} title="Verwijderen"
-              className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3"/></svg>
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-function SaveModal({ events, defaults, onConfirm, onCancel }) {
-  var currentYear = new Date().getFullYear()
-  var [event, setEvent] = useState(defaults && defaults.event ? defaults.event : '')
-  var [edition, setEdition] = useState(defaults && defaults.edition ? defaults.edition : currentYear)
-  var [name, setName] = useState(defaults && defaults.name ? defaults.name : '')
-
-  function handleConfirm() {
-    if (!name.trim()) return
-    onConfirm({ event: event || null, edition: edition || null, name: name.trim() })
-  }
-
-  return (
-    <AnimatePresence>
-    <motion.div
-      variants={backdropVariants} initial="hidden" animate="visible" exit="exit"
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-    >
-      <motion.div
-        variants={modalVariants} initial="hidden" animate="visible" exit="exit"
-        className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6"
-      >
-        <h2 className="text-sm font-semibold text-gray-800 mb-4">Ontwerp opslaan</h2>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Event</label>
-            <select value={event} onChange={e => setEvent(e.target.value)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-              <option value="">Geen event</option>
-              {events.map(ev => <option key={ev} value={ev}>{ev}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Editie (jaar)</label>
-            <input type="number" value={edition}
-              onChange={e => setEdition(parseInt(e.target.value, 10) || currentYear)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
-              min={2000} max={2100}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Naam *</label>
-            <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); if (e.key === 'Escape') onCancel() }}
-              placeholder="Bijv. Startpodium — Variant A"
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
-            />
-          </div>
-        </div>
-        <div className="flex gap-2 mt-5 justify-end">
-          <button onClick={onCancel}
-            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors">
-            Annuleren
-          </button>
-          <button onClick={handleConfirm} disabled={!name.trim()}
-            className="text-xs px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-            Opslaan
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-    </AnimatePresence>
-  )
-}
-
-function SavedDesignsPanel({ designs, events, renamingDesign, loadedDesignId, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
-  var [query, setQuery] = useState('')
-  var [collapsedEvents, setCollapsedEvents] = useState({})
-  var [collapsedEditions, setCollapsedEditions] = useState({})
-
-  var filtered = useMemo(function() {
-    if (!query.trim()) return designs
-    var q = query.toLowerCase()
-    return designs.filter(function(d) {
-      return (d.name || '').toLowerCase().includes(q) ||
-        (d.event || '').toLowerCase().includes(q) ||
-        String(d.edition || '').includes(q)
-    })
-  }, [designs, query])
-
-  var grouped = useMemo(function() {
-    var eventMap = {}
-    var noEvent = []
-    filtered.forEach(function(d) {
-      if (!d.event) { noEvent.push(d); return }
-      if (!eventMap[d.event]) eventMap[d.event] = {}
-      var year = d.edition !== null && d.edition !== undefined ? String(d.edition) : '__none__'
-      if (!eventMap[d.event][year]) eventMap[d.event][year] = []
-      eventMap[d.event][year].push(d)
-    })
-    var eventOrder = {}
-    events.forEach(function(ev, i) { eventOrder[ev] = i })
-    var sortedEventKeys = Object.keys(eventMap).sort(function(a, b) {
-      var ai = eventOrder[a] !== undefined ? eventOrder[a] : 999
-      var bi = eventOrder[b] !== undefined ? eventOrder[b] : 999
-      if (ai !== bi) return ai - bi
-      return a.localeCompare(b)
-    })
-    var result = sortedEventKeys.map(function(ev) {
-      return {
-        event: ev,
-        editions: Object.keys(eventMap[ev]).sort(function(a, b) {
-          if (a === '__none__') return 1
-          if (b === '__none__') return -1
-          return parseInt(b, 10) - parseInt(a, 10)
-        }).map(function(year) {
-          return {
-            year: year === '__none__' ? null : year,
-            designs: eventMap[ev][year].slice().sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0) })
-          }
-        })
-      }
-    })
-    if (noEvent.length > 0) {
-      result.push({
-        event: null,
-        editions: [{ year: null, designs: noEvent.slice().sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0) }) }]
-      })
-    }
-    return result
-  }, [filtered, events])
-
-  function toggleEvent(evKey) {
-    setCollapsedEvents(function(prev) { var n = Object.assign({}, prev); n[evKey] = !n[evKey]; return n })
-  }
-  function toggleEdition(evKey, yearKey) {
-    var k = evKey + '__' + yearKey
-    setCollapsedEditions(function(prev) { var n = Object.assign({}, prev); n[k] = !n[k]; return n })
-  }
-  function isEventCollapsed(evKey) { return !!collapsedEvents[evKey] }
-  function isEditionCollapsed(evKey, yearKey) { return !!collapsedEditions[evKey + '__' + yearKey] }
-
-  if (designs.length === 0 && !query) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
-          <path d="M6 3h14l6 6v20a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"/>
-          <path d="M20 3v8h8M12 17h8M12 22h5"/>
-        </svg>
-        <p className="text-xs text-gray-400">Nog geen opgeslagen ontwerpen.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="relative mb-2 flex-shrink-0">
-        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Zoek ontwerp..."
-          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
-        />
-        {query && (
-          <button onClick={() => setQuery('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2 2l8 8M10 2L2 10"/></svg>
-          </button>
-        )}
-      </div>
-      <div className="flex-1 overflow-y-auto min-h-0">
-        {grouped.length === 0 && (
-          <p className="text-xs text-gray-400 text-center py-4 italic">Geen resultaten.</p>
-        )}
-        {grouped.map(function(group) {
-          var evKey = group.event || '__none__'
-          var totalCount = group.editions.reduce(function(n, e) { return n + e.designs.length }, 0)
-          return (
-            <div key={evKey} className="mb-1">
-              <button onClick={() => toggleEvent(evKey)}
-                className="w-full flex items-center gap-1.5 px-2 py-1.5 text-left hover:bg-gray-50 rounded-lg transition-colors">
-                <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                  style={{ transform: isEventCollapsed(evKey) ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
-                  <path d="M2 3.5l3 3 3-3"/>
-                </svg>
-                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide truncate flex-1">
-                  {group.event || 'Overig'}
-                </span>
-                {!group.event && (
-                  <span className="text-[9px] text-gray-300 mr-1 flex-shrink-0" title="Sla op met een event en editie om te groeperen">zonder event</span>
-                )}
-                <span className="text-[10px] text-gray-400 flex-shrink-0">({totalCount})</span>
-              </button>
-              {!isEventCollapsed(evKey) && group.editions.map(function(editionGroup) {
-                var yearKey = editionGroup.year !== null ? String(editionGroup.year) : '__none__'
-                var showEditionHeader = editionGroup.year !== null || group.editions.length > 1
-                return (
-                  <div key={yearKey} className="ml-3">
-                    {showEditionHeader && (
-                      <button onClick={() => toggleEdition(evKey, yearKey)}
-                        className="w-full flex items-center gap-1.5 px-2 py-1 text-left hover:bg-gray-50 rounded transition-colors">
-                        <svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                          style={{ transform: isEditionCollapsed(evKey, yearKey) ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
-                          <path d="M2 3.5l3 3 3-3"/>
-                        </svg>
-                        <span className="text-[11px] font-semibold text-gray-500">{editionGroup.year || 'Geen editie'}</span>
-                        <span className="text-[10px] text-gray-300 ml-auto">({editionGroup.designs.length})</span>
-                      </button>
-                    )}
-                    {!isEditionCollapsed(evKey, yearKey) && editionGroup.designs.map(function(d) {
-                      return (
-                        <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} isLoaded={loadedDesignId === d.id}
-                          onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-                          onStartRename={onStartRename} onDuplicate={onDuplicate}
-                        />
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-
-// ─── Toast notification ────────────────────────────────────────────────────────
-function Toast({ message, type = 'success', onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2500)
-    return () => clearTimeout(t)
-  }, [onDone])
-
-  const styles = {
-    success: { bg: '#16a34a', icon: <path d="M2 7l4 4 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> },
-    info:    { bg: '#2563eb', icon: <path d="M7 3v4M7 9v1" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
-    warning: { bg: '#d97706', icon: <path d="M7 3v4M7 9v1" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
-    error:   { bg: '#dc2626', icon: <path d="M3 3l8 8M11 3L3 11" stroke="white" strokeWidth="2" strokeLinecap="round"/> },
-  }
-  const s = styles[type] || styles.success
-
-  return (
-    <motion.div
-      variants={slideFromRightVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      style={{
-        position: 'fixed', bottom: 28, right: 28, zIndex: 400,
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 16px', borderRadius: 10,
-        background: s.bg,
-        color: 'white', fontSize: 13, fontWeight: 600,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
-        pointerEvents: 'none',
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">{s.icon}</svg>
-      {message}
-    </motion.div>
-  )
-}
-
-// ─── Export dropdown ─────────────────────────────────────────────────────────
-function ExportMenu({ format, slots, customLogos, onImportJson }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  const importRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [open])
-
-  function handleJpeg() {
-    exportJpeg(format, slots, customLogos)
-    setOpen(false)
-  }
-
-  function handleJson() {
-    var data = { version: 1, format: format, slots: slots, exportedAt: Date.now() }
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    var url = URL.createObjectURL(blob)
-    var a = document.createElement('a')
-    a.href = url
-    a.download = (format.Code || 'ontwerp') + '_design.json'
-    a.click()
-    URL.revokeObjectURL(url)
-    setOpen(false)
-  }
-
-  function handleImportClick() {
-    setOpen(false)
-    if (importRef.current) importRef.current.click()
-  }
-
-  function handleImportFile(e) {
-    var file = e.target.files[0]
-    if (!file) return
-    var reader = new FileReader()
-    reader.onload = function(ev) {
-      try {
-        var data = JSON.parse(ev.target.result)
-        if (!data.format || !Array.isArray(data.slots)) throw new Error('Ongeldig formaat')
-        onImportJson(data)
-      } catch (err) {
-        alert('Kon het bestand niet laden: ' + err.message)
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
-
-  function handleCsv() {
-    const { Cols, Rows, Code } = format
-    function csvCell(val) {
-      var s = (val && val !== '') ? val : 'BLANK'
-      if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-        return '"' + s.replace(/"/g, '""') + '"'
-      }
-      return s
-    }
-    // Metadata rows (parseable by Gridzilla via META prefix)
-    var meta = []
-    meta.push('META,BackgroundColor_Hex,' + (format.BackgroundColor_Hex || '#000000'))
-    var c = format.BackgroundColor_C ?? ''
-    var m = format.BackgroundColor_M ?? ''
-    var y = format.BackgroundColor_Y ?? ''
-    var k = format.BackgroundColor_K ?? ''
-    if (c !== '' || m !== '' || y !== '' || k !== '') {
-      meta.push('META,BackgroundColor_CMYK,' + c + ',' + m + ',' + y + ',' + k)
-    }
-    var colHeaders = Array.from({ length: Cols }, function(_, i) { return 'C' + (i + 1) })
-    var lines = meta.concat([colHeaders.join(',')])
-    for (var r = 0; r < Rows; r++) {
-      var row = []
-      for (var c2 = 0; c2 < Cols; c2++) row.push(csvCell(slots[r * Cols + c2]))
-      lines.push(row.join(','))
-    }
-    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
-    var url = URL.createObjectURL(blob)
-    var a = document.createElement('a')
-    a.href = url
-    a.download = (Code || 'grid') + '_grid.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        title="Exporteren"
-        className="flex items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white font-semibold text-sm px-3 py-2.5 rounded-lg transition-colors shadow-sm"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M7 1v8M4 6l3 3 3-3M2 11h10"/>
-        </svg>
-        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-          <path d="M2 3.5l3 3 3-3"/>
-        </svg>
-      </button>
-      {open && (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 50, minWidth: 160 }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl py-1">
-          <button onClick={handleJpeg}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <rect x="1" y="1" width="12" height="12" rx="2"/>
-              <path d="M1 9l3-3 2 2 3-4 4 5"/>
-            </svg>
-            <span className="font-medium">JPEG</span>
-            <span className="ml-auto text-xs text-gray-400">beeld</span>
-          </button>
-          <button onClick={handleCsv}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M2 1h7l3 3v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-              <path d="M9 1v3h3M4 8h6M4 11h4"/>
-            </svg>
-            <span className="font-medium">CSV</span>
-            <span className="ml-auto text-xs text-gray-400">Gridzilla</span>
-          </button>
-          <button onClick={handleJson}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M2 1h7l3 3v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/>
-              <path d="M9 1v3h3"/>
-              <path d="M4 7.5c0-1 1.5-1 1.5 0s-1.5 1-1.5 2 1.5 1 1.5 0M8 7h1.5a1 1 0 010 2H8"/>
-            </svg>
-            <span className="font-medium">JSON</span>
-            <span className="ml-auto text-xs text-gray-400">backup</span>
-          </button>
-          <div className="border-t border-gray-100 my-1" />
-          <button onClick={handleImportClick}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M7 10V2M4 5l3-3 3 3M2 11h10"/>
-            </svg>
-            <span className="font-medium">JSON laden</span>
-            <span className="ml-auto text-xs text-gray-400">importeer</span>
-          </button>
-          <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportFile} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Confirm modal ────────────────────────────────────────────────────────────
-function ConfirmModal({ message, confirmLabel = 'Verwijderen', variant = 'danger', onConfirm, onCancel }) {
-  const btnClass = variant === 'warning'
-    ? 'bg-orange-500 hover:bg-orange-600 text-white'
-    : 'bg-red-600 hover:bg-red-700 text-white'
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30" onClick={onCancel} />
-      <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
-        <p className="text-sm text-gray-700 mb-5 leading-relaxed">{message}</p>
-        <div className="flex gap-2 justify-end">
-          <button onClick={onCancel}
-            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors">
-            Annuleren
-          </button>
-          <button onClick={() => { onConfirm(); onCancel() }}
-            className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors ${btnClass}`}>
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function App({ session: initialSession }) {
+  // Auth (session + dropdown menu) is managed by useAuth
+  const { authSession, authMenuOpen, setAuthMenuOpen, authMenuRef, signOut } = useAuth(initialSession)
+
+  // All persisted data is loaded from Supabase via useAppData
+  const {
+    savedDesigns, setSavedDesigns,
+    tags,
+    sponsorCategories,
+    events,
+    categoryList,
+    eventGroups,
+    sponsorGroups,
+    cellPresets,
+    canvasPresets,
+    customFormats,
+    customSponsors,
+    customLogos,
+    staticImported,
+  } = useAppData()
+
+  // Local UI / design state
   const [selectedFormat, setSelectedFormat] = useState(null)
   const [editedFormat, setEditedFormat] = useState(null)
   const [slots, setSlots] = useState([])
-  const [staticImported, setStaticImported] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState(new Set())
   const [view, setView] = useState('preview') // 'grid' | 'preview'
   const [showRuler, setShowRuler] = useState(false)
   const [activeOverlay, setActiveOverlay] = useState(null) // null | 'person' | 'chair'
-  const [customLogos, setCustomLogos] = useState({})
-  const [savedDesigns, setSavedDesigns] = useState([])
-  const [designFolders, setDesignFolders] = useState([])
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [saveModalDefaults, setSaveModalDefaults] = useState(null)
   const [renamingDesign, setRenamingDesign] = useState(null)
   const [advanceDir, setAdvanceDirState] = useState(() => localStorage.getItem('backdropDesigner_advanceDir') || 'r')
-  const [dbLoading, setDbLoading] = useState(true)
-
-  // Settings state
-  const [tags, setTags] = useState({})
-  const [sponsorCategories, setSponsorCategories] = useState({})
-  const [events, setEvents] = useState([])
-  const [categoryList, setCategoryList] = useState(DEFAULT_CATEGORIES)
-  const [eventGroups, setEventGroups] = useState({})
-  const [sponsorGroups, setSponsorGroups] = useState({})
-  const [cellPresets, setCellPresets] = useState(DEFAULT_CELL_PRESETS)
-  const [canvasPresets, setCanvasPresets] = useState(DEFAULT_CANVAS_PRESETS)
-  const [customFormats, setCustomFormats] = useState([])
-  const [customSponsors, setCustomSponsors] = useState([])
-  const [defaultAspect, setDefaultAspectState] = useState(1.667)
-  const [showSettings, setShowSettings] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
   const [draftRestoreData, setDraftRestoreData] = useState(null)
   const [toast, setToast] = useState(null)          // { message, type }
   const [isDirty, setIsDirty] = useState(false)
   const [loadedDesignId, setLoadedDesignId] = useState(null) // id of the currently loaded saved design
   const [leftPanel, setLeftPanel] = useState('formats') // null | 'designs' | 'formats' | 'adjust' | 'frequency'
-  const [authSession, setAuthSession] = useState(initialSession ?? null)
-  const [authMenuOpen, setAuthMenuOpen] = useState(false)
-  const authMenuRef = useRef(null)
   const hasMounted = useRef(false)
   const skipNextDirtyMark = useRef(false)
 
@@ -570,21 +84,6 @@ export default function App({ session: initialSession }) {
   function showToast(message, type = 'success') {
     setToast({ message, type })
   }
-
-  // ─── Auth state ───────────────────────────────────────────────────────────
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAuthSession(session))
-    return () => subscription.unsubscribe()
-  }, [])
-
-  // Sluit auth menu bij klik buiten
-  useEffect(() => {
-    function handleOutside(e) {
-      if (authMenuRef.current && !authMenuRef.current.contains(e.target)) setAuthMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [])
 
   // ─── Auto-save draft + dirty tracking ────────────────────────────────────
   useEffect(() => {
@@ -599,53 +98,6 @@ export default function App({ session: initialSession }) {
   useEffect(() => {
     const draft = loadDraft()
     if (draft && draft.format && Array.isArray(draft.slots)) setDraftRestoreData(draft)
-  }, [])
-
-  // ─── Load all data from Supabase on mount ────────────────────────────────
-  useEffect(() => {
-    async function loadAll() {
-      try {
-        const [
-          designs, events, eventGroups, tags, cats, sponsorGroups,
-          catList, customSponsors, logos, cellPresets, canvasPresets,
-          customFormats, staticImportedVal, defaultAspectVal,
-        ] = await Promise.all([
-          db.loadDesigns(),
-          db.loadEvents(),
-          db.loadEventGroups(),
-          db.loadTags(),
-          db.loadSponsorCategories(),
-          db.loadSponsorGroups(),
-          db.loadSetting('category_list', DEFAULT_CATEGORIES),
-          db.loadCustomSponsors(),
-          db.loadCustomLogos(),
-          db.loadCellPresets(),
-          db.loadCanvasPresets(),
-          db.loadCustomFormats(),
-          db.loadSetting('static_imported', false),
-          db.loadSetting('default_aspect', 1.667),
-        ])
-        setSavedDesigns(designs)
-        setEvents(events.length ? events : [])
-        setEventGroups(eventGroups)
-        setTags(tags)
-        setSponsorCategories(cats)
-        setSponsorGroups(sponsorGroups)
-        setCategoryList(catList)
-        setCustomSponsors(customSponsors)
-        setCustomLogos(logos)
-        setCellPresets(cellPresets.length ? cellPresets : DEFAULT_CELL_PRESETS)
-        setCanvasPresets(canvasPresets.length ? canvasPresets : DEFAULT_CANVAS_PRESETS)
-        setCustomFormats(customFormats)
-        setStaticImported(staticImportedVal)
-        setDefaultAspectState(defaultAspectVal)
-      } catch (err) {
-        console.error('Supabase load error:', err)
-      } finally {
-        setDbLoading(false)
-      }
-    }
-    loadAll()
   }, [])
 
   function setAdvanceDir(dir) {
@@ -678,38 +130,7 @@ export default function App({ session: initialSession }) {
     showToast(`Alle "${from}" vervangen door "${to}"`, 'success')
   }
 
-  function handleCustomLogoChange(sponsorName, dataUrl) {
-    const next = { ...customLogos }
-    if (dataUrl) next[sponsorName] = dataUrl
-    else delete next[sponsorName]
-    setCustomLogos(next)
-    db.saveCustomLogos(next).catch(console.error)
-  }
-
-  function handleAddCustomSponsor({ partner, dataUrl, eventSelections, groupSelections }) {
-    const next = [...customSponsors, { id: partner, partner, dataUrl }]
-    setCustomSponsors(next)
-    db.addCustomSponsor({ partner, dataUrl }).catch(console.error)
-    // eventSelections: { [eventCode]: categoryString }
-    if (eventSelections && Object.keys(eventSelections).length > 0) {
-      handleTagsChange(partner, Object.keys(eventSelections))
-      Object.entries(eventSelections).forEach(([ev, cat]) => {
-        if (cat) handleCategoryChange(partner, ev, cat)
-      })
-    }
-    // groupSelections: { [groupName]: categoryString }
-    if (groupSelections && Object.keys(groupSelections).length > 0) {
-      handleSponsorGroupsChange(partner, groupSelections)
-    }
-  }
-
-  function handleDeleteCustomSponsor(partner) {
-    const next = customSponsors.filter(s => s.partner !== partner)
-    setCustomSponsors(next)
-    db.deleteCustomSponsor(partner).catch(console.error)
-  }
-
-  async function handleSaveDesign({ event, edition, name }) {
+  async function handleSaveDesign({ name }) {
     const designName = name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`
     try {
       const id = await db.saveDesign({
@@ -846,44 +267,6 @@ export default function App({ session: initialSession }) {
     }
   }
 
-  function handleCustomFormat(format) {
-    setShowCustomModal(false)
-    handleSelectFormat(format)
-  }
-
-  function handleSaveCustomFormat(format, editingId) {
-    const withMeta = { ...format, _custom: true, id: editingId || `custom_${Date.now()}` }
-    setCustomFormats(prev => {
-      const updated = editingId
-        ? prev.map(f => (f.id === editingId || f.Code === editingId) ? withMeta : f)
-        : [...prev, withMeta]
-      db.saveCustomFormats(updated).catch(console.error)
-      return updated
-    })
-  }
-
-  function handleImportAllFormats() {
-    const existingCodes = new Set(customFormats.map(f => f.Code))
-    const toImport = allStaticFormats
-      .filter(f => !existingCodes.has(f.Code))
-      .map(f => ({ ...f, _custom: true, id: f.Code }))
-    setCustomFormats(prev => {
-      const updated = [...prev, ...toImport]
-      db.saveCustomFormats(updated).catch(console.error)
-      return updated
-    })
-    setStaticImported(true)
-    db.saveSetting('static_imported', true).catch(console.error)
-  }
-
-  function handleDeleteCustomFormat(format) {
-    setCustomFormats(prev => {
-      const updated = prev.filter(f => f.id !== format.id && f.Code !== format.Code)
-      db.saveCustomFormats(updated).catch(console.error)
-      return updated
-    })
-  }
-
   function handleFormatChange(updated) {
     const prevCols = editedFormat.Cols
     const prevRows = editedFormat.Rows
@@ -891,178 +274,6 @@ export default function App({ session: initialSession }) {
     if (updated.Cols !== prevCols || updated.Rows !== prevRows) {
       setSlots(prev => resizeSlots(prev, prevCols, updated.Cols, updated.Rows))
       setSelectedSlots(new Set())
-    }
-  }
-
-  // ─── Tags & categories (for SponsorEditModal in LogoLibrary) ─────────────
-  function handleTagsChange(sponsorName, eventsArray) {
-    const newTags = { ...tags, [sponsorName]: eventsArray }
-    setTags(newTags)
-    // Per-sponsor save — veilig ook als andere sponsordata via admin werd ingesteld
-    const catMap = sponsorCategories[sponsorName] || {}
-    const filteredCatMap = {}
-    eventsArray.forEach(ev => { if (catMap[ev]) filteredCatMap[ev] = catMap[ev] })
-    db.saveSponsorTags(sponsorName, eventsArray, filteredCatMap).catch(console.error)
-  }
-
-  function handleCategoryChange(sponsorName, event, category) {
-    const catCopy = { ...sponsorCategories, [sponsorName]: { ...(sponsorCategories[sponsorName] || {}), [event]: category } }
-    if (category === '') delete catCopy[sponsorName][event]
-    setSponsorCategories(catCopy)
-    // Per-sponsor save
-    db.saveSponsorTags(sponsorName, tags[sponsorName] || [], catCopy[sponsorName] || {}).catch(console.error)
-  }
-
-  function handleSponsorGroupsChange(sponsorName, groupData) {
-    const next = { ...sponsorGroups, [sponsorName]: groupData }
-    setSponsorGroups(next)
-    db.saveSponsorGroups(next).catch(console.error)
-  }
-
-  // ─── Events ──────────────────────────────────────────────────────────────
-  function addEvent(val) {
-    const v = val.trim().toUpperCase()
-    if (!v || events.includes(v)) return
-    const next = [...events, v]; setEvents(next)
-    db.saveEvents(next).catch(console.error)
-  }
-
-  function deleteEvent(ev) {
-    askConfirm(`Event "${ev}" verwijderen? Alle sponsortags voor dit event gaan verloren.`, () => {
-      const next = events.filter(e => e !== ev); setEvents(next)
-      db.saveEvents(next).catch(console.error)
-      const newTags = {}
-      Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.filter(e => e !== ev) })
-      const catCopy = {}
-      Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-        catCopy[name] = { ...evMap }; delete catCopy[name][ev]
-      })
-      setTags(newTags); setSponsorCategories(catCopy)
-      db.saveSponsorEventData(newTags, catCopy).catch(console.error)
-    })
-  }
-
-  function renameEvent(oldName, newName) {
-    const val = newName.trim().toUpperCase()
-    if (!val || val === oldName || events.includes(val)) return
-    const next = events.map(e => e === oldName ? val : e); setEvents(next)
-    db.saveEvents(next).catch(console.error)
-    const newTags = {}
-    Object.entries(tags).forEach(([name, evs]) => { newTags[name] = evs.map(e => e === oldName ? val : e) })
-    const catCopy = {}
-    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-      catCopy[name] = {}
-      Object.entries(evMap).forEach(([ev, cat]) => { catCopy[name][ev === oldName ? val : ev] = cat })
-    })
-    setTags(newTags); setSponsorCategories(catCopy)
-    db.saveSponsorEventData(newTags, catCopy).catch(console.error)
-  }
-
-  // ─── Categories ──────────────────────────────────────────────────────────
-  function addCategory(val) {
-    if (!val || categoryList.includes(val)) return
-    const next = [...categoryList, val]; setCategoryList(next)
-    db.saveSetting('category_list', next).catch(console.error)
-  }
-
-  function deleteCategory(cat) {
-    askConfirm(`Categorie "${cat}" verwijderen? Alle sponsortoewijzingen voor deze categorie gaan verloren.`, () => {
-      const next = categoryList.filter(c => c !== cat); setCategoryList(next)
-      db.saveSetting('category_list', next).catch(console.error)
-      const catCopy = {}
-      Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-        catCopy[name] = {}
-        Object.entries(evMap).forEach(([ev, c]) => { if (c !== cat) catCopy[name][ev] = c })
-      })
-      setSponsorCategories(catCopy)
-      db.saveSponsorEventData(tags, catCopy).catch(console.error)
-    })
-  }
-
-  function renameCategory(oldCat, newCat) {
-    const val = newCat.trim()
-    if (!val || val === oldCat || categoryList.includes(val)) return
-    const next = categoryList.map(c => c === oldCat ? val : c); setCategoryList(next)
-    db.saveSetting('category_list', next).catch(console.error)
-    const catCopy = {}
-    Object.entries(sponsorCategories).forEach(([name, evMap]) => {
-      catCopy[name] = {}
-      Object.entries(evMap).forEach(([ev, c]) => { catCopy[name][ev] = c === oldCat ? val : c })
-    })
-    setSponsorCategories(catCopy)
-    db.saveSponsorEventData(tags, catCopy).catch(console.error)
-  }
-
-  function reorderCategoryList(newOrder) {
-    setCategoryList(newOrder)
-    db.saveSetting('category_list', newOrder).catch(console.error)
-  }
-
-  // ─── Event groups (koepels) ───────────────────────────────────────────────
-  function addEventGroup(name) {
-    const v = name.trim()
-    if (!v || v in eventGroups) return
-    const next = { ...eventGroups, [v]: [] }; setEventGroups(next)
-    db.saveEventGroups(next).catch(console.error)
-  }
-
-  function deleteEventGroup(name) {
-    askConfirm(`Koepel "${name}" verwijderen?`, () => {
-      const next = { ...eventGroups }; delete next[name]
-      setEventGroups(next)
-      db.saveEventGroups(next).catch(console.error)
-      const sg = {}
-      Object.entries(sponsorGroups).forEach(([sp, groups]) => { const g = { ...groups }; delete g[name]; sg[sp] = g })
-      setSponsorGroups(sg)
-      db.saveSponsorGroups(sg).catch(console.error)
-    })
-  }
-
-  function renameEventGroup(oldName, newName) {
-    const val = newName.trim()
-    if (!val || val === oldName || val in eventGroups) return
-    const next = {}
-    Object.entries(eventGroups).forEach(([k, v]) => { next[k === oldName ? val : k] = v })
-    setEventGroups(next)
-    db.saveEventGroups(next).catch(console.error)
-    const sg = {}
-    Object.entries(sponsorGroups).forEach(([sp, groups]) => {
-      const g = {}
-      Object.entries(groups).forEach(([k, v]) => { g[k === oldName ? val : k] = v })
-      sg[sp] = g
-    })
-    setSponsorGroups(sg)
-    db.saveSponsorGroups(sg).catch(console.error)
-  }
-
-  function setEventKoepelAssign(eventCode, koepelName) {
-    const next = {}
-    Object.entries(eventGroups).forEach(([grp, evs]) => { next[grp] = evs.filter(e => e !== eventCode) })
-    if (koepelName && koepelName in next) next[koepelName] = [...next[koepelName], eventCode]
-    setEventGroups(next)
-    db.saveEventGroups(next).catch(console.error)
-  }
-
-  // ─── Cell presets ─────────────────────────────────────────────────────────
-  function handleCellPresetsChange(newPresets) {
-    setCellPresets(newPresets)
-    db.saveCellPresets(newPresets).catch(console.error)
-  }
-
-  // ─── Canvas presets ───────────────────────────────────────────────────────
-  function handleCanvasPresetsChange(newPresets) {
-    setCanvasPresets(newPresets)
-    db.saveCanvasPresets(newPresets).catch(console.error)
-  }
-
-  // ─── Default aspect ratio ─────────────────────────────────────────────────
-  function handleDefaultAspectChange(val) {
-    const v = parseFloat(val) || 1.667
-    setDefaultAspectState(v)
-    db.saveSetting('default_aspect', v).catch(console.error)
-    if (editedFormat) {
-      const newH = Math.round((editedFormat.CellW_mm || 0) / v * 1000) / 1000
-      handleFormatChange({ ...editedFormat, CellAspect: v, CellH_mm: newH })
     }
   }
 
@@ -1265,7 +476,7 @@ export default function App({ session: initialSession }) {
                       Admin panel
                     </a>
                     <button
-                      onClick={() => { supabase.auth.signOut(); setAuthMenuOpen(false) }}
+                      onClick={signOut}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1362,17 +573,17 @@ export default function App({ session: initialSession }) {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Settings — bottom */}
-          <button
+          {/* Instellingen — bottom */}
+          <a
+            href="/admin"
             title="Instellingen"
-            onClick={() => setShowSettings(true)}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <circle cx="9" cy="9" r="3"/>
               <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>
             </svg>
-          </button>
+          </a>
         </div>
 
         {/* ── Side panel — conditional ── */}
@@ -1694,31 +905,6 @@ export default function App({ session: initialSession }) {
       )}
 
 
-      {showSettings && (
-        <SettingsModal
-          onClose={() => setShowSettings(false)}
-          cellPresets={cellPresets}
-          onCellPresetsChange={handleCellPresetsChange}
-          canvasPresets={canvasPresets}
-          onCanvasPresetsChange={handleCanvasPresetsChange}
-          defaultAspect={defaultAspect}
-          onDefaultAspectChange={handleDefaultAspectChange}
-          events={events}
-          onAddEvent={addEvent}
-          onDeleteEvent={deleteEvent}
-          onRenameEvent={renameEvent}
-          eventGroups={eventGroups}
-          onAddEventGroup={addEventGroup}
-          onDeleteEventGroup={deleteEventGroup}
-          onRenameEventGroup={renameEventGroup}
-          onSetEventKoepel={setEventKoepelAssign}
-          categoryList={categoryList}
-          onAddCategory={addCategory}
-          onDeleteCategory={deleteCategory}
-          onRenameCategory={renameCategory}
-          onReorderCategoryList={reorderCategoryList}
-        />
-      )}
     </div>
   )
 }

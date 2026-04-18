@@ -1,301 +1,22 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
 
-// Helper: parse DefaultBarPosition string → { type, row }
-function parseBarPosition(val) {
-  if (!val || val === 'NONE') return { type: 'NONE', row: '' }
-  if (val === 'TOP') return { type: 'TOP', row: '' }
-  if (val === 'BOTTOM') return { type: 'BOTTOM', row: '' }
-  const m = val.match(/^AFTER_ROW=(\d+)$/)
-  if (m) return { type: 'AFTER_ROW', row: m[1] }
-  return { type: 'NONE', row: '' }
-}
+import NumInput from './toolbar/inputs/NumInput'
+import IntInput from './toolbar/inputs/IntInput'
+import SelectInput from './toolbar/inputs/SelectInput'
+import LinkBtn from './toolbar/inputs/LinkBtn'
+import BgColorInput from './toolbar/inputs/BgColorInput'
+import { Group, Sep } from './toolbar/layout/Group'
+import { VSection, VRow } from './toolbar/layout/VSection'
+import {
+  parseBarPosition,
+  serializeBarPosition,
+  HEADER_OPTIONS,
+  BAR_TYPE_OPTIONS,
+  BAR_POS_OPTIONS,
+  PLACE_EMPTY_OPTIONS,
+  withFittedAndCentered,
+} from './toolbar/constants'
 
-function serializeBarPosition(type, row) {
-  if (type === 'AFTER_ROW') return `AFTER_ROW=${row || 1}`
-  return type
-}
-
-function NumInput({ label, value, onChange, unit = 'mm', min, step = 1, readOnly, wide }) {
-  return (
-    <label className={`flex flex-col gap-0.5 ${wide ? 'flex-1 min-w-0' : 'min-w-[52px]'}`}>
-      <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none whitespace-nowrap">
-        {label}
-      </span>
-      <div className="flex items-center gap-0.5">
-        <input
-          type="number"
-          value={value ?? ''}
-          min={min}
-          step={step}
-          readOnly={readOnly}
-          onChange={e => !readOnly && onChange(parseFloat(e.target.value) || 0)}
-          className={`text-xs px-1.5 py-1 border rounded text-right tabular-nums
-            ${wide ? 'w-full' : 'w-14'}
-            ${readOnly
-              ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-default'
-              : 'border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300'
-            }`}
-        />
-        {unit && <span className="text-[9px] text-gray-300">{unit}</span>}
-      </div>
-    </label>
-  )
-}
-
-function IntInput({ label, value, onChange, min = 1, max, wide }) {
-  return (
-    <label className={`flex flex-col gap-0.5 ${wide ? 'flex-1 min-w-0' : 'min-w-[44px]'}`}>
-      <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">{label}</span>
-      <input
-        type="number"
-        value={value ?? ''}
-        min={min}
-        max={max}
-        step={1}
-        onChange={e => {
-          const v = parseInt(e.target.value) || min
-          const clamped = max !== undefined ? Math.min(v, max) : v
-          onChange(Math.max(min, clamped))
-        }}
-        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 text-right tabular-nums ${wide ? 'w-full' : 'w-12'}`}
-      />
-    </label>
-  )
-}
-
-function SelectInput({ label, value, options, onChange, wide }) {
-  return (
-    <label className={`flex flex-col gap-0.5 ${wide ? 'flex-1 min-w-0' : ''}`}>
-      <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">{label}</span>
-      <select
-        value={value ?? 'NONE'}
-        onChange={e => onChange(e.target.value)}
-        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 ${wide ? 'w-full' : ''}`}
-      >
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </label>
-  )
-}
-
-function LinkBtn({ linked, onToggle, title, vertical }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      title={title}
-      className={`flex-shrink-0 p-1 rounded transition-colors ${vertical ? 'self-end mb-1' : 'self-end mb-1'}
-        ${linked
-          ? 'text-blue-500 bg-blue-50 hover:bg-blue-100'
-          : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
-        }`}
-    >
-      {linked ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-        </svg>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 17H7A5 5 0 0 1 7 7h2"/>
-          <path d="M15 7h2a5 5 0 1 1 0 10h-2"/>
-          <line x1="2" y1="2" x2="22" y2="22"/>
-        </svg>
-      )}
-    </button>
-  )
-}
-
-// Horizontal layout helpers
-function Sep() {
-  return <div className="w-px bg-gray-200 self-stretch mx-1 flex-shrink-0" />
-}
-
-function BgColorInput({ format, set }) {
-  const [hexText, setHexText] = useState(format.BackgroundColor_Hex || '#000000')
-
-  useEffect(() => {
-    setHexText(format.BackgroundColor_Hex || '#000000')
-  }, [format.BackgroundColor_Hex])
-
-  function handleColorPicker(val) {
-    set('BackgroundColor_Hex', val)
-    setHexText(val)
-  }
-
-  function handleHexInput(val) {
-    setHexText(val)
-    var norm = val.startsWith('#') ? val : '#' + val
-    if (/^#[0-9a-fA-F]{6}$/.test(norm)) set('BackgroundColor_Hex', norm.toLowerCase())
-  }
-
-  function handleHexBlur() {
-    var norm = hexText.startsWith('#') ? hexText : '#' + hexText
-    if (/^#[0-9a-fA-F]{6}$/.test(norm)) setHexText(norm.toLowerCase())
-    else setHexText(format.BackgroundColor_Hex || '#000000')
-  }
-
-  function handleCmyk(ch, val) {
-    var n = Math.max(0, Math.min(100, parseInt(val) || 0))
-    set('BackgroundColor_' + ch, n)
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="flex flex-col gap-0.5">
-        <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">Achtergrond</span>
-        <div className="flex items-center gap-1.5">
-          <input
-            type="color"
-            value={format.BackgroundColor_Hex || '#000000'}
-            onChange={e => handleColorPicker(e.target.value)}
-            className="w-7 h-7 rounded border border-gray-200 cursor-pointer p-0.5 flex-shrink-0"
-          />
-          <input
-            type="text"
-            value={hexText}
-            onChange={e => handleHexInput(e.target.value)}
-            onBlur={handleHexBlur}
-            spellCheck={false}
-            maxLength={7}
-            className="text-xs font-mono px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 w-20"
-          />
-        </div>
-      </label>
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">CMYK</span>
-        <div className="grid grid-cols-4 gap-1">
-          {['C', 'M', 'Y', 'K'].map(function(ch) {
-            return (
-              <label key={ch} className="flex flex-col gap-0.5">
-                <span className="text-[9px] text-gray-400 text-center">{ch}</span>
-                <input
-                  type="number" min={0} max={100} step={1}
-                  value={format['BackgroundColor_' + ch] ?? ''}
-                  onChange={e => handleCmyk(ch, e.target.value)}
-                  className="text-xs px-1 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 w-full text-right tabular-nums"
-                />
-              </label>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Group({ label, children }) {
-  return (
-    <div className="flex flex-col gap-1.5 flex-shrink-0">
-      <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-300">{label}</span>
-      <div className="flex items-end gap-2">{children}</div>
-    </div>
-  )
-}
-
-// Vertical layout helpers
-function VSection({ label, children, defaultOpen = true }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="flex items-center justify-between w-full px-3 py-2 group bg-white"
-      >
-        <p className="text-[9px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-        <svg
-          width="10" height="10" viewBox="0 0 10 10" fill="none"
-          stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-          className={`text-gray-300 group-hover:text-gray-500 transition-transform ${open ? '' : '-rotate-90'}`}
-        >
-          <path d="M2 3.5l3 3 3-3"/>
-        </svg>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-col gap-2 px-3 pb-3 pt-1 border-t border-gray-100 bg-white">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-function VRow({ children }) {
-  return <div className="flex items-end gap-1.5">{children}</div>
-}
-
-const HEADER_OPTIONS = [
-  { value: 'NONE', label: 'Geen' },
-  { value: 'TEXT', label: 'Tekst' },
-  { value: 'SYMBOL', label: 'Symbool' },
-  { value: 'TEXT_SOCIAL', label: 'Tekst + Social' },
-  { value: 'GRAPHIC', label: 'Grafisch' },
-]
-
-const BAR_TYPE_OPTIONS = [
-  { value: 'NONE', label: 'Geen' },
-  { value: 'TEXT', label: 'Tekst' },
-  { value: 'SYMBOL', label: 'Symbool' },
-]
-
-const BAR_POS_OPTIONS = [
-  { value: 'NONE', label: 'Geen' },
-  { value: 'TOP', label: 'Boven' },
-  { value: 'BOTTOM', label: 'Onder' },
-  { value: 'AFTER_ROW', label: 'Na rij...' },
-]
-
-const PLACE_EMPTY_OPTIONS = [
-  { value: 'blank', label: 'Placeholder' },
-  { value: 'skip', label: 'Overslaan' },
-]
-
-// ─── withFittedCells ─────────────────────────────────────────────────────────
-function withFittedAndCentered(fmt) {
-  if (!fmt.CanvasWidth_mm || !fmt.CanvasHeight_mm) return fmt
-
-  const cols   = fmt.Cols || 1
-  const rows   = fmt.Rows || 1
-  const gx     = fmt.GutterX_mm || 0
-  const gy     = fmt.GutterY_mm || 0
-  const aspect = fmt.CellAspect || 1.667
-  const ml     = fmt.MarginLeft_mm   || 0
-  const mr     = fmt.MarginRight_mm  || 0
-  const mt     = fmt.MarginTop_mm    || 0
-  const mb     = fmt.MarginBottom_mm || 0
-
-  const availW = fmt.CanvasWidth_mm  - ml - mr
-  const availH = fmt.CanvasHeight_mm - mt - mb
-  if (availW <= 0 || availH <= 0) return fmt
-
-  const maxCellW = (availW - (cols - 1) * gx) / cols
-  const maxCellH = (availH - (rows - 1) * gy) / rows
-
-  let cw = fmt.TargetCellW_mm ?? fmt.CellW_mm ?? 0
-  let ch = cw / aspect
-
-  if (maxCellW > 0 && cw > maxCellW) { cw = maxCellW; ch = cw / aspect }
-  if (maxCellH > 0 && ch > maxCellH) { ch = maxCellH; cw = ch * aspect }
-
-  const result = { ...fmt }
-  result.TargetCellW_mm = fmt.TargetCellW_mm ?? fmt.CellW_mm ?? 0
-  result.CellW_mm = Math.round(cw * 100) / 100
-  result.CellH_mm = Math.round(ch * 1000) / 1000
-  return result
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
 export default function GridToolbar({ format, onChange, cellPresets = [], canvasPresets = [], layout = 'horizontal' }) {
   const [canvasLinked, setCanvasLinked] = useState(false)
   const [gutterLinked, setGutterLinked] = useState(true)
@@ -422,7 +143,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
                 value={canvasPresets.find(p => p.CanvasWidth_mm === format.CanvasWidth_mm && p.CanvasHeight_mm === format.CanvasHeight_mm)?.id || ''}
                 onChange={e => {
                   const p = canvasPresets.find(x => x.id === e.target.value)
-                  if (p) onChange({ ...format, CanvasWidth_mm: p.CanvasWidth_mm, CanvasHeight_mm: p.CanvasHeight_mm })
+                  if (p) onChange(withFittedAndCentered({ ...format, CanvasWidth_mm: p.CanvasWidth_mm, CanvasHeight_mm: p.CanvasHeight_mm }))
                 }}
                 className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300"
               >
@@ -435,14 +156,14 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
             <NumInput label="Breedte" value={format.CanvasWidth_mm} step={1} min={1} onChange={v => {
               const next = { ...format, CanvasWidth_mm: v }
               if (canvasLinked && format.CanvasWidth_mm) next.CanvasHeight_mm = Math.round(v / format.CanvasWidth_mm * format.CanvasHeight_mm)
-              onChange(next)
+              onChange(withFittedAndCentered(next))
             }} wide />
             <LinkBtn linked={canvasLinked} onToggle={() => setCanvasLinked(v => !v)}
               title={canvasLinked ? 'Verhouding vergrendeld' : 'Vrije afmetingen'} />
             <NumInput label="Hoogte" value={format.CanvasHeight_mm} step={1} min={1} onChange={v => {
               const next = { ...format, CanvasHeight_mm: v }
               if (canvasLinked && format.CanvasHeight_mm) next.CanvasWidth_mm = Math.round(v / format.CanvasHeight_mm * format.CanvasWidth_mm)
-              onChange(next)
+              onChange(withFittedAndCentered(next))
             }} wide />
           </VRow>
         </VSection>

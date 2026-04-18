@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   loadCellPresets, saveCellPresets,
   loadCanvasPresets, saveCanvasPresets,
-  loadCustomFormats, saveCustomFormats,
+  loadSetting, saveSetting,
 } from '../../utils/db'
 
 function genId() {
@@ -32,15 +32,39 @@ function NumInput({ label, value, onChange, step = 1, unit = 'mm' }) {
 
 // ─── Cel presets ──────────────────────────────────────────────────────────────
 
+const ASPECT_SHORTCUTS = [
+  { label: '5:3', val: 1.667 },
+  { label: '16:9', val: 1.778 },
+  { label: '3:2', val: 1.5 },
+  { label: '4:3', val: 1.333 },
+]
+
 function CelTab({ showToast }) {
   const [presets, setPresets] = useState([])
   const [editing, setEditing] = useState(null) // preset object of null
   const [loading, setLoading] = useState(true)
+  const [defaultAspect, setDefaultAspect] = useState(1.667)
+  const [aspectDraft, setAspectDraft] = useState('1.667')
 
   useEffect(() => {
-    loadCellPresets().then(p => { setPresets(p); setLoading(false) })
-      .catch(e => { showToast('Laden mislukt', 'error'); setLoading(false) })
+    Promise.all([
+      loadCellPresets(),
+      loadSetting('default_aspect', 1.667),
+    ]).then(([p, aspect]) => {
+      setPresets(p)
+      setDefaultAspect(aspect)
+      setAspectDraft(String(aspect))
+      setLoading(false)
+    }).catch(e => { showToast('Laden mislukt', 'error'); setLoading(false) })
   }, [])
+
+  async function saveAspect(val) {
+    const v = Math.max(0.1, parseFloat(val) || 1.667)
+    setDefaultAspect(v)
+    setAspectDraft(String(v))
+    try { await saveSetting('default_aspect', v); showToast('Aspect ratio opgeslagen') }
+    catch (e) { showToast('Opslaan mislukt', 'error') }
+  }
 
   function startNew() {
     setEditing({ id: genId(), name: '', CellW_mm: 200, CellAspect: 2, GutterX_mm: 10, GutterY_mm: 10 })
@@ -70,6 +94,42 @@ function CelTab({ showToast }) {
 
   return (
     <div>
+
+      {/* ── Standaard aspect ratio ── */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-4 mb-6">
+        <p className="text-xs font-bold uppercase tracking-wide text-blue-700 mb-1">Standaard aspect ratio</p>
+        <p className="text-xs text-blue-400 mb-3">Verhouding breedte ÷ hoogte voor nieuwe en aangepaste cellen.</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={aspectDraft}
+              step={0.001}
+              min={0.1}
+              onChange={e => setAspectDraft(e.target.value)}
+              onBlur={() => saveAspect(aspectDraft)}
+              className="w-24 text-sm px-2 py-1.5 border border-blue-200 rounded-lg text-right tabular-nums font-semibold focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+            />
+            <span className="text-xs text-blue-400">= {Math.round(defaultAspect * 100)}:100</span>
+          </div>
+          <div className="flex gap-1.5">
+            {ASPECT_SHORTCUTS.map(({ label, val }) => (
+              <button
+                key={label}
+                onClick={() => saveAspect(val)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors ${
+                  Math.abs(defaultAspect - val) < 0.002
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'border-blue-200 text-blue-500 hover:border-blue-400 hover:bg-blue-100'
+                }`}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cel presets ── */}
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Cel presets</p>
       <div className="space-y-2 mb-4">
         {presets.map(p => (
           <div key={p.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3">
@@ -250,62 +310,11 @@ function CanvasTab({ showToast }) {
   )
 }
 
-// ─── Format presets ───────────────────────────────────────────────────────────
-
-function FormatTab({ showToast }) {
-  const [formats, setFormats] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadCustomFormats().then(f => { setFormats(f); setLoading(false) })
-      .catch(() => { showToast('Laden mislukt', 'error'); setLoading(false) })
-  }, [])
-
-  async function handleDelete(id) {
-    const next = formats.filter(f => f.id !== id)
-    setFormats(next)
-    try { await saveCustomFormats(next); showToast('Format verwijderd') }
-    catch (e) { showToast('Verwijderen mislukt', 'error') }
-  }
-
-  if (loading) return <div className="text-sm text-gray-400 py-4">Laden…</div>
-
-  return (
-    <div>
-      <p className="text-xs text-gray-500 mb-4">
-        Aangepaste formats worden aangemaakt en bewerkt via de app zelf (Formaten → potlood-icoon).
-        Hier kun je enkel verwijderen.
-      </p>
-      <div className="space-y-2">
-        {formats.map(f => (
-          <div key={f.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800">{f.Beschrijving || f.Code}</p>
-              <p className="text-xs text-gray-400">
-                {f.Code} · {f.Cols}×{f.Rows} · {f.CanvasWidth_mm}×{f.CanvasHeight_mm}mm
-              </p>
-            </div>
-            <button onClick={() => handleDelete(f.id)} className="text-gray-400 hover:text-red-500 p-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        ))}
-        {formats.length === 0 && (
-          <p className="text-xs text-gray-400 italic">Geen aangepaste formats</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ─── Main section ─────────────────────────────────────────────────────────────
 
 const TABS = [
   { id: 'cel', label: 'Cel' },
   { id: 'canvas', label: 'Canvas' },
-  { id: 'format', label: 'Formaten' },
 ]
 
 export default function PresetsSection({ showToast }) {
@@ -332,7 +341,6 @@ export default function PresetsSection({ showToast }) {
 
       {activeTab === 'cel' && <CelTab showToast={showToast} />}
       {activeTab === 'canvas' && <CanvasTab showToast={showToast} />}
-      {activeTab === 'format' && <FormatTab showToast={showToast} />}
     </div>
   )
 }

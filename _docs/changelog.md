@@ -4,6 +4,105 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — settings modal verwijderd + admin hernoemd naar Instellingen (TODO)
+
+### SettingsModal verwijderd
+De tandwiel-modal in de hoofdapp was volledig redundant met het admin-paneel:
+
+| Modal-tab (weg) | Admin-equivalent (blijft) |
+|---|---|
+| Celdimensies | Presets → Cel |
+| Canvas | Presets → Canvas |
+| Events & Koepels | Events & Koepels |
+| Categorieën | Categorieën |
+
+**Verwijderd:**
+- `src/components/SettingsModal.jsx`
+- `src/components/settings/` (CelDimensiesTab, CanvasTab, EventsKoepelsTab, CategorieenTab, KoepelsList, ManageList, PresetLinkBtn)
+
+**App.jsx opgeruimd:**
+- ~145 regels mutatie-handlers verwijderd (events, categorieën, koepels, presets)
+- `useAppData` destructuring vereenvoudigd (setters niet meer nodig in hoofdapp)
+- `showSettings` state weg
+- Tandwiel-knop → `<a href="/admin">` link
+
+**Aspect ratio naar admin verplaatst:**
+- `PresetsSection.jsx` Cel-tab krijgt de standaard aspect ratio (lees + schrijf `default_aspect` setting), inclusief snelknoppen voor 5:3, 16:9, 3:2, 4:3
+- `useAppData` laadt `default_aspect` niet meer (enkel nog in admin)
+
+**Bundlegrootte:** main bundle 775kB → **745kB** (−30kB)
+
+---
+
+## Sessie april 2026 — design tokens + format fixes
+
+### Design tokens
+- `src/design-system/tokens.css` aangemaakt met raw palette + semantische tokens (colors, typography, radius, shadows, z-index, transitions)
+- `src/index.css` importeert tokens; body gebruikt `var(--color-bg)` en `var(--font-sans)`
+- Geen `@theme` block (conflicteert met Tailwind v4 interne `--color-*` variabelen)
+
+### Format fixes (4)
+
+**Bug fix — canvas preset herberekent cellen niet**
+- `GridToolbar.jsx`: canvas preset selector en canvas breedte/hoogte inputs roepen nu `withFittedAndCentered` aan
+- Hierdoor worden col/rij-dimensies correct hergberekend wanneer het canvas kleiner wordt
+
+**Opschoning — `PresetsSection.FormatTab` verwijderd**
+- Verouderde `FormatTab` in admin → Presets verwijderd: gebruikte destructieve `saveCustomFormats` (DELETE ALL + INSERT) bij verwijderen en verwees incorrect naar "bewerken via de app"
+- Formatensbeheer zit volledig in admin → Formaten (`FormatenSection.jsx`)
+- Ongebruikte imports (`loadCustomFormats`, `saveCustomFormats`) verwijderd
+
+**UX — FormatPreview aanzetten in admin**
+- `FormatEditModal.jsx`: SVG-preview boven de secties getoond zodra canvas-afmetingen beschikbaar zijn
+- Geeft directe visuele feedback bij aanmaken/bewerken van een formaat
+
+**Fix — `static_imported` flag zetten na import**
+- `FormatenSection.jsx`: na succesvolle bulkimport wordt `saveSetting('static_imported', true)` aangeroepen
+- Garandeert correcte lege staat als alle formats later uit Supabase worden verwijderd
+
+---
+
+## Sessie april 2026 — volledige refactor (structuur, geen gedragswijziging)
+
+Structurele opschoning van `dev/backdrop-designer/` zonder functionele wijzigingen. Gesplitst in 8 fases; `npm run build` passeert na elke fase.
+
+### ① Dode code verwijderd
+- `FormatPickerModal.jsx`, `CustomFormatModal.jsx`, `SponsorEditModal.jsx`, `App.css` (niet meer geïmporteerd)
+- Ongebruikte handlers uit `App.jsx`: `handleCustomLogoChange`, `handleAddCustomSponsor`, `handleDeleteCustomSponsor`, `handleCustomFormat`, `handleSaveCustomFormat`, `handleImportAllFormats`, `handleDeleteCustomFormat`, `handleTagsChange`, `handleCategoryChange`, `handleSponsorGroupsChange` (~84 regels)
+
+### ② App.jsx opgesplitst (1724 → ~1085 regels)
+- Nieuwe componenten in `components/designs/`: `SaveModal`, `SavedDesignsPanel`, `DesignRow`
+- Nieuwe componenten in `components/shared/`: `Toast`, `ConfirmModal`
+- Nieuw component `components/export/ExportMenu.jsx`
+- Nieuwe hooks: `hooks/useAuth.js` (auth-sessie + menu), `hooks/useAppData.js` (bulk-load Supabase state)
+
+### ③ SettingsModal.jsx opgesplitst (784 → ~115 regels)
+- Tab-componenten in `components/settings/`: `CelDimensiesTab`, `CanvasTab`, `EventsKoepelsTab`, `CategorieenTab`, `KoepelsList`, `ManageList`, `PresetLinkBtn`
+
+### ④ PreviewCanvas.jsx opgesplitst (682 regels)
+- `components/preview/Cell.jsx` — één gridvak
+- `components/preview/PersonSilhouette.jsx`, `ChairSilhouette.jsx` — floor-aligned overlays
+- `components/preview/constants.js` — `ZOOM_STEPS`, `RULER_SIZE`, `getTickSpacing`, viewbox-dimensies
+
+### ⑤ GridToolbar.jsx opgesplitst (637 regels)
+- `components/toolbar/inputs/`: `NumInput`, `IntInput`, `SelectInput`, `LinkBtn`, `BgColorInput`
+- `components/toolbar/layout/`: `Group` + `Sep` (horizontal), `VSection` + `VRow` (vertical)
+- `components/toolbar/constants.js`: option-lijsten, `parseBarPosition`, `serializeBarPosition`, `withFittedAndCentered`
+
+### ⑥ db.js opgesplitst (501 regels)
+- `utils/db.js` → `utils/db/` folder met `settings.js`, `events.js`, `sponsors.js`, `presets.js`, `formats.js`, `designs.js`
+- `utils/db/index.js` re-exporteert alles — bestaande imports (`import * as db from '../utils/db'`) blijven werken
+
+### ⑦ Bundle splitting via React.lazy
+- `main.jsx` laadt `AdminPage` nu dynamisch via `lazy()` + `<Suspense>`
+- Main bundle: **860kB → 776kB** (admin chunk apart: ~85kB)
+
+### ⑧ Documentatie bijgewerkt
+- `_docs/components.md` geüpdatet met nieuwe folder-structuur (designs/, shared/, export/, preview/, settings/, toolbar/)
+- Deze changelog-entry toegevoegd
+
+---
+
 ## Sessie april 2026 — accentkleur terug naar blauw
 
 De UI/UX-upgrade (`9f6c450`) had alle accents op rood (`#E30613`, Flanders Classics brand). Dat bleek te overheersen — accentkleur is teruggezet naar **blauw** (`#2563EB` / Tailwind `blue-600`).
