@@ -55,6 +55,50 @@ export async function loadCanvasPresets() {
   }))
 }
 
+// ---------------------------------------------------------------------------
+// Background presets
+// ---------------------------------------------------------------------------
+
+export async function loadBackgroundPresets() {
+  const { data, error } = await supabase
+    .from('background_presets')
+    .select('*')
+    .order('sort_order')
+  if (error) throw error
+  return data.map(r => ({
+    id: r.id,
+    name: r.name,
+    BackgroundColor_Hex: r.color_hex,
+    BackgroundColor_Cmyk: { c: r.cmyk_c, m: r.cmyk_m, y: r.cmyk_y, k: r.cmyk_k },
+    koepelIds: r.koepel_ids || [],
+    eventCodes: r.event_codes || [],
+    sortOrder: r.sort_order,
+  }))
+}
+
+export async function upsertBackgroundPreset(preset, sortOrder) {
+  const { error } = await supabase
+    .from('background_presets')
+    .upsert({
+      id: preset.id,
+      name: preset.name,
+      color_hex: preset.BackgroundColor_Hex,
+      cmyk_c: preset.BackgroundColor_Cmyk.c,
+      cmyk_m: preset.BackgroundColor_Cmyk.m,
+      cmyk_y: preset.BackgroundColor_Cmyk.y,
+      cmyk_k: preset.BackgroundColor_Cmyk.k,
+      koepel_ids: preset.koepelIds || [],
+      event_codes: preset.eventCodes || [],
+      sort_order: sortOrder,
+    }, { onConflict: 'id' })
+  if (error) throw error
+}
+
+export async function deleteBackgroundPreset(id) {
+  const { error } = await supabase.from('background_presets').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function saveCanvasPresets(list) {
   const rows = list.map(p => ({
     id: p.id,

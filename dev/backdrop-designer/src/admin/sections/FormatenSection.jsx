@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import allStaticFormats from '../../data/backdropFormats.json'
-import { loadFormats, upsertFormat, deleteFormat, bulkImportFormats, reorderFormats, saveSetting } from '../../utils/db'
+import { loadFormats, upsertFormat, deleteFormat, bulkImportFormats, reorderFormats, saveSetting, loadCellPresets, loadCanvasPresets, loadBackgroundPresets } from '../../utils/db'
+import { DEFAULT_CELL_PRESETS, DEFAULT_CANVAS_PRESETS } from '../../hooks/useAppData'
 import FormatEditModal from './FormatEditModal'
 
 function GripIcon() {
@@ -22,12 +23,18 @@ export default function FormatenSection({ showToast }) {
   const [overIdx, setOverIdx] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null) // format to delete
   const [importing, setImporting] = useState(false)
+  const [cellPresets, setCellPresets] = useState(DEFAULT_CELL_PRESETS)
+  const [canvasPresets, setCanvasPresets] = useState(DEFAULT_CANVAS_PRESETS)
+  const [backgroundPresets, setBackgroundPresets] = useState([])
 
   useEffect(() => {
     loadFormats()
       .then(setFormats)
       .catch(e => showToast('Laden mislukt: ' + e.message, 'error'))
       .finally(() => setLoading(false))
+    loadCellPresets().then(r => setCellPresets(r.length ? r : DEFAULT_CELL_PRESETS)).catch(() => {})
+    loadCanvasPresets().then(r => setCanvasPresets(r.length ? r : DEFAULT_CANVAS_PRESETS)).catch(() => {})
+    loadBackgroundPresets().then(setBackgroundPresets).catch(() => {})
   }, [])
 
   // ─── Drag reorder ─────────────────────────────────────────────────────────
@@ -257,6 +264,9 @@ export default function FormatenSection({ showToast }) {
         <FormatEditModal
           format={editingFormat === 'new' ? null : editingFormat}
           allTags={[...new Set(formats.flatMap(f => f.tags || []))].sort()}
+          cellPresets={cellPresets}
+          canvasPresets={canvasPresets}
+          backgroundPresets={backgroundPresets}
           onSave={handleSave}
           onClose={() => setEditingFormat(null)}
         />

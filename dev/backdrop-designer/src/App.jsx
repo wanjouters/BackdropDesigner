@@ -48,6 +48,7 @@ export default function App({ session: initialSession }) {
     sponsorGroups,
     cellPresets,
     canvasPresets,
+    backgroundPresets,
     customFormats,
     customSponsors,
     customLogos,
@@ -465,7 +466,7 @@ export default function App({ session: initialSession }) {
                       <p className="text-xs text-gray-400 truncate">{authSession.user.email}</p>
                     </div>
                     <a
-                      href="/admin"
+                      href="/instellingen"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,7 +474,7 @@ export default function App({ session: initialSession }) {
                           d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Admin panel
+                      Instellingen
                     </a>
                     <button
                       onClick={signOut}
@@ -490,7 +491,7 @@ export default function App({ session: initialSession }) {
               </>
             ) : (
               <a
-                href="/admin"
+                href="/instellingen"
                 title="Inloggen"
                 className="w-8 h-8 rounded-full border border-gray-200 text-gray-400 flex items-center justify-center hover:border-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -570,20 +571,6 @@ export default function App({ session: initialSession }) {
             </button>
           ))}
 
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Instellingen — bottom */}
-          <a
-            href="/admin"
-            title="Instellingen"
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-              <circle cx="9" cy="9" r="3"/>
-              <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>
-            </svg>
-          </a>
         </div>
 
         {/* ── Side panel — conditional ── */}
@@ -656,7 +643,7 @@ export default function App({ session: initialSession }) {
               )}
               {leftPanel === 'adjust' && format && (
                 <>
-                  <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} layout="vertical" />
+                  <GridToolbar format={format} onChange={handleFormatChange} cellPresets={cellPresets} canvasPresets={canvasPresets} backgroundPresets={backgroundPresets} layout="vertical" />
                   <div className="bg-white rounded-xl border border-gray-200 p-4 flex-shrink-0">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Info</h2>
                     <dl className="space-y-1">

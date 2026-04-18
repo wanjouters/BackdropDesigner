@@ -10,6 +10,7 @@ const DEFAULT_CANVAS_PRESETS = [
   { id: 'canvas_1', name: 'Mixed Zone (7900×2300)', CanvasWidth_mm: 7900, CanvasHeight_mm: 2300 },
   { id: 'canvas_2', name: 'Flash (4000×2300)', CanvasWidth_mm: 4000, CanvasHeight_mm: 2300 },
 ]
+const DEFAULT_BACKGROUND_PRESETS = []
 
 /**
  * Loads all persisted app data from Supabase on mount. Exposes every piece
@@ -27,6 +28,7 @@ export function useAppData() {
   const [sponsorGroups, setSponsorGroups] = useState({})
   const [cellPresets, setCellPresets] = useState(DEFAULT_CELL_PRESETS)
   const [canvasPresets, setCanvasPresets] = useState(DEFAULT_CANVAS_PRESETS)
+  const [backgroundPresets, setBackgroundPresets] = useState(DEFAULT_BACKGROUND_PRESETS)
   const [customFormats, setCustomFormats] = useState([])
   const [customSponsors, setCustomSponsors] = useState([])
   const [customLogos, setCustomLogos] = useState({})
@@ -39,7 +41,7 @@ export function useAppData() {
         const [
           designs, eventsVal, eventGroupsVal, tagsVal, cats, sponsorGroupsVal,
           catList, customSponsorsVal, logos, cellPresetsVal, canvasPresetsVal,
-          customFormatsVal, staticImportedVal,
+          backgroundPresetsVal, customFormatsVal, staticImportedVal,
         ] = await Promise.all([
           db.loadDesigns(),
           db.loadEvents(),
@@ -52,6 +54,7 @@ export function useAppData() {
           db.loadCustomLogos(),
           db.loadCellPresets(),
           db.loadCanvasPresets(),
+          db.loadBackgroundPresets(),
           db.loadCustomFormats(),
           db.loadSetting('static_imported', false),
         ])
@@ -66,6 +69,7 @@ export function useAppData() {
         setCustomLogos(logos)
         setCellPresets(cellPresetsVal.length ? cellPresetsVal : DEFAULT_CELL_PRESETS)
         setCanvasPresets(canvasPresetsVal.length ? canvasPresetsVal : DEFAULT_CANVAS_PRESETS)
+        setBackgroundPresets(backgroundPresetsVal)
         setCustomFormats(customFormatsVal)
         setStaticImported(staticImportedVal)
       } catch (err) {
@@ -88,6 +92,7 @@ export function useAppData() {
     sponsorGroups, setSponsorGroups,
     cellPresets, setCellPresets,
     canvasPresets, setCanvasPresets,
+    backgroundPresets, setBackgroundPresets,
     customFormats, setCustomFormats,
     customSponsors, setCustomSponsors,
     customLogos, setCustomLogos,
@@ -96,4 +101,4 @@ export function useAppData() {
   }
 }
 
-export { DEFAULT_CATEGORIES, DEFAULT_CELL_PRESETS, DEFAULT_CANVAS_PRESETS }
+export { DEFAULT_CATEGORIES, DEFAULT_CELL_PRESETS, DEFAULT_CANVAS_PRESETS, DEFAULT_BACKGROUND_PRESETS }

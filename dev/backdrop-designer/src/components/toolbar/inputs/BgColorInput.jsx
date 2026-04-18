@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function BgColorInput({ format, set }) {
+export default function BgColorInput({ format, set, onChange, backgroundPresets = [] }) {
   const [hexText, setHexText] = useState(format.BackgroundColor_Hex || '#000000')
 
   useEffect(() => {
@@ -29,8 +29,47 @@ export default function BgColorInput({ format, set }) {
     set('BackgroundColor_' + ch, n)
   }
 
+  function findMatchingPreset() {
+    if (!backgroundPresets.length) return ''
+    return backgroundPresets.find(p =>
+      p.BackgroundColor_Hex === (format.BackgroundColor_Hex || '#000000')
+    )?.id || ''
+  }
+
+  function applyPreset(presetId) {
+    const p = backgroundPresets.find(x => x.id === presetId)
+    if (!p || !onChange) return
+    onChange({
+      ...format,
+      BackgroundColor_Hex: p.BackgroundColor_Hex,
+      BackgroundColor_Cmyk: p.BackgroundColor_Cmyk,
+      BackgroundColor_C: p.BackgroundColor_Cmyk.c,
+      BackgroundColor_M: p.BackgroundColor_Cmyk.m,
+      BackgroundColor_Y: p.BackgroundColor_Cmyk.y,
+      BackgroundColor_K: p.BackgroundColor_Cmyk.k,
+    })
+  }
+
   return (
     <div className="flex flex-col gap-2">
+
+      {/* Preset dropdown */}
+      <label className="flex flex-col gap-0.5">
+        <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">Preset</span>
+        <select
+          value={findMatchingPreset()}
+          onChange={e => applyPreset(e.target.value)}
+          disabled={backgroundPresets.length === 0}
+          className="w-full text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50 disabled:text-gray-300"
+        >
+          <option value="">{backgroundPresets.length === 0 ? '— Geen presets —' : '— Aangepast —'}</option>
+          {backgroundPresets.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </label>
+
+      {/* HEX */}
       <label className="flex flex-col gap-0.5">
         <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">Achtergrond</span>
         <div className="flex items-center gap-1.5">
@@ -51,6 +90,8 @@ export default function BgColorInput({ format, set }) {
           />
         </div>
       </label>
+
+      {/* CMYK */}
       <div className="flex flex-col gap-0.5">
         <span className="text-[9px] uppercase tracking-wide text-gray-400 leading-none">CMYK</span>
         <div className="grid grid-cols-4 gap-1">

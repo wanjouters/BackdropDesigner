@@ -17,7 +17,7 @@ import {
   withFittedAndCentered,
 } from './toolbar/constants'
 
-export default function GridToolbar({ format, onChange, cellPresets = [], canvasPresets = [], layout = 'horizontal' }) {
+export default function GridToolbar({ format, onChange, cellPresets = [], canvasPresets = [], backgroundPresets = [], layout = 'horizontal' }) {
   const [canvasLinked, setCanvasLinked] = useState(false)
   const [gutterLinked, setGutterLinked] = useState(true)
   const [lastChangedGutter, setLastChangedGutter] = useState('x')
@@ -166,6 +166,23 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
               onChange(withFittedAndCentered(next))
             }} wide />
           </VRow>
+          {/* Aanpassingsmodus bij canvas-wijziging */}
+          <label className="flex items-center gap-2 pt-0.5 cursor-pointer select-none">
+            <span className="text-[9px] uppercase tracking-wide text-gray-400 flex-1 leading-none">
+              {format.FixedCellSize ? 'Cellen vast, raster past' : 'Raster vast, cellen passen'}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange({ ...format, FixedCellSize: !format.FixedCellSize })}
+              className={`relative inline-flex h-4 w-7 flex-shrink-0 items-center rounded-full transition-colors ${
+                format.FixedCellSize ? 'bg-blue-500' : 'bg-gray-300'
+              }`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
+                format.FixedCellSize ? 'translate-x-3.5' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </label>
         </VSection>
 
         {/* Grid + Gutter */}
@@ -253,7 +270,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
 
         {/* Stijl */}
         <VSection label="Stijl">
-          <BgColorInput format={format} set={set} />
+          <BgColorInput format={format} set={set} onChange={onChange} backgroundPresets={backgroundPresets} />
           <SelectInput label="Leeg slot" value={format.PlaceEmpty || 'blank'} options={PLACE_EMPTY_OPTIONS}
             onChange={v => set('PlaceEmpty', v)} wide />
         </VSection>
@@ -347,7 +364,7 @@ export default function GridToolbar({ format, onChange, cellPresets = [], canvas
         <Sep />
 
         <Group label="Stijl">
-          <BgColorInput format={format} set={set} />
+          <BgColorInput format={format} set={set} onChange={onChange} backgroundPresets={backgroundPresets} />
           <SelectInput label="Leeg slot" value={format.PlaceEmpty || 'blank'} options={PLACE_EMPTY_OPTIONS}
             onChange={v => set('PlaceEmpty', v)} />
         </Group>

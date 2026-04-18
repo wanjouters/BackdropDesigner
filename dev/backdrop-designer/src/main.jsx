@@ -10,7 +10,7 @@ const AdminPage = lazy(() => import('./admin/AdminPage.jsx'))
 function AdminFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">
-      Admin laden…
+      Instellingen laden…
     </div>
   )
 }
@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<AppPage />} />
         <Route
-          path="/admin"
+          path="/instellingen"
           element={
             <Suspense fallback={<AdminFallback />}>
               <AdminPage />

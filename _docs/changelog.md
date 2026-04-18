@@ -4,6 +4,36 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — achtergrond presets + canvas/cel presets in FormatEditModal
+
+### Canvas- en celpresets in FormatEditModal (admin)
+- Dropdowns altijd zichtbaar (niet conditioneel op `length > 0`)
+- Fallback op `DEFAULT_CELL_PRESETS` / `DEFAULT_CANVAS_PRESETS` als DB leeg is (zelfde logica als hoofdapp)
+- `FormatenSection` laadt presets bij mount en geeft ze als props door
+
+### Achtergrond presets — volledig nieuw feature
+**Supabase:** nieuwe tabel `background_presets` (`id uuid`, `name`, `color_hex`, `cmyk_c/m/y/k`, `koepel_ids uuid[]`, `event_codes text[]`, `sort_order`, `created_at`) met RLS (public read, authenticated write)
+
+**DB-laag:**
+- `loadBackgroundPresets()`, `upsertBackgroundPreset()`, `deleteBackgroundPreset()` in `db/presets.js`
+- `loadKoepels()` in `db/events.js` — geeft `[{ id, name }]` terug (nieuw, naast bestaande `loadEventGroups`)
+
+**Admin — Presets → tabblad "Achtergrond":**
+- CRUD-lijst met kleurvlak, naam, CMYK-info, koepel/event-badges
+- Editor: HEX picker + CMYK-velden + "CMYK van HEX"-knop
+- Koppeling via radiobuttons (één koepel óf één event tegelijk)
+- Naam vult automatisch in bij selectie van koepel of event
+
+**Admin — FormatEditModal:**
+- Preset dropdown in Achtergrond-sectie: selecteren past `BackgroundColor_Hex` + `BackgroundColor_Cmyk` toe
+
+**Hoofdapp — GridToolbar Stijl-blok (BgColorInput):**
+- Preset dropdown boven HEX-veld
+- Selecteren past `BackgroundColor_Hex`, `BackgroundColor_Cmyk` én losse `BackgroundColor_C/M/Y/K` velden toe
+- `backgroundPresets` prop: `useAppData` → `App.jsx` → `GridToolbar` → `BgColorInput`
+
+---
+
 ## Sessie april 2026 — settings modal verwijderd + admin hernoemd naar Instellingen (TODO)
 
 ### SettingsModal verwijderd

@@ -17,7 +17,8 @@
 
 ### `hooks/useAppData.js`
 - Laadt alle persistente Supabase-data bij mount via `Promise.all` (savedDesigns, tags, categorieën, events, koepels, presets, custom sponsors/logos, …)
-- Exporteert defaults: `DEFAULT_CATEGORIES`, `DEFAULT_CELL_PRESETS`, `DEFAULT_CANVAS_PRESETS`
+- Exporteert defaults: `DEFAULT_CATEGORIES`, `DEFAULT_CELL_PRESETS`, `DEFAULT_CANVAS_PRESETS`, `DEFAULT_BACKGROUND_PRESETS`
+- Laadt ook `backgroundPresets` (geen fallback defaults — lege array als DB leeg is)
 
 ### `components/designs/` — opgesplitste ontwerpen-UI
 - `SaveModal.jsx`: dialoog voor opslaan (naam)

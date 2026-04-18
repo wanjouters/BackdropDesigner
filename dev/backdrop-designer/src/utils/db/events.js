@@ -27,6 +27,15 @@ export async function saveEvents(codes) {
 // Event groups
 // ---------------------------------------------------------------------------
 
+export async function loadKoepels() {
+  const { data, error } = await supabase
+    .from('event_groups')
+    .select('id, name')
+    .order('name')
+  if (error) throw error
+  return data.map(r => ({ id: r.id, name: r.name }))
+}
+
 export async function loadEventGroups() {
   const { data, error } = await supabase
     .from('event_groups')

@@ -43,7 +43,7 @@ function PasswordResetForm() {
               </svg>
             </div>
             <p className="font-medium text-gray-900 mb-1">Wachtwoord ingesteld</p>
-            <p className="text-sm text-gray-500 mb-4">Je bent nu ingelogd en kan de admin gebruiken.</p>
+            <p className="text-sm text-gray-500 mb-4">Je bent nu ingelogd en kan de instellingen gebruiken.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

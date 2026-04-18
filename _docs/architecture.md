@@ -67,6 +67,7 @@ Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/ut
 | `logo_overrides` | Custom logo-overrides voor bestaande sponsors — `sponsor_name, logo_data_url` |
 | `cell_presets` | Celdimensie-presets — `id, data` |
 | `canvas_presets` | Canvas-presets — `id, data` |
+| `background_presets` | Achtergrondkleur-presets — `id uuid, name, color_hex, cmyk_c/m/y/k int, koepel_ids uuid[], event_codes text[], sort_order` |
 | `format_presets` | Gridformaten — `id (text), data (jsonb), sort_order (int)` — `data` bevat alle formaatsvelden incl. `tags: []` |
 
 Alle tabellen hebben een nullable `user_id uuid` kolom voor toekomstige multi-user migratie (RLS).

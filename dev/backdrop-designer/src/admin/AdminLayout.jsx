@@ -147,7 +147,7 @@ export default function AdminLayout({ session }) {
         {/* Logo */}
         <div className="px-4 py-5 border-b border-gray-700">
           <p className="text-white font-semibold text-sm">BackdropDesigner</p>
-          <p className="text-gray-400 text-xs mt-0.5">Admin</p>
+          <p className="text-gray-400 text-xs mt-0.5">Instellingen</p>
         </div>
 
         {/* Nav */}
@@ -176,20 +176,18 @@ export default function AdminLayout({ session }) {
               : null
             }
             <p className="text-gray-500 text-xs truncate">{session.user.email}</p>
-            {session.user.app_metadata?.role === 'admin' && (
-              <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded bg-purple-900/60 text-purple-300 font-medium">Admin</span>
-            )}
+            <div className="flex items-center gap-2 mt-1">
+              {session.user.app_metadata?.role === 'admin' && (
+                <span className="text-xs px-1.5 py-0.5 rounded bg-purple-900/60 text-purple-300 font-medium">Admin</span>
+              )}
+              <button
+                onClick={() => setShowChangePassword(true)}
+                className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
+              >
+                Wachtwoord wijzigen
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowChangePassword(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
-            Wachtwoord instellen
-          </button>
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
@@ -232,6 +230,14 @@ export default function AdminLayout({ session }) {
           {active === 'gebruikers' && <GebruikersSection {...sectionProps} />}
         </div>
       </div>
+
+      {/* Change password modal */}
+      {showChangePassword && (
+        <ChangePasswordModal
+          onClose={() => setShowChangePassword(false)}
+          showToast={showToast}
+        />
+      )}
 
       {/* Toast */}
       <AnimatePresence>
