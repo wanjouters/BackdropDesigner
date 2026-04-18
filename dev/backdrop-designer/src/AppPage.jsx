@@ -7,7 +7,7 @@ import App from './App'
 
 function Spinner() {
   return (
-    <svg className="animate-spin w-5 h-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <svg className="animate-spin w-5 h-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
     </svg>
@@ -69,17 +69,17 @@ function PasswordResetForm() {
               <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="Minstens 8 tekens" required autoComplete="new-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
               <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
                 placeholder="Herhaal wachtwoord" required autoComplete="new-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading || !password || !confirm}
-              className="w-full bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+              className="w-full bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
               {loading ? <><Spinner /><span>Opslaan…</span></> : 'Wachtwoord instellen'}
             </button>
           </form>
@@ -129,7 +129,7 @@ function AppLogin() {
       >
         {/* Logo */}
         <div className="mb-8">
-          <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -141,8 +141,8 @@ function AppLogin() {
 
         {resetSent ? (
           <div className="text-center py-4">
-            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -156,17 +156,17 @@ function AppLogin() {
               <label className="block text-xs font-medium text-gray-500 mb-1">E-mailadres</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="naam@flandersclassics.be" required autoComplete="email"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Wachtwoord</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" required autoComplete="current-password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-200 transition-colors" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <button type="submit" disabled={loading || !email || !password}
-              className="w-full bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mt-1">
+              className="w-full bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 mt-1">
               {loading ? <><Spinner /><span>Inloggen…</span></> : 'Inloggen'}
             </button>
             <button type="button" onClick={handleForgotPassword} disabled={loading}

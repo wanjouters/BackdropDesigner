@@ -48,7 +48,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
               onChange={e => setCode(e.target.value)}
               placeholder="bv. MIJN_BACKDROP_10x6"
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
           <div>
@@ -59,7 +59,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="bv. Backstage custom"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
           <div className="flex gap-3">
@@ -73,7 +73,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
                 max={30}
                 value={cols}
                 onChange={e => setCols(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div className="flex-1">
@@ -86,7 +86,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
                 max={20}
                 value={rows}
                 onChange={e => setRows(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function CustomFormatModal({ onConfirm, onClose }) {
             </button>
             <button
               type="submit"
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
             >
               Aanmaken
             </button>

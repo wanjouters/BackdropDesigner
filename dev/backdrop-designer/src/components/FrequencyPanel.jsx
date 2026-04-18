@@ -90,7 +90,7 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                       <button
                         onClick={() => { setReplacing(isReplacing ? null : name); setReplaceQuery('') }}
                         title={`Vervang alle ${name}`}
-                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-gray-100 ${isReplacing ? 'opacity-100 text-red-500' : 'text-gray-400'}`}
+                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-gray-100 ${isReplacing ? 'opacity-100 text-blue-500' : 'text-gray-400'}`}
                       >
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M1 4h8a4 4 0 010 8H1"/>
@@ -102,7 +102,7 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                   </div>
                   <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                     <motion.div
-                      className={`h-full rounded-full ${isInvalid ? 'bg-red-300' : 'bg-red-400'}`}
+                      className={`h-full rounded-full ${isInvalid ? 'bg-red-300' : 'bg-blue-400'}`}
                       initial={{ width: 0 }}
                       animate={{ width: `${widthPct}%` }}
                       transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
@@ -118,9 +118,9 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.18 }}
-                    className="mt-1.5 mb-2 ml-2 border border-red-200 rounded-lg bg-red-50 p-2 overflow-hidden"
+                    className="mt-1.5 mb-2 ml-2 border border-blue-200 rounded-lg bg-blue-50 p-2 overflow-hidden"
                   >
-                    <p className="text-[10px] text-red-500 font-semibold mb-1.5 uppercase tracking-wide">Vervangen door:</p>
+                    <p className="text-[10px] text-blue-500 font-semibold mb-1.5 uppercase tracking-wide">Vervangen door:</p>
                     <div className="relative mb-1.5">
                       <input
                         autoFocus
@@ -128,10 +128,10 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                         value={replaceQuery}
                         onChange={e => setReplaceQuery(e.target.value)}
                         placeholder="Zoek sponsor..."
-                        className="w-full text-xs border border-red-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:border-red-400"
+                        className="w-full text-xs border border-blue-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:border-blue-400"
                       />
                       {replaceQuery && (
-                        <button onClick={() => setReplaceQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-300 hover:text-red-500">
+                        <button onClick={() => setReplaceQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-500">
                           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
                         </button>
                       )}
@@ -141,7 +141,7 @@ export default function FrequencyPanel({ slots, onBulkReplace }) {
                         <button
                           key={n}
                           onClick={() => handlePickReplacement(n)}
-                          className="w-full text-left text-xs px-2 py-1 rounded hover:bg-red-100 text-gray-700 transition-colors"
+                          className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-100 text-gray-700 transition-colors"
                         >
                           {n}
                         </button>

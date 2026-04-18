@@ -73,12 +73,12 @@ export default function SlotCell({ id, index, value, onAssign, onDropSponsor, co
           flex flex-col items-center justify-center gap-1 p-1
           min-h-[72px]
           ${isDragOver
-            ? 'border-red-500 bg-red-100 ring-2 ring-red-400'
+            ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-400'
             : isSelected
-              ? 'border-red-500 ring-2 ring-red-300 bg-red-50'
+              ? 'border-blue-500 ring-2 ring-blue-300 bg-blue-50'
               : isBlank
                 ? 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
-                : 'border-gray-200 bg-gray-100 hover:border-red-300'
+                : 'border-gray-200 bg-gray-100 hover:border-blue-300'
           }
           ${isDragging ? 'shadow-lg' : ''}
         `}

@@ -133,7 +133,7 @@ bg-white border border-gray-200 rounded-xl p-1 flex gap-1
 ```
 
 - **Links**: Grid / Preview view-toggle + Liniaal-toggle + Overlay-toggles (alleen in preview-view)
-- **Rechts**: Bijwerken (conditioneel, rood filled `bg-red-600`) + Wissen (grijs, rood on hover, met prullenbak-icoon)
+- **Rechts**: Bijwerken (conditioneel, blauw filled `bg-blue-600`) + Wissen (grijs, rood on hover, met prullenbak-icoon)
 
 Alle knoppen: `px-3 py-1.5 rounded-lg text-xs font-medium` — zelfde grootte en padding.
 
@@ -166,37 +166,47 @@ Wissen is **niet in de header** — header toont enkel naam/info + ExportMenu.
 
 ---
 
-## Kleurenpalet — Flanders Classics branding
+## Kleurenpalet
 
-Primaire accentkleur is **rood** (`#E30613` ≈ Tailwind `red-600`). Geen blauw meer in de hoofdapp of admin.
+Primaire accentkleur is **blauw** (`#2563EB` ≈ Tailwind `blue-600`). Rood is voorbehouden aan destructieve acties (verwijderen, wissen), error states en warnings.
 
 | Rol | Kleur | Tailwind klasse |
 |---|---|---|
 | Achtergrond | `#F9F9F9` | `bg-gray-50` |
 | Surface / kaart | `#FFFFFF` | `bg-white` |
-| Primair accent | `#E30613` | `bg-red-600` |
-| Primair hover | `#C4010F` | `hover:bg-red-700` |
+| Primair accent | `#2563EB` | `bg-blue-600` |
+| Primair hover | `#1D4ED8` | `hover:bg-blue-700` |
 | Secundair / donker | `#111111` | `bg-gray-900` |
 | Tekst | `#1A1A1A` | `text-gray-900` |
-| Lichte accent bg | `#FEF2F2` | `bg-red-50` |
-| Lichte accent border | `#FECACA` | `border-red-200` |
+| Lichte accent bg | `#EFF6FF` | `bg-blue-50` |
+| Lichte accent border | `#BFDBFE` | `border-blue-200` |
+| Destructief / error | Tailwind red | `bg-red-600`, `text-red-500`, enz. |
 
 **CSS custom properties** (gedefinieerd in `src/index.css`):
 ```css
---color-brand: #E30613;
---color-brand-hover: #C4010F;
+--color-brand: #2563EB;
+--color-brand-hover: #1D4ED8;
+--color-brand-light: #EFF6FF;
+--color-brand-border: #BFDBFE;
 --color-surface: #FFFFFF;
 --color-bg: #F9F9F9;
 --color-text: #1A1A1A;
 ```
 
 **Vuistregel voor klassekeuze**:
-- Primaire knoppen: `bg-red-600 hover:bg-red-700 text-white`
-- Actieve tab / nav-item: `bg-red-600 text-white`
-- Actieve inline toggle: `text-red-500 bg-red-50`
-- Focus rings: `focus:ring-1 focus:ring-red-300` of `focus:ring-2 focus:ring-red-300`
-- Geselecteerde staat (kaart, slot, rij): `border-red-500 ring-2 ring-red-300 bg-red-50`
-- Checked row bg: `bg-red-50`, checked text: `text-red-700`, checked border: `border-red-200`
+- Primaire knoppen: `bg-blue-600 hover:bg-blue-700 text-white`
+- Actieve tab / nav-item: `bg-blue-600 text-white`
+- Actieve inline toggle: `text-blue-500 bg-blue-50`
+- Focus rings: `focus:ring-1 focus:ring-blue-400` of `focus:ring-2 focus:ring-blue-300`
+- Geselecteerde staat (kaart, slot, rij): `border-blue-500 ring-2 ring-blue-300 bg-blue-50`
+- Checked row bg: `bg-blue-50`, checked text: `text-blue-700`, checked border: `border-blue-200`
+
+**Rood blijft voor**:
+- Delete / verwijder / wissen knoppen (vaak `hover:text-red-500`, confirm `bg-red-600 hover:bg-red-700`)
+- Error messages (`text-red-500`)
+- Toast error (`bg-red-600`)
+- Warnings (bv. "Onbekende sponsors" in FrequencyPanel: `bg-red-50 border-red-200 text-red-600`)
+- Bulk-delete modus in admin (geselecteerde rijen, bevestigingsbalk)
 
 ---
 
@@ -371,7 +381,7 @@ Inklapbare secties in `GridToolbar` gebruiken `AnimatePresence` met een `height`
 
 ```jsx
 <motion.div
-  className="h-full bg-red-400 rounded-full"
+  className="h-full bg-blue-400 rounded-full"
   initial={{ width: 0 }}
   animate={{ width: `${pct}%` }}
   transition={{ type: 'spring', stiffness: 120, damping: 20 }}
@@ -387,7 +397,7 @@ Inklapbare secties in `GridToolbar` gebruiken `AnimatePresence` met een `height`
 - `ArrowDown` / `ArrowUp` — navigeer door de lijst; scrollt het actieve item automatisch in beeld (`scrollIntoView`)
 - `Enter` — selecteer het actieve item
 - `Escape` — sluit de picker
-- Actief item: `bg-red-50` highlight
+- Actief item: `bg-blue-50` highlight
 - State: `activeIndex` (number | null)
 
 ```jsx

@@ -50,7 +50,7 @@ export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
         <input
           type="text" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Zoek formaat..."
-          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-red-300"
+          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
         />
         {query && (
           <button onClick={() => setQuery('')}
@@ -67,7 +67,7 @@ export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
         <button
           onClick={() => setFilterOpen(v => !v)}
           className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors w-full ${
-            hasFilter ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'
+            hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'
           }`}>
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M1 3h10M3 6h6M5 9h2"/>
@@ -83,7 +83,7 @@ export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
               <button key={opt.id}
                 onClick={() => { setActiveTag(opt.id); setFilterOpen(false) }}
                 className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${
-                  activeTag === opt.id ? 'bg-red-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                  activeTag === opt.id ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
                 }`}>
                 {opt.label}
               </button>
@@ -105,7 +105,7 @@ export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
               onClick={() => onSelect(f)}
               title={f.Beschrijving || f.Code}
               className={`w-full text-left px-3 py-1.5 rounded-lg transition-colors overflow-hidden ${
-                isActive ? 'bg-red-600 text-white' : 'hover:bg-gray-100 text-gray-700'
+                isActive ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'
               }`}
             >
               <div className="flex items-center justify-between gap-1 min-w-0">

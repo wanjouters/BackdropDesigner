@@ -142,7 +142,7 @@ export default function LogoLibrary({
           <input
             type="text" value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Zoek sponsor..."
-            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
           />
           {query && (
             <button
@@ -163,7 +163,7 @@ export default function LogoLibrary({
         <div className="relative mt-2" ref={filterRef}>
           <button
             onClick={() => setFilterOpen(v => !v)}
-            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors w-full ${eventFilter !== 'ALL' ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'}`}
+            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors w-full ${eventFilter !== 'ALL' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-500 hover:border-gray-400 bg-white'}`}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 3h10M3 6h6M5 9h2"/>
@@ -189,7 +189,7 @@ export default function LogoLibrary({
                 {events.map(ev => (
                   <button key={ev}
                     onClick={() => { setEventFilter(ev); setFilterOpen(false) }}
-                    className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === ev ? 'bg-red-600 text-white' : 'text-gray-600 hover:bg-red-50'}`}
+                    className={`w-full text-left text-xs px-3 py-1.5 font-semibold transition-colors ${eventFilter === ev ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-blue-50'}`}
                   >{ev}</button>
                 ))}
               </motion.div>
@@ -200,7 +200,7 @@ export default function LogoLibrary({
         {/* Slot info + direction picker */}
         <div className="flex items-center justify-between mt-2">
           {hasSlot ? (
-            <p className="text-xs text-red-600 font-medium">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
+            <p className="text-xs text-blue-600 font-medium">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
           ) : (
             <p className="text-xs text-gray-400">Klik of sleep een logo</p>
           )}
@@ -213,10 +213,10 @@ export default function LogoLibrary({
                   title={dir === 'none' ? 'Geen vooruitgang' : `Richting: ${dir}`}
                   className={`w-4 h-4 flex items-center justify-center rounded text-[10px] transition-colors leading-none
                     ${advanceDir === dir
-                      ? 'bg-red-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : dir === 'none'
                         ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                        : 'bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-600'
+                        : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600'
                     }`}
                 >{DIR_ARROWS[dir]}</button>
               )))}
@@ -241,7 +241,7 @@ export default function LogoLibrary({
                 title={s.partner}
                 whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.10)' }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="relative flex flex-col items-center gap-1 p-2 rounded-lg border text-center select-none border-gray-200 hover:border-red-400 hover:bg-red-50 cursor-grab active:cursor-grabbing"
+                className="relative flex flex-col items-center gap-1 p-2 rounded-lg border text-center select-none border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
               >
                 {localSrc && !hasError ? (
                   <img src={localSrc} alt={s.partner} loading="lazy"
@@ -261,7 +261,7 @@ export default function LogoLibrary({
           if (eventFilter !== 'ALL' && !searchActive) {
             const headerColors = {
               teal: 'text-teal-700 bg-teal-50 border-teal-200',
-              red: 'text-red-700 bg-red-50 border-red-200',
+              red: 'text-blue-700 bg-blue-50 border-blue-200',
               gray: 'text-gray-500 bg-gray-50 border-gray-200',
             }
             return groups.length === 0 ? (

@@ -30,13 +30,13 @@ function ChangePasswordModal({ onClose, showToast }) {
             <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Minstens 8 tekens" required autoComplete="new-password"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
             <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
               placeholder="Herhaal wachtwoord" required autoComplete="new-password"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-500" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
           </div>
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
@@ -158,7 +158,7 @@ export default function AdminLayout({ session }) {
               onClick={() => setActive(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
                 active === item.id
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >

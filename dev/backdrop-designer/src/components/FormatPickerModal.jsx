@@ -69,7 +69,7 @@ function FormatThumbnail({ format, maxW = 96, h = 52 }) {
 function BlankCard({ onClick }) {
   return (
     <div onClick={onClick}
-      className="p-2.5 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-red-300 hover:bg-red-50/30 transition-all flex flex-col items-center justify-center gap-1.5 select-none"
+      className="p-2.5 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-1.5 select-none"
       style={{ minHeight: 92 }}>
       <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -87,12 +87,12 @@ function PresetCard({ format, isSelected, onClick, onDelete }) {
     <div onClick={onClick}
       className={`relative p-2.5 rounded-xl border cursor-pointer transition-all group select-none ${
         isSelected
-          ? 'border-red-500 bg-red-50 ring-1 ring-red-400'
+          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-400'
           : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
       }`}
     >
       <FormatThumbnail format={format} maxW={120} h={52} />
-      <p className={`text-[10px] font-semibold mt-2 truncate leading-tight ${isSelected ? 'text-red-700' : 'text-gray-700'}`}>
+      <p className={`text-[10px] font-semibold mt-2 truncate leading-tight ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
         {format.Beschrijving || format.Code}
       </p>
       <p className="text-[9px] text-gray-400 mt-0.5">{format.Cols}×{format.Rows}</p>
@@ -116,7 +116,7 @@ function PresetCard({ format, isSelected, onClick, onDelete }) {
 function LinkBtn({ linked, onToggle }) {
   return (
     <button type="button" onClick={onToggle}
-      className={`flex-shrink-0 p-1 rounded transition-colors ${linked ? 'text-red-500' : 'text-gray-300 hover:text-gray-500'}`}
+      className={`flex-shrink-0 p-1 rounded transition-colors ${linked ? 'text-blue-500' : 'text-gray-300 hover:text-gray-500'}`}
       title={linked ? 'Gelinkt' : 'Los — klik om te linken'}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6.5 9.5a3.536 3.536 0 0 0 5 0l2-2a3.536 3.536 0 0 0-5-5L7.25 3.75"/>
@@ -134,7 +134,7 @@ function NumField({ label, value, onChange, unit = 'mm', min, step = 1, wide = f
       {label && <span className="text-[10px] text-gray-400 flex-shrink-0 text-right" style={{ width: 52 }}>{label}</span>}
       <input type="number" value={value} min={min} step={step}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
-        className={`text-xs px-2 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white ${wide ? 'w-20' : 'w-16'}`}
+        className={`text-xs px-2 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white ${wide ? 'w-20' : 'w-16'}`}
       />
       {unit && <span className="text-[10px] text-gray-400 flex-shrink-0">{unit}</span>}
     </div>
@@ -258,7 +258,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
               <button key={cat} onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
                   activeCategory === cat
-                    ? 'bg-red-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : cat === 'Opgeslagen'
                       ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200'
                       : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -319,7 +319,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
         {/* Header with back button */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 flex-shrink-0">
           <button onClick={goBack}
-            className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-medium transition-colors">
+            className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 3L6 8l4 5"/>
             </svg>
@@ -356,7 +356,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
           <input value={form.Beschrijving}
             onChange={e => update('Beschrijving', e.target.value)}
             placeholder="Backdrop mixed zone breed..."
-            className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-300 mb-1"
+            className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 mb-1"
           />
 
           {/* Canvas */}
@@ -384,7 +384,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
               <span className="text-[10px] text-gray-400 flex-shrink-0 text-right" style={{ width: 52 }}>Aspect</span>
               <input type="number" value={form.CellAspect} min={0.1} step={0.001}
                 onChange={e => update('CellAspect', parseFloat(e.target.value) || 1)}
-                className="w-20 text-xs px-2 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-red-300 bg-white"
+                className="w-20 text-xs px-2 py-1 border border-gray-200 rounded text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
               />
               <span className="text-[10px] text-gray-400 ml-1">→ hoogte: {r(form.CellH_mm || form.CellW_mm / form.CellAspect)} mm</span>
             </div>
@@ -411,7 +411,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
           {!isEditing && !selectedPreset && (
             <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer mt-6 select-none">
               <input type="checkbox" checked={saveAsPreset} onChange={e => setSaveAsPreset(e.target.checked)}
-                className="rounded border-gray-300 text-red-600 focus:ring-red-300"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-300"
               />
               Opslaan als herbruikbare preset
             </label>
@@ -486,7 +486,7 @@ export default function FormatPickerModal({ staticFormats = [], customFormats = 
                 <button onClick={handleConfirm} disabled={!canConfirm}
                   className={`px-5 py-2 text-sm font-semibold rounded-lg transition-colors ${
                     canConfirm
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}>
                   {isEditing ? 'Bijwerken & gebruiken' : editMode ? 'Opslaan & gebruiken' : saveAsPreset ? 'Aanmaken & opslaan' : 'Aanmaken'}

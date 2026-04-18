@@ -4,6 +4,18 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — accentkleur terug naar blauw
+
+De UI/UX-upgrade (`9f6c450`) had alle accents op rood (`#E30613`, Flanders Classics brand). Dat bleek te overheersen — accentkleur is teruggezet naar **blauw** (`#2563EB` / Tailwind `blue-600`).
+
+- Alle primaire buttons, actieve tabs/nav-items, focus rings, selected states, hover-accents en filter-pills terug naar `blue-*`
+- CSS custom properties in `src/index.css` bijgewerkt (`--color-brand: #2563EB`, etc.)
+- **Destructieve rood behouden** voor: delete-knoppen, Wissen, toast error, danger-ConfirmModal, bulk-delete-mode in admin, "Onbekende sponsors"-warning en invalid-indicator in `FrequencyPanel`, error messages in login-formulieren
+- Animaties (framer-motion), Inter font en overige UX-patronen uit de upgrade blijven ongewijzigd
+- `_docs/design-system.md` kleurenpalet-sectie herschreven met blauw-schema + expliciete "rood blijft voor..." lijst
+
+---
+
 ## Sessie april 2026 — admin UX, modal fixes, autocomplete
 
 ### Admin LogosSection — filter + bulk delete

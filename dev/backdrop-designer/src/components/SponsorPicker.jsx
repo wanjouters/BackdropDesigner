@@ -81,7 +81,7 @@ export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Zoek sponsor..."
-              className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+              className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
             />
             {query && (
               <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -100,7 +100,7 @@ export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
               data-item
               onClick={() => { onSelect(s.partner); onClose() }}
               className={`flex items-center gap-2 w-full px-3 py-2 text-left transition-colors ${
-                i === activeIndex ? 'bg-red-50' : 'hover:bg-red-50'
+                i === activeIndex ? 'bg-blue-50' : 'hover:bg-blue-50'
               }`}
             >
               {s.url && !imgErrors[s.partner] ? (
