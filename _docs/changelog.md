@@ -4,6 +4,28 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — tegel/lijst-weergave + richting-picker verplaatst
+
+### Tegel/lijst-toggle in LogosSection (admin)
+- Nieuw: `SponsorRow`-component — compacte rij met klein logo, naam, koepel/event-badges en hover-editknop
+- `viewMode` state (`'tile'` | `'list'`), toggle-knoppen (raster-icoon / lijnen-icoon) in de toolbar
+- Beide modi ondersteunen delete-mode (checkbox + rode balk onderaan)
+
+### Tegel/lijst-toggle in LogoLibrary (hoofdapp)
+- Zelfde toggle naast de "Logo's" titel (kleinere iconen, `rounded-md`)
+- Inline `SponsorRow`-component: compact, draggable, klikbaar (assign), laadt logo lazy
+- Bij event-filter (grouped view) werkt de toggle ook per categorie-sectie
+- Lijstweergave toont geen hover-animatie (geen Framer Motion) — directe feedback via border/bg
+
+### Auto-advance richtingskiezer verplaatst naar canvas-toolbar
+- Verwijderd uit `LogoLibrary` (props `advanceDir`, `onAdvanceDirChange`, `DIR_GRID`, `DIR_ARROWS`)
+- Toegevoegd aan de toolbar boven het canvas in `App.jsx` — zichtbaar in **beide** views (grid én preview)
+- Geen "Richting" label; compact 3×3 grid (`w-2 h-2` knoppen) passend binnen de standaard toolbar-hoogte
+- "Klik of sleep een logo" hint-tekst verwijderd; "X slots geselecteerd" feedback blijft (alleen zichtbaar als er slots geselecteerd zijn)
+- `DIR_GRID` en `DIR_ARROWS` constanten verhuisd naar `App.jsx` (module-niveau)
+
+---
+
 ## Sessie april 2026 — security hardening + Vercel cron ping
 
 ### Supabase RLS

@@ -8,20 +8,8 @@ import { supabase } from '../utils/supabase'
 const BLANK = { partner: 'BLANK', filename: 'BLANK' }
 const STATIC_SPONSORS = [BLANK, ...sponsors]
 
-const DIR_GRID = [
-  ['ul','u','ur'],
-  ['l','none','r'],
-  ['dl','d','dr'],
-]
-const DIR_ARROWS = {
-  ul:'↖', u:'↑', ur:'↗',
-  l:'←', none:'·', r:'→',
-  dl:'↙', d:'↓', dr:'↘',
-}
-
 export default function LogoLibrary({
   selectedSlots, onAssign, customLogos,
-  advanceDir = 'r', onAdvanceDirChange,
   tags, sponsorCategories, events, categoryList, eventGroups, sponsorGroups,
   customSponsors = [],
 }) {
@@ -30,6 +18,7 @@ export default function LogoLibrary({
   const [storageFilenames, setStorageFilenames] = useState(null)
   const [eventFilter, setEventFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
+  const [viewMode, setViewMode] = useState('tile')
   const filterRef = useRef(null)
 
   useEffect(() => {
@@ -135,7 +124,31 @@ export default function LogoLibrary({
   return (
     <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-full">
       <div className="p-3 border-b border-gray-100 flex-shrink-0">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-2">Logo's</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400">Logo's</h2>
+          <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
+            <button
+              onClick={() => setViewMode('tile')}
+              title="Tegelweergave"
+              className={`p-1 transition-colors ${viewMode === 'tile' ? 'bg-gray-800 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              title="Lijstweergave"
+              className={`p-1 transition-colors ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         {/* Search */}
         <div className="relative">
@@ -197,35 +210,13 @@ export default function LogoLibrary({
           </AnimatePresence>
         </div>
 
-        {/* Slot info + direction picker */}
-        <div className="flex items-center justify-between mt-2">
-          {hasSlot ? (
-            <p className="text-xs text-blue-600 font-medium">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
-          ) : (
-            <p className="text-xs text-gray-400">Klik of sleep een logo</p>
-          )}
-          {onAdvanceDirChange && (
-            <div className="grid grid-cols-3 gap-px flex-shrink-0" title="Auto-advance richting">
-              {DIR_GRID.map(row => row.map(dir => (
-                <button
-                  key={dir}
-                  onClick={() => onAdvanceDirChange(dir)}
-                  title={dir === 'none' ? 'Geen vooruitgang' : `Richting: ${dir}`}
-                  className={`w-4 h-4 flex items-center justify-center rounded text-[10px] transition-colors leading-none
-                    ${advanceDir === dir
-                      ? 'bg-blue-600 text-white'
-                      : dir === 'none'
-                        ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                        : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600'
-                    }`}
-                >{DIR_ARROWS[dir]}</button>
-              )))}
-            </div>
-          )}
-        </div>
+        {/* Slot feedback */}
+        {hasSlot && (
+          <p className="text-xs text-blue-600 font-medium mt-2">{count === 1 ? '1 slot' : `${count} slots`} geselecteerd</p>
+        )}
       </div>
 
-      {/* Sponsor grid */}
+      {/* Sponsor grid / list */}
       <div className="overflow-y-auto flex-1 p-2">
         {(() => {
           function SponsorCard({ s }) {
@@ -258,12 +249,41 @@ export default function LogoLibrary({
             )
           }
 
+          function SponsorRow({ s }) {
+            const customSrc = customLogos && customLogos[s.partner]
+            const localSrc = customSrc || s.dataUrl || logoUrl(s.filename)
+            const hasError = !customSrc && !s.dataUrl && imgErrors[s.filename]
+
+            return (
+              <div
+                draggable
+                onDragStart={e => handleDragStart(e, s.partner)}
+                onClick={() => { if (hasSlot) onAssign(s.partner) }}
+                title={s.partner}
+                className="flex items-center gap-2 px-1.5 py-1 rounded-lg border border-transparent select-none hover:border-blue-300 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
+              >
+                <div className="w-10 h-7 flex-shrink-0 flex items-center justify-center bg-gray-50 rounded border border-gray-100 pointer-events-none">
+                  {localSrc && !hasError ? (
+                    <img src={localSrc} alt={s.partner} loading="lazy"
+                      className="max-w-full max-h-full object-contain"
+                      onError={() => !s._custom && setImgErrors(prev => ({ ...prev, [s.filename]: true }))}
+                    />
+                  ) : (
+                    <span className="text-[8px] font-bold text-gray-400">{s.filename === 'BLANK' ? 'BLANK' : '?'}</span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-700 leading-tight truncate pointer-events-none">{s.partner}</span>
+              </div>
+            )
+          }
+
+          const headerColors = {
+            teal: 'text-teal-700 bg-teal-50 border-teal-200',
+            red: 'text-blue-700 bg-blue-50 border-blue-200',
+            gray: 'text-gray-500 bg-gray-50 border-gray-200',
+          }
+
           if (eventFilter !== 'ALL' && !searchActive) {
-            const headerColors = {
-              teal: 'text-teal-700 bg-teal-50 border-teal-200',
-              red: 'text-blue-700 bg-blue-50 border-blue-200',
-              gray: 'text-gray-500 bg-gray-50 border-gray-200',
-            }
             return groups.length === 0 ? (
               <p className="text-xs text-gray-400 text-center mt-4">Geen sponsors voor dit event.</p>
             ) : (
@@ -273,25 +293,31 @@ export default function LogoLibrary({
                     <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border mb-1.5 ${headerColors[group.color] || headerColors.gray}`}>
                       {group.label} <span className="font-normal opacity-60">({group.sponsors.length})</span>
                     </div>
-                    <motion.div
-                      className="grid grid-cols-2 gap-1.5"
-                      variants={listContainerVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      {group.sponsors.map(s => (
-                        <motion.div key={s.partner} variants={listItemVariants}>
-                          <SponsorCard s={s} />
-                        </motion.div>
-                      ))}
-                    </motion.div>
+                    {viewMode === 'tile' ? (
+                      <motion.div
+                        className="grid grid-cols-2 gap-1.5"
+                        variants={listContainerVariants}
+                        initial="hidden"
+                        animate="visible"
+                      >
+                        {group.sponsors.map(s => (
+                          <motion.div key={s.partner} variants={listItemVariants}>
+                            <SponsorCard s={s} />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {group.sponsors.map(s => <SponsorRow key={s.partner} s={s} />)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )
           }
 
-          return (
+          return viewMode === 'tile' ? (
             <motion.div
               className="grid grid-cols-2 gap-1.5"
               variants={listContainerVariants}
@@ -304,6 +330,10 @@ export default function LogoLibrary({
                 </motion.div>
               ))}
             </motion.div>
+          ) : (
+            <div className="space-y-0.5">
+              {filtered.map(s => <SponsorRow key={s.partner} s={s} />)}
+            </div>
           )
         })()}
       </div>

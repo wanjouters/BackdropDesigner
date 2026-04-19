@@ -10,6 +10,7 @@
 - `handleDuplicateDesign`: kopieert een ontwerp met "(kopie)" suffix
 - `handleSaveDesign({ name })`: slaat huidig ontwerp op via SaveModal
 - **Icon bar**: 4 panels — `'designs'`, `'formats'`, `'adjust'`, `'frequency'`; `'adjust'` uitgeschakeld wanneer geen formaat geladen
+- **Canvas-toolbar**: richtingskiezer (3×3 grid, `DIR_GRID`/`DIR_ARROWS` op module-niveau) zichtbaar in beide views; liniaal + silhouet-toggle alleen in preview-view
 
 ### `hooks/useAuth.js`
 - Beheert Supabase auth-sessie + auth-menu UI (`authSession`, `authMenuOpen`, `signOut()`)
@@ -34,10 +35,13 @@
 
 ### `components/LogoLibrary.jsx`
 - Rechterpaneel: **alleen-lezen sponsorbibliotheek** — geen beheer meer
-- Zoekbalk (met × wis-knop), event-filter dropdown, richtingskiezer
-- `buildGroups()`: groepeert gefilterde sponsors per categorie wanneer event-filter actief is (gememoized via `useMemo`)
-- `SponsorCard`: klikbaar/sleepbaar logo-kaartje — geen tag-icoon, geen delete-checkbox
+- Zoekbalk (met × wis-knop), event-filter dropdown
+- **Tegel/lijst-toggle** naast de "Logo's" titel — `viewMode` state (`'tile'` | `'list'`)
+- `SponsorCard`: klikbaar/sleepbaar logo-kaartje in tegel-layout (Framer Motion hover)
+- `SponsorRow`: compacte rij-layout (klein logo + naam), ook draggable/klikbaar
+- `buildGroups()`: groepeert gefilterde sponsors per categorie wanneer event-filter actief is (gememoized via `useMemo`); toggle werkt ook in grouped view
 - `storageFilenames` check: enkel sponsors tonen waarvan het logo-bestand in Supabase Storage staat
+- Richtingskiezer verwijderd — staat nu in de canvas-toolbar van `App.jsx`
 - Alle tag/koepel/categorieën-beheer is verplaatst naar de **admin** (`LogosSection.jsx`)
 
 ### `components/GridCanvas.jsx`
@@ -100,7 +104,9 @@
 ### `sections/LogosSection.jsx`
 - Logo-beheer: upload, per-sponsor tags (via `TagEditor`), event/koepel-koppeling
 - Filter op event/koepel (optgroups) + zoekbalk (stapelbaar)
-- Bulk delete modus met checkbox-selectie en rode bevestigingsbalk onderaan
+- **Tegel/lijst-toggle** in de toolbar (`viewMode` state, `SponsorCard` / `SponsorRow`)
+- `SponsorRow`: rij met logo-thumbnail, naam, koepel/event-badges, hover-editknop
+- Bulk delete modus met checkbox-selectie en rode bevestigingsbalk onderaan (werkt in beide views)
 
 ### `sections/FormatenSection.jsx`
 - CRUD, tags, drag-reorder, eenmalige import uit `backdropFormats.json`

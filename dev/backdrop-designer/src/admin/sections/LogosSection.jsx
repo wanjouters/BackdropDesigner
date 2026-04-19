@@ -213,6 +213,78 @@ function SponsorCard({ sponsor, onEdit, deleteMode, isSelected, onToggleSelect }
   )
 }
 
+// ─── Sponsor rij (lijstweergave) ──────────────────────────────────────────────
+
+function SponsorRow({ sponsor, tags, sponsorGroups, onEdit, deleteMode, isSelected, onToggleSelect }) {
+  const src = logoUrl(sponsor.filename)
+  const eventCount = (tags[sponsor.partner] || []).length
+  const koepelCount = Object.keys(sponsorGroups[sponsor.partner] || {}).length
+
+  return (
+    <div
+      className={`flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 last:border-0 group transition-colors cursor-pointer
+        ${deleteMode && isSelected ? 'bg-red-50' : 'hover:bg-gray-50'}
+        ${deleteMode ? 'cursor-pointer' : ''}`}
+      onClick={() => { if (deleteMode) onToggleSelect(sponsor.partner) }}
+    >
+      {/* Delete checkbox */}
+      {deleteMode && (
+        <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+          isSelected ? 'bg-red-500 border-red-500' : 'bg-white border-gray-300'
+        }`}>
+          {isSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+      )}
+
+      {/* Logo */}
+      <div className="w-12 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 rounded border border-gray-100">
+        {src
+          ? <img src={src} alt={sponsor.partner} className="max-w-full max-h-full object-contain" />
+          : <span className="text-gray-300 text-[10px]">—</span>
+        }
+      </div>
+
+      {/* Naam */}
+      <span className="flex-1 text-sm font-medium text-gray-800 truncate">{sponsor.partner}</span>
+
+      {/* Badges */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {koepelCount > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-teal-50 text-teal-600 rounded-full font-medium">
+            {koepelCount} koepel{koepelCount !== 1 ? 's' : ''}
+          </span>
+        )}
+        {eventCount > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
+            {eventCount} event{eventCount !== 1 ? 's' : ''}
+          </span>
+        )}
+        {koepelCount === 0 && eventCount === 0 && (
+          <span className="text-[10px] text-gray-300 italic">Geen koppeling</span>
+        )}
+      </div>
+
+      {/* Edit knop */}
+      {!deleteMode && (
+        <button
+          onClick={() => onEdit(sponsor)}
+          className="flex-shrink-0 p-1.5 text-gray-300 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors opacity-0 group-hover:opacity-100"
+          title="Bewerken"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ─── Main section ─────────────────────────────────────────────────────────────
 
 export default function LogosSection({ showToast }) {
@@ -230,6 +302,7 @@ export default function LogosSection({ showToast }) {
   const [deleteMode, setDeleteMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState('tile')
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -396,6 +469,30 @@ export default function LogosSection({ showToast }) {
         <span className="text-sm text-gray-400">{filtered.length} sponsors</span>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('tile')}
+              title="Tegelweergave"
+              className={`p-2 transition-colors ${viewMode === 'tile' ? 'bg-gray-900 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              title="Lijstweergave"
+              className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
           <input ref={fileRef} type="file" multiple accept=".png,.svg" className="hidden" onChange={handleUpload} />
           <button
             onClick={toggleDeleteMode}
@@ -425,19 +522,36 @@ export default function LogosSection({ showToast }) {
         </div>
       </div>
 
-      {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
-        {filtered.map(sponsor => (
-          <SponsorCard
-            key={sponsor.partner}
-            sponsor={sponsor}
-            onEdit={setEditingSponsor}
-            deleteMode={deleteMode}
-            isSelected={selected.has(sponsor.partner)}
-            onToggleSelect={toggleSelect}
-          />
-        ))}
-      </div>
+      {/* Tegel- of lijstweergave */}
+      {viewMode === 'tile' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
+          {filtered.map(sponsor => (
+            <SponsorCard
+              key={sponsor.partner}
+              sponsor={sponsor}
+              onEdit={setEditingSponsor}
+              deleteMode={deleteMode}
+              isSelected={selected.has(sponsor.partner)}
+              onToggleSelect={toggleSelect}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          {filtered.map(sponsor => (
+            <SponsorRow
+              key={sponsor.partner}
+              sponsor={sponsor}
+              tags={tags}
+              sponsorGroups={sponsorGroups}
+              onEdit={setEditingSponsor}
+              deleteMode={deleteMode}
+              isSelected={selected.has(sponsor.partner)}
+              onToggleSelect={toggleSelect}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Bulk delete bevestigingsbalk */}
       {deleteMode && (

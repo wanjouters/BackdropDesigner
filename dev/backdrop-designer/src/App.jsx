@@ -18,6 +18,17 @@ import { useAppData } from './hooks/useAppData'
 import { saveDraft, loadDraft, clearDraft } from './utils/sponsorTags'
 import * as db from './utils/db'
 
+const DIR_GRID = [
+  ['ul','u','ur'],
+  ['l','none','r'],
+  ['dl','d','dr'],
+]
+const DIR_ARROWS = {
+  ul:'↖', u:'↑', ur:'↗',
+  l:'←', none:'·', r:'→',
+  dl:'↙', d:'↓', dr:'↘',
+}
+
 function makeEmptySlots(cols, rows) {
   return Array(cols * rows).fill('BLANK')
 }
@@ -713,6 +724,25 @@ export default function App({ session: initialSession }) {
                   Preview
                 </button>
               </div>
+              {/* Auto-advance direction */}
+              <div className="bg-white border border-gray-200 rounded-xl p-1 flex items-center justify-center" title="Auto-advance richting">
+                <div className="grid grid-cols-3 gap-[1px]">
+                  {DIR_GRID.map((row) => row.map(dir => (
+                    <button
+                      key={dir}
+                      onClick={() => setAdvanceDir(dir)}
+                      title={dir === 'none' ? 'Geen vooruitgang' : `Richting: ${dir}`}
+                      className={`w-2 h-2 flex items-center justify-center rounded-sm text-[7px] transition-colors leading-none
+                        ${advanceDir === dir
+                          ? 'bg-blue-600 text-white'
+                          : dir === 'none'
+                            ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600'
+                        }`}
+                    >{DIR_ARROWS[dir]}</button>
+                  )))}
+                </div>
+              </div>
               {/* Ruler toggle — only relevant in preview */}
               {view === 'preview' && (
                 <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
@@ -867,8 +897,6 @@ export default function App({ session: initialSession }) {
             selectedSlots={selectedSlots}
             onAssign={handleAssignFromLibrary}
             customLogos={customLogos}
-            advanceDir={advanceDir}
-            onAdvanceDirChange={setAdvanceDir}
             tags={tags}
             sponsorCategories={sponsorCategories}
             events={events}
