@@ -4,6 +4,27 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — security hardening + Vercel cron ping
+
+### Supabase RLS
+RLS ingeschakeld op alle 11 tabellen die nog geen beveiliging hadden:
+`designs`, `custom_sponsors`, `logo_overrides`, `sponsor_event_tags`, `sponsor_group_assignments`, `cell_presets`, `canvas_presets`, `design_folders`, `events`, `format_presets`, `settings`
+
+Patroon: public read (`SELECT USING (true)`) + authenticated write (`ALL USING auth.role() = 'authenticated'`).
+Ook `event_groups` overly-permissive write policy vervangen door dezelfde authenticated-only policy.
+
+### Vercel cron job — Supabase wake-up ping
+- `api/ping.js`: serverless functie die elke 3 dagen een lichte query doet op de `settings` tabel
+- `vercel.json`: cron schedule `0 6 */3 * *` toegevoegd + rewrite gefixed (`/((?!api/).*)`  i.p.v. `/(.*))` zodat `/api/` routes niet omgeleid worden)
+- Voorkomt dat het Supabase free-plan project pauzeert na 1 week inactiviteit
+
+### ChangePasswordModal uitgebreid
+- Veld "Huidig wachtwoord" toegevoegd — geverifieerd via `signInWithPassword` voor de update
+- Minimale wachtwoordlengte verhoogd naar 12 tekens
+- Maakt "Require current password when updating" in Supabase Auth veilig om in te schakelen
+
+---
+
 ## Sessie april 2026 — achtergrond presets + canvas/cel presets in FormatEditModal
 
 ### Canvas- en celpresets in FormatEditModal (admin)
