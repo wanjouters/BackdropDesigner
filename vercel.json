@@ -3,6 +3,12 @@
   "buildCommand": "cd dev/backdrop-designer && npm run build",
   "outputDirectory": "dev/backdrop-designer/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/ping",
+      "schedule": "0 6 */3 * *"
+    }
   ]
 }

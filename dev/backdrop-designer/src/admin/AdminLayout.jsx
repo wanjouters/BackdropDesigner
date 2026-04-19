@@ -4,6 +4,7 @@ import { slideFromRightVariants } from '../utils/animations'
 import { supabase } from '../utils/supabase'
 
 function ChangePasswordModal({ onClose, showToast }) {
+  const [current, setCurrent] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -11,12 +12,25 @@ function ChangePasswordModal({ onClose, showToast }) {
   async function handleSubmit(e) {
     e.preventDefault()
     if (password !== confirm) { showToast('Wachtwoorden komen niet overeen', 'error'); return }
-    if (password.length < 8) { showToast('Wachtwoord moet minstens 8 tekens zijn', 'error'); return }
+    if (password.length < 12) { showToast('Wachtwoord moet minstens 12 tekens zijn', 'error'); return }
     setLoading(true)
+
+    // Verifieer huidig wachtwoord via re-login
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: current,
+    })
+    if (signInError) {
+      setLoading(false)
+      showToast('Huidig wachtwoord is onjuist', 'error')
+      return
+    }
+
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (error) { showToast(error.message, 'error'); return }
-    showToast('Wachtwoord ingesteld')
+    showToast('Wachtwoord gewijzigd')
     onClose()
   }
 
@@ -24,18 +38,24 @@ function ChangePasswordModal({ onClose, showToast }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
-        <h3 className="text-base font-bold text-gray-800 mb-4">Wachtwoord instellen</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4">Wachtwoord wijzigen</h3>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="Minstens 8 tekens" required autoComplete="new-password"
+            <label className="block text-xs font-medium text-gray-500 mb-1">Huidig wachtwoord</label>
+            <input type="password" value={current} onChange={e => setCurrent(e.target.value)}
+              required autoComplete="current-password"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig wachtwoord</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Nieuw wachtwoord</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="Minstens 12 tekens" required autoComplete="new-password"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Bevestig nieuw wachtwoord</label>
             <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-              placeholder="Herhaal wachtwoord" required autoComplete="new-password"
+              placeholder="Herhaal nieuw wachtwoord" required autoComplete="new-password"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
           </div>
           <div className="flex gap-2 pt-1">
@@ -43,9 +63,9 @@ function ChangePasswordModal({ onClose, showToast }) {
               className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
               Annuleren
             </button>
-            <button type="submit" disabled={loading || !password || !confirm}
+            <button type="submit" disabled={loading || !current || !password || !confirm}
               className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-40">
-              {loading ? 'Opslaan…' : 'Opslaan'}
+              {loading ? 'Bezig…' : 'Opslaan'}
             </button>
           </div>
         </form>
