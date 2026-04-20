@@ -1,17 +1,14 @@
 import { useState } from 'react'
-import sponsors from '../../data/sponsors.json'
 import { logoUrl } from '../../utils/logoUrl'
-
-const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
 
 export default function Cell({ x, y, width, height, value, index, isSelected, canvasBg, onSelect, onDropSponsor, customLogos }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  const sponsor = sponsorMap[value]
   const isBlank = !value || value === 'BLANK'
   const customSrc = customLogos && customLogos[value]
-  const localSrc = customSrc || (sponsor ? logoUrl(sponsor.filename) : null)
+  // Leid filename af van partner-naam (spaties → underscores) — zelfde patroon als alle logos
+  const localSrc = customSrc || (!isBlank ? logoUrl(value.replace(/ /g, '_')) : null)
 
   function handleDragOver(e) {
     if (!e.dataTransfer.types.includes('sponsor')) return

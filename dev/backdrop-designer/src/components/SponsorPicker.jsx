@@ -1,13 +1,33 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { modalVariants, backdropVariants } from '../utils/animations'
-import sponsors from '../data/sponsors.json'
+import { supabase } from '../utils/supabase'
+import { logoUrl } from '../utils/logoUrl'
 
 const BLANK = { partner: 'BLANK', filename: 'BLANK', url: null }
-const ALL_SPONSORS = [BLANK, ...sponsors]
+
+// Module-level cache: laad storage één keer voor alle SponsorPicker-instanties
+let _cache = null
+let _pending = null
+async function loadSponsorList() {
+  if (_cache) return _cache
+  if (_pending) return _pending
+  _pending = supabase.storage.from('logos').list('', { limit: 2000 }).then(({ data }) => {
+    const list = (data || [])
+      .map(f => f.name.replace(/\.(png|svg)$/i, ''))
+      .filter(Boolean)
+      .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, url: logoUrl(fn) }))
+    list.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+    _cache = [BLANK, ...list]
+    _pending = null
+    return _cache
+  })
+  return _pending
+}
 
 export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
   const [query, setQuery] = useState('')
+  const [allSponsors, setAllSponsors] = useState([BLANK])
   const [imgErrors, setImgErrors] = useState({})
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef(null)
@@ -16,6 +36,7 @@ export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
 
   useEffect(() => {
     inputRef.current?.focus()
+    loadSponsorList().then(setAllSponsors)
   }, [])
 
   useEffect(() => {
@@ -28,7 +49,7 @@ export default function SponsorPicker({ onSelect, onClose, anchorRef }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [onClose])
 
-  const filtered = ALL_SPONSORS.filter(s =>
+  const filtered = allSponsors.filter(s =>
     s.partner.toLowerCase().includes(query.toLowerCase())
   )
 

@@ -1,8 +1,5 @@
-import sponsors from '../data/sponsors.json'
 import { parseBarPosition } from './barPosition'
 import { logoUrl } from './logoUrl'
-
-const sponsorMap = Object.fromEntries(sponsors.map(s => [s.partner, s]))
 
 function loadImage(src) {
   return new Promise(resolve => {
@@ -84,9 +81,8 @@ export async function exportJpeg(format, slots, customLogos = {}) {
   const uniqueSponsors = [...new Set(slots.filter(v => v && v !== 'BLANK'))]
   const imgCache = {}
   await Promise.all(uniqueSponsors.map(async name => {
-    const sp = sponsorMap[name]
-    if (!sp) return
-    const src = customLogos[name] || logoUrl(sp.filename)
+    // Leid filename af van partner-naam (spaties → underscores)
+    const src = customLogos[name] || logoUrl(name.replace(/ /g, '_'))
     const img = await loadImage(src)
     if (img) imgCache[name] = img
   }))

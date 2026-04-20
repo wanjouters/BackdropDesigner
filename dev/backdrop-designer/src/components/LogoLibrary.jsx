@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { listContainerVariants, listItemVariants } from '../utils/animations'
-import sponsors from '../data/sponsors.json'
 import { logoUrl } from '../utils/logoUrl'
 import { supabase } from '../utils/supabase'
 
 const BLANK = { partner: 'BLANK', filename: 'BLANK' }
-const STATIC_SPONSORS = [BLANK, ...sponsors]
 
 export default function LogoLibrary({
   selectedSlots, onAssign, customLogos,
@@ -15,8 +13,7 @@ export default function LogoLibrary({
 }) {
   const [query, setQuery] = useState('')
   const [imgErrors, setImgErrors] = useState({})
-  const [storageFilenames, setStorageFilenames] = useState(null)   // Set van bekende filenames
-  const [storageExtras, setStorageExtras] = useState([])            // sponsors alleen in Storage (niet in JSON)
+  const [storageExtras, setStorageExtras] = useState([])            // alle sponsors uit Supabase Storage
   const [eventFilter, setEventFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
   const [viewMode, setViewMode] = useState('tile')
@@ -26,12 +23,10 @@ export default function LogoLibrary({
     async function fetchStorageFiles() {
       const { data } = await supabase.storage.from('logos').list('', { limit: 2000 })
       if (data) {
-        const names = new Set(data.map(f => f.name.replace(/\.(png|svg)$/i, '')))
-        setStorageFilenames(names)
-        // Sponsors die in storage staan maar niet in sponsors.json
+        // Alle logo's uit storage worden sponsors
         const extras = data
           .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-          .filter(fn => fn && !sponsors.some(s => s.filename === fn))
+          .filter(Boolean)
           .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
         setStorageExtras(extras)
       }
@@ -41,18 +36,14 @@ export default function LogoLibrary({
     return () => window.removeEventListener('focus', fetchStorageFiles)
   }, [])
 
-  // Merge static and custom sponsors; filter static op beschikbare Storage-bestanden
+  // Alle sponsors komen uit storage; custom sponsors worden er achter geplakt
   const allSponsors = useMemo(() => {
     const customEntries = customSponsors.map(s => ({ ...s, _custom: true }))
-    const filteredStatic = storageFilenames === null
-      ? STATIC_SPONSORS
-      : STATIC_SPONSORS.filter(s => s.filename === 'BLANK' || storageFilenames.has(s.filename))
-    const [blank, ...rest] = filteredStatic
+    // storageExtras bevat nu alle storage-logos; filter duplicaten met custom
     const extras = storageExtras.filter(e => !customEntries.some(c => c.filename === e.filename))
-    const combined = [...rest, ...extras]
-    combined.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
-    return [blank, ...combined, ...customEntries]
-  }, [customSponsors, storageFilenames, storageExtras])
+    extras.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+    return [BLANK, ...extras, ...customEntries]
+  }, [customSponsors, storageExtras])
 
   function buildGroups(sponsorList) {
     const placed = new Set()

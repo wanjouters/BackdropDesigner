@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { listContainerVariants, listItemVariants } from '../utils/animations'
-import sponsors from '../data/sponsors.json'
 
-const validNames = new Set(sponsors.map(s => s.partner))
-validNames.add('BLANK')
-
-const allSponsorNames = ['BLANK', ...sponsors.map(s => s.partner)]
-
-export default function FrequencyPanel({ slots, onBulkReplace }) {
+export default function FrequencyPanel({ slots, onBulkReplace, sponsors = [] }) {
+  const validNames = new Set(sponsors.map(s => s.partner))
+  validNames.add('BLANK')
+  const allSponsorNames = ['BLANK', ...sponsors.map(s => s.partner)]
   const [replacing, setReplacing] = useState(null)  // name being replaced
   const [replaceQuery, setReplaceQuery] = useState('')
 

@@ -6,8 +6,6 @@ import {
   saveSponsorTags, saveSponsorGroup,
   loadEvents, loadSetting, loadEventGroups, loadSponsorGroups,
 } from '../../utils/db'
-import sponsors from '../../data/sponsors.json'
-
 const DEFAULT_CATEGORIES = ['Titel', 'Goud', 'Zilver', 'Brons', 'Partner', 'Leverancier', 'Media']
 
 // ─── Sponsor tag editor modal ────────────────────────────────────────────────
@@ -511,7 +509,6 @@ export default function LogosSection({ showToast }) {
         setEvents(eventsData)
         setCategoryList(catList)
 
-        // Voeg storage-only logo's toe als sponsor-entry ontbreekt in sponsors.json
         const storageFiles = storageData?.data || []
         const timestamps = {}
         for (const f of storageFiles) {
@@ -520,12 +517,13 @@ export default function LogosSection({ showToast }) {
         }
         setStorageTimestamps(timestamps)
 
-        const extraFromStorage = storageFiles
+        // Alle sponsors komen uit Supabase Storage — één enkele bron van waarheid
+        const allFromStorage = storageFiles
           .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-          .filter(fn => fn && !sponsors.some(s => s.filename === fn))
-          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
+          .filter(Boolean)
+          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn }))
 
-        setAllSponsors([...sponsors, ...extraFromStorage])
+        setAllSponsors(allFromStorage)
       } catch (e) {
         showToast('Fout bij laden: ' + e.message, 'error')
       } finally {

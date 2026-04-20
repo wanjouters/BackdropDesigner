@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import * as db from '../utils/db'
+import { supabase } from '../utils/supabase'
 
 const DEFAULT_CATEGORIES = ['Titelsponsor', 'Co-sponsor', 'Partner', 'Leverancier', 'Mediapartner']
 const DEFAULT_CELL_PRESETS = [
@@ -33,6 +34,7 @@ export function useAppData() {
   const [customSponsors, setCustomSponsors] = useState([])
   const [customLogos, setCustomLogos] = useState({})
   const [staticImported, setStaticImported] = useState(false)
+  const [sponsors, setSponsors] = useState([])
   const [dbLoading, setDbLoading] = useState(true)
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function useAppData() {
         const [
           designs, eventsVal, eventGroupsVal, tagsVal, cats, sponsorGroupsVal,
           catList, customSponsorsVal, logos, cellPresetsVal, canvasPresetsVal,
-          backgroundPresetsVal, customFormatsVal, staticImportedVal,
+          backgroundPresetsVal, customFormatsVal, staticImportedVal, storageData,
         ] = await Promise.all([
           db.loadDesigns(),
           db.loadEvents(),
@@ -57,6 +59,7 @@ export function useAppData() {
           db.loadBackgroundPresets(),
           db.loadCustomFormats(),
           db.loadSetting('static_imported', false),
+          supabase.storage.from('logos').list('', { limit: 2000 }),
         ])
         setSavedDesigns(designs)
         setEvents(eventsVal.length ? eventsVal : [])
@@ -72,6 +75,12 @@ export function useAppData() {
         setBackgroundPresets(backgroundPresetsVal)
         setCustomFormats(customFormatsVal)
         setStaticImported(staticImportedVal)
+        const sponsorList = (storageData?.data || [])
+          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
+          .filter(Boolean)
+          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn }))
+        sponsorList.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+        setSponsors(sponsorList)
       } catch (err) {
         console.error('Supabase load error:', err)
       } finally {
@@ -97,6 +106,7 @@ export function useAppData() {
     customSponsors, setCustomSponsors,
     customLogos, setCustomLogos,
     staticImported, setStaticImported,
+    sponsors, setSponsors,
     dbLoading,
   }
 }

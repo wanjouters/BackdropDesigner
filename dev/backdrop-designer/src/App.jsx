@@ -64,6 +64,7 @@ export default function App({ session: initialSession }) {
     customSponsors,
     customLogos,
     staticImported,
+    sponsors,
   } = useAppData()
 
   // Local UI / design state
@@ -674,7 +675,7 @@ export default function App({ session: initialSession }) {
                 </>
               )}
               {leftPanel === 'frequency' && (
-                <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} />
+                <FrequencyPanel slots={slots} onBulkReplace={handleBulkReplace} sponsors={sponsors} />
               )}
             </div>
           </motion.div>
