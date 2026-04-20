@@ -510,20 +510,24 @@ export default function LogosSection({ showToast }) {
         setCategoryList(catList)
 
         const storageFiles = storageData?.data || []
+
+        // Normaliseer: spaties → underscores, dedupliceer op genormaliseerde sleutel
+        // Zo verschijnt CIRCUIT_ZOLDER.png en "CIRCUIT ZOLDER.png" maar één keer
+        const seenKeys = new Map()
         const timestamps = {}
         for (const f of storageFiles) {
-          const fn = f.name.replace(/\.(png|svg)$/i, '')
-          if (fn) timestamps[fn] = f.updated_at ? new Date(f.updated_at).getTime() : 0
+          const raw = f.name.replace(/\.(png|svg)$/i, '')
+          if (!raw) continue
+          const key = raw.replace(/ /g, '_')   // canonieke vorm: altijd underscores
+          const ts = f.updated_at ? new Date(f.updated_at).getTime() : 0
+          if (!seenKeys.has(key)) {
+            seenKeys.set(key, { partner: key.replace(/_/g, ' '), filename: key })
+          }
+          // Neem de nieuwste timestamp als er meerdere varianten bestaan
+          timestamps[key] = Math.max(timestamps[key] || 0, ts)
         }
         setStorageTimestamps(timestamps)
-
-        // Alle sponsors komen uit Supabase Storage — één enkele bron van waarheid
-        const allFromStorage = storageFiles
-          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-          .filter(Boolean)
-          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn }))
-
-        setAllSponsors(allFromStorage)
+        setAllSponsors([...seenKeys.values()])
       } catch (e) {
         showToast('Fout bij laden: ' + e.message, 'error')
       } finally {
@@ -614,7 +618,8 @@ export default function LogosSection({ showToast }) {
       const { error } = await supabase.storage.from('logos').upload(file.name, file, { upsert: true })
       if (error) { fail++; console.error(error) } else {
         ok++
-        const filenameNoExt = file.name.replace(/\.(png|svg)$/i, '')
+        // Normaliseer naar underscores — zelfde canonieke sleutel als allSponsors
+        const filenameNoExt = file.name.replace(/\.(png|svg)$/i, '').replace(/ /g, '_')
         // Sla lokale objectURL op — toon het logo direct vanuit geheugen, los van CDN
         previews[filenameNoExt] = URL.createObjectURL(file)
         newTimestamps[filenameNoExt] = now
@@ -681,9 +686,17 @@ export default function LogosSection({ showToast }) {
   }
 
   async function handleBulkDelete() {
+    // Probeer alle varianten: underscore én spatie, .png én .svg
+    // Supabase storage.remove() negeert stilletjes bestanden die niet bestaan
     const filenames = [...selected].flatMap(partnerName => {
       const s = allSponsors.find(sp => sp.partner === partnerName)
-      return s ? [s.filename + '.png'] : []
+      if (!s) return []
+      const base = s.filename                      // underscore-variant (canoniek)
+      const spaced = base.replace(/_/g, ' ')       // spatie-variant (oude uploads)
+      return [
+        base + '.png', base + '.svg',
+        spaced + '.png', spaced + '.svg',
+      ]
     })
     const { error } = await supabase.storage.from('logos').remove(filenames)
     if (error) { showToast('Verwijderen mislukt: ' + error.message, 'error'); return }

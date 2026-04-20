@@ -75,10 +75,17 @@ export function useAppData() {
         setBackgroundPresets(backgroundPresetsVal)
         setCustomFormats(customFormatsVal)
         setStaticImported(staticImportedVal)
-        const sponsorList = (storageData?.data || [])
-          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-          .filter(Boolean)
-          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn }))
+        // Normaliseer: spaties → underscores, dedupliceer op canonieke sleutel
+        const seenKeys = new Map()
+        for (const f of storageData?.data || []) {
+          const raw = f.name.replace(/\.(png|svg)$/i, '')
+          if (!raw) continue
+          const key = raw.replace(/ /g, '_')
+          if (!seenKeys.has(key)) {
+            seenKeys.set(key, { partner: key.replace(/_/g, ' '), filename: key })
+          }
+        }
+        const sponsorList = [...seenKeys.values()]
         sponsorList.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
         setSponsors(sponsorList)
       } catch (err) {

@@ -20,6 +20,7 @@
 - Laadt alle persistente Supabase-data bij mount via `Promise.all` (savedDesigns, tags, categorieën, events, koepels, presets, custom sponsors/logos, …)
 - Exporteert defaults: `DEFAULT_CATEGORIES`, `DEFAULT_CELL_PRESETS`, `DEFAULT_CANVAS_PRESETS`, `DEFAULT_BACKGROUND_PRESETS`
 - Laadt ook `backgroundPresets` (geen fallback defaults — lege array als DB leeg is)
+- Bouwt `sponsors` state uit Supabase Storage (geen `sponsors.json`): `seenKeys` Map normaliseert en dedupliceert; gesorteerd op NL locale
 
 ### `components/designs/` — opgesplitste ontwerpen-UI
 - `SaveModal.jsx`: dialoog voor opslaan (naam)
@@ -40,7 +41,7 @@
 - `SponsorCard`: klikbaar/sleepbaar logo-kaartje in tegel-layout (Framer Motion hover)
 - `SponsorRow`: compacte rij-layout (klein logo + naam), ook draggable/klikbaar
 - `buildGroups()`: groepeert gefilterde sponsors per categorie wanneer event-filter actief is (gememoized via `useMemo`); toggle werkt ook in grouped view
-- `storageFilenames` (Set) + `storageExtras` state: sponsors uit Storage die niet in `sponsors.json` staan worden ook getoond (`_fromStorage: true`)
+- `storageExtras` state: alle sponsors uit Supabase Storage (geen `sponsors.json` meer); `seenKeys` Map normaliseert en dedupliceert bij fetch
 - `window.addEventListener('focus', fetchStorageFiles)`: herlaadt storage-lijst bij tab-focus na admin-upload
 - Richtingskiezer verwijderd — staat nu in de canvas-toolbar van `App.jsx`
 - Alle tag/koepel/categorieën-beheer is verplaatst naar de **admin** (`LogosSection.jsx`)
@@ -75,12 +76,14 @@
 ### `components/SponsorPicker.jsx`
 - Popup bij slot-klik om sponsor te kiezen/wissen
 - Zoekveld met × wis-knop
+- Module-level cache (`_cache`/`_pending`): laadt storage één keer voor alle instanties; `seenKeys` Map normaliseert en dedupliceert
 
 ### `components/SlotCell.jsx`
 - Individueel gridvak
 
 ### `components/FrequencyPanel.jsx`
-- Frequentietelling sponsors met ongeldig-detectie (t.o.v. `sponsors.json`)
+- Frequentietelling sponsors met ongeldig-detectie (t.o.v. `sponsors` prop uit `useAppData`)
+- Accepteert `sponsors = []` prop — geen `sponsors.json` import meer
 - Bulk replace: vervang alle slots van sponsor A door sponsor B via inline zoekpaneel (× wis-knop)
 
 ### `components/ExportButton.jsx` / `ExportMenu.jsx`
@@ -111,7 +114,9 @@
 - **Folder-import**: `ImportModal` met drie secties (Nieuw / Bijgewerkt / Al aanwezig), detectie via `file.lastModified` vs `storage.updated_at`
 - `ImportModal` accepteert `eventGroups` prop: toont koepel-dropdown voor bulk-toewijzing na import (merge-logica — bestaande koepels nooit overschreven)
 - `localPreviews` state: objectURLs van net geüploade bestanden → directe weergave los van CDN; `logoVersion` timestamp als key-remount + URL cache-buster
-- `allSponsors` = `sponsors.json` + storage-bestanden zonder JSON-entry (auto-gegenereerde entries, `_fromStorage: true`)
+- `allSponsors` = volledig uit Supabase Storage (geen `sponsors.json` meer); `seenKeys` Map normaliseert filenames (spaties → underscores) en dedupliceert bij load
+- `handleImport`: normaliseert `filenameNoExt` naar underscores voor de bestaanscheck op `allSponsors` — voorkomt duplicate entries bij bestanden met spaties in de naam
+- `handleBulkDelete`: probeert 4 varianten per sponsor (`filename.png`, `filename.svg`, spatie-variant × 2) — verwijdert oude uploads met spaties én svg's
 - `sortMode` state (`'alpha'` | `'recent'`): toggle in toolbar; `storageTimestamps` Map voor "recent"-sortering; `filtered` via `useMemo`
 
 ### `sections/FormatenSection.jsx`

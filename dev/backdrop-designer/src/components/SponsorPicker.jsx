@@ -13,10 +13,17 @@ async function loadSponsorList() {
   if (_cache) return _cache
   if (_pending) return _pending
   _pending = supabase.storage.from('logos').list('', { limit: 2000 }).then(({ data }) => {
-    const list = (data || [])
-      .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-      .filter(Boolean)
-      .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, url: logoUrl(fn) }))
+    // Normaliseer: spaties → underscores, dedupliceer op canonieke sleutel
+    const seenKeys = new Map()
+    for (const f of data || []) {
+      const raw = f.name.replace(/\.(png|svg)$/i, '')
+      if (!raw) continue
+      const key = raw.replace(/ /g, '_')
+      if (!seenKeys.has(key)) {
+        seenKeys.set(key, { partner: key.replace(/_/g, ' '), filename: key, url: logoUrl(key) })
+      }
+    }
+    const list = [...seenKeys.values()]
     list.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
     _cache = [BLANK, ...list]
     _pending = null

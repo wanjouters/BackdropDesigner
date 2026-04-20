@@ -23,12 +23,17 @@ export default function LogoLibrary({
     async function fetchStorageFiles() {
       const { data } = await supabase.storage.from('logos').list('', { limit: 2000 })
       if (data) {
-        // Alle logo's uit storage worden sponsors
-        const extras = data
-          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
-          .filter(Boolean)
-          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
-        setStorageExtras(extras)
+        // Normaliseer: spaties → underscores, dedupliceer op canonieke sleutel
+        const seenKeys = new Map()
+        for (const f of data) {
+          const raw = f.name.replace(/\.(png|svg)$/i, '')
+          if (!raw) continue
+          const key = raw.replace(/ /g, '_')
+          if (!seenKeys.has(key)) {
+            seenKeys.set(key, { partner: key.replace(/_/g, ' '), filename: key, _fromStorage: true })
+          }
+        }
+        setStorageExtras([...seenKeys.values()])
       }
     }
     fetchStorageFiles()

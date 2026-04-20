@@ -4,6 +4,24 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — duplicate-fix, delete alle varianten, normalisatie overal
+
+### Oorzaak duplicate sponsors bij sort-toggle (LogosSection)
+- **Root cause**: `handleImport` bewaarde de ruwe filename (bv. `"CIRCUIT ZOLDER"` met spatie) als key in `previews`. De bestaanscheck op `allSponsors` (`s.filename === fn`) vond de genormaliseerde `"CIRCUIT_ZOLDER"` niet → dubbele entry in `allSponsors`. Twee entries met dezelfde `partner`-naam → duplicate React keys → bij elke re-sort (toggle) verscheen er één "extra" in de DOM.
+- **Fix**: `filenameNoExt` direct normaliseren na strip extensie: `.replace(/ /g, '_')`
+
+### handleBulkDelete probeert nu alle bestandsvarianten
+- Voorheen: alleen `filename + '.png'` — bestanden met spaties of `.svg` werden niet verwijderd
+- Nu: per geselecteerde sponsor worden 4 varianten geprobeerd: `filename.png`, `filename.svg`, `spaced.png`, `spaced.svg` (Supabase negeert stilletjes niet-bestaande paden)
+
+### Filename-normalisatie (spaties → underscores + deduplicatie) toegepast overal
+- `LogoLibrary.jsx` — `fetchStorageFiles`: `seenKeys` Map deduplicatie
+- `SponsorPicker.jsx` — `loadSponsorList`: `seenKeys` Map deduplicatie  
+- `useAppData.js` — sponsor list builder: `seenKeys` Map deduplicatie
+- `LogosSection.jsx` `load()` was al gefixed in de vorige sessie; nu consistent in alle 4 plaatsen
+
+---
+
 ## Sessie april 2026 — sorteerknop admin + bulk koepel bij import
 
 ### Sorteerknop (LogosSection)
