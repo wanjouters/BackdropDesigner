@@ -4,6 +4,36 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — logo import modal + cache-busting + storage-auto-detectie
+
+### Folder-gebaseerde logo-import (admin LogosSection)
+- Upload-knop opent een **mapkiezer** (`webkitdirectory`) in plaats van een enkelvoudige file-picker
+- Na selectie vergelijkt de app de lokale bestanden met de live Supabase Storage-lijst (verse fetch elke keer):
+  - **Nieuw** (groen, auto-aangevinkt): filename niet in storage
+  - **Bijgewerkt** (oranje, opt-in): `file.lastModified > storage.updated_at`
+  - **Al aanwezig** (grijs, opt-in): bestand ongewijzigd
+- `ImportModal`: toont de drie groepen, sectie-selecteer-toggle, bestandsgrootte, bevestigingsknop met teller
+- Upload via `supabase.storage.upload(..., { upsert: true })` met voortgangsmelding per bestand
+
+### Cache-busting na import (localPreviews + logoVersion)
+- Na succesvolle upload: `URL.createObjectURL(file)` opgeslagen als `localPreviews[filename]`
+- `SponsorCard` en `SponsorRow` gebruiken `localPreview` als prioriteit boven de Supabase URL — beeldweergave volledig los van CDN/cache
+- `logoVersion` (timestamp) triggert key-remount van alle kaarten + `?v=timestamp` suffix op Supabase URLs — dubbele cache-bypass voor updates
+- Aanpak lost zowel CDN-gecachte 404s (nieuwe bestanden) als CDN-gecachte oude versies op
+
+### Auto-detectie van sponsors niet in sponsors.json
+- Bij mount én na import: storage wordt uitgelezen; filenames zonder matching entry in `sponsors.json` krijgen automatisch een sponsor-entry (`filename.replace(/_/g, ' ')` als naam, `_fromStorage: true`)
+- `LogosSection`: `allSponsors = [...sponsors, ...extraFromStorage]`, gesorteerd op `partner` (NL locale)
+- `LogoLibrary`: zelfde via `storageExtras` state — ook in de hoofdapp verschijnen nieuwe logos na tab-focus refresh
+
+### Alfabetische sortering admin
+- `allSponsors` in LogosSection wordt nu gesorteerd op `partner.localeCompare('nl')`, zowel bij mount als wanneer nieuwe sponsors via import worden toegevoegd
+
+### Focus-refresh LogoLibrary
+- `window.addEventListener('focus', fetchStorageFiles)` in LogoLibrary: herlaadt de storage-lijst wanneer de gebruiker terugkeert naar het hoofdtabblad na een upload in admin
+
+---
+
 ## Sessie april 2026 — tegel/lijst-weergave + richting-picker verplaatst
 
 ### Tegel/lijst-toggle in LogosSection (admin)

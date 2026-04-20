@@ -40,7 +40,8 @@
 - `SponsorCard`: klikbaar/sleepbaar logo-kaartje in tegel-layout (Framer Motion hover)
 - `SponsorRow`: compacte rij-layout (klein logo + naam), ook draggable/klikbaar
 - `buildGroups()`: groepeert gefilterde sponsors per categorie wanneer event-filter actief is (gememoized via `useMemo`); toggle werkt ook in grouped view
-- `storageFilenames` check: enkel sponsors tonen waarvan het logo-bestand in Supabase Storage staat
+- `storageFilenames` (Set) + `storageExtras` state: sponsors uit Storage die niet in `sponsors.json` staan worden ook getoond (`_fromStorage: true`)
+- `window.addEventListener('focus', fetchStorageFiles)`: herlaadt storage-lijst bij tab-focus na admin-upload
 - Richtingskiezer verwijderd — staat nu in de canvas-toolbar van `App.jsx`
 - Alle tag/koepel/categorieën-beheer is verplaatst naar de **admin** (`LogosSection.jsx`)
 
@@ -107,6 +108,9 @@
 - **Tegel/lijst-toggle** in de toolbar (`viewMode` state, `SponsorCard` / `SponsorRow`)
 - `SponsorRow`: rij met logo-thumbnail, naam, koepel/event-badges, hover-editknop
 - Bulk delete modus met checkbox-selectie en rode bevestigingsbalk onderaan (werkt in beide views)
+- **Folder-import**: `ImportModal` met drie secties (Nieuw / Bijgewerkt / Al aanwezig), detectie via `file.lastModified` vs `storage.updated_at`
+- `localPreviews` state: objectURLs van net geüploade bestanden → directe weergave los van CDN; `logoVersion` timestamp als key-remount + URL cache-buster
+- `allSponsors` = `sponsors.json` + storage-bestanden zonder JSON-entry (auto-gegenereerde entries, `_fromStorage: true`), gesorteerd alfabetisch (NL locale)
 
 ### `sections/FormatenSection.jsx`
 - CRUD, tags, drag-reorder, eenmalige import uit `backdropFormats.json`

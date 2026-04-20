@@ -153,9 +153,10 @@ function TagEditor({ sponsor, events, categoryList, tags, sponsorCategories, eve
 
 // ─── Sponsor card ─────────────────────────────────────────────────────────────
 
-function SponsorCard({ sponsor, onEdit, deleteMode, isSelected, onToggleSelect }) {
+function SponsorCard({ sponsor, onEdit, deleteMode, isSelected, onToggleSelect, logoVersion, localPreview }) {
   const [hover, setHover] = useState(false)
-  const src = logoUrl(sponsor.filename)
+  const base = logoUrl(sponsor.filename)
+  const src = localPreview || (base && logoVersion ? `${base}?v=${logoVersion}` : base)
 
   return (
     <div
@@ -215,8 +216,9 @@ function SponsorCard({ sponsor, onEdit, deleteMode, isSelected, onToggleSelect }
 
 // ─── Sponsor rij (lijstweergave) ──────────────────────────────────────────────
 
-function SponsorRow({ sponsor, tags, sponsorGroups, onEdit, deleteMode, isSelected, onToggleSelect }) {
-  const src = logoUrl(sponsor.filename)
+function SponsorRow({ sponsor, tags, sponsorGroups, onEdit, deleteMode, isSelected, onToggleSelect, logoVersion, localPreview }) {
+  const base = logoUrl(sponsor.filename)
+  const src = localPreview || (base && logoVersion ? `${base}?v=${logoVersion}` : base)
   const eventCount = (tags[sponsor.partner] || []).length
   const koepelCount = Object.keys(sponsorGroups[sponsor.partner] || {}).length
 
@@ -285,6 +287,165 @@ function SponsorRow({ sponsor, tags, sponsorGroups, onEdit, deleteMode, isSelect
   )
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB'
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB'
+}
+
+// ─── Import modal ─────────────────────────────────────────────────────────────
+
+function ImportModal({ files, onImport, onClose }) {
+  const newFiles = files.filter(f => f.status === 'new')
+  const changedFiles = files.filter(f => f.status === 'changed')
+  const existingFiles = files.filter(f => f.status === 'existing')
+
+  const [selected, setSelected] = useState(() => new Set(newFiles.map(f => f.file.name)))
+
+  function toggle(name) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  function toggleSection(list) {
+    const allSel = list.every(f => selected.has(f.file.name))
+    setSelected(prev => {
+      const next = new Set(prev)
+      for (const { file } of list) allSel ? next.delete(file.name) : next.add(file.name)
+      return next
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden"
+        style={{ maxHeight: 'calc(100vh - 48px)' }}
+        onMouseDown={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-800">Logo's importeren</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{files.length} bestanden gevonden in de map</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M2 2l12 12M14 2L2 14"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+
+          {/* Nieuw */}
+          {newFiles.length > 0 && (
+            <div className="px-5 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700">
+                  Nieuw · {newFiles.length}
+                </span>
+                <button onClick={() => toggleSection(newFiles)} className="text-xs text-gray-400 hover:text-gray-600">
+                  {newFiles.every(f => selected.has(f.file.name)) ? 'Deselecteer' : 'Selecteer alles'}
+                </button>
+              </div>
+              <div className="space-y-0.5">
+                {newFiles.map(({ file }) => (
+                  <label key={file.name} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-green-50 cursor-pointer">
+                    <input type="checkbox" checked={selected.has(file.name)} onChange={() => toggle(file.name)}
+                      className="w-4 h-4 accent-green-600 flex-shrink-0" />
+                    <span className="flex-1 text-sm text-gray-700 font-mono truncate">{file.name}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{formatSize(file.size)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bijgewerkt */}
+          {changedFiles.length > 0 && (
+            <div className="px-5 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-orange-700">
+                  Bijgewerkt · {changedFiles.length}
+                </span>
+                <button onClick={() => toggleSection(changedFiles)} className="text-xs text-gray-400 hover:text-gray-600">
+                  {changedFiles.every(f => selected.has(f.file.name)) ? 'Deselecteer' : 'Selecteer alles'}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400 mb-2">Lokaal bestand is nieuwer dan de laatste upload.</p>
+              <div className="space-y-0.5">
+                {changedFiles.map(({ file }) => (
+                  <label key={file.name} className={`flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selected.has(file.name) ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                    <input type="checkbox" checked={selected.has(file.name)} onChange={() => toggle(file.name)}
+                      className="w-4 h-4 accent-orange-500 flex-shrink-0" />
+                    <span className="flex-1 text-sm text-gray-700 font-mono truncate">{file.name}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{formatSize(file.size)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Al aanwezig */}
+          {existingFiles.length > 0 && (
+            <div className="px-5 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-500">
+                  Al aanwezig · {existingFiles.length}
+                </span>
+                <button onClick={() => toggleSection(existingFiles)} className="text-xs text-gray-400 hover:text-gray-600">
+                  {existingFiles.every(f => selected.has(f.file.name)) ? 'Deselecteer' : 'Selecteer alles'}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400 mb-2">Selecteer bestanden die je wil overschrijven.</p>
+              <div className="space-y-0.5">
+                {existingFiles.map(({ file }) => (
+                  <label key={file.name} className={`flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selected.has(file.name) ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                    <input type="checkbox" checked={selected.has(file.name)} onChange={() => toggle(file.name)}
+                      className="w-4 h-4 accent-orange-500 flex-shrink-0" />
+                    <span className="flex-1 text-sm text-gray-600 font-mono truncate">{file.name}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{formatSize(file.size)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Niets te doen */}
+          {newFiles.length === 0 && changedFiles.length === 0 && (
+            <div className="px-5 py-12 text-center text-sm text-gray-400">
+              Alle logo's in deze map staan al in de storage en zijn niet gewijzigd.
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-end gap-2">
+          <button onClick={onClose}
+            className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+            Annuleren
+          </button>
+          <button
+            onClick={() => onImport(selected)}
+            disabled={selected.size === 0}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40"
+          >
+            {selected.size === 0
+              ? 'Niets geselecteerd'
+              : `Importeer ${selected.size} logo${selected.size !== 1 ? "'s" : ''}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main section ─────────────────────────────────────────────────────────────
 
 export default function LogosSection({ showToast }) {
@@ -298,23 +459,28 @@ export default function LogosSection({ showToast }) {
   const [search, setSearch] = useState('')
   const [filterValue, setFilterValue] = useState('')
   const [editingSponsor, setEditingSponsor] = useState(null)
-  const [uploading, setUploading] = useState(false)
   const [deleteMode, setDeleteMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('tile')
+  const [importFiles, setImportFiles] = useState(null)        // null = modal dicht
+  const [importing, setImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0 })
+  const [logoVersion, setLogoVersion] = useState(null)        // cache-buster na import
+  const [localPreviews, setLocalPreviews] = useState({})     // filename → objectURL na import
   const fileRef = useRef(null)
 
   useEffect(() => {
     async function load() {
       try {
-        const [tagsData, catsData, eventsData, catList, groupsData, eventGroupsData] = await Promise.all([
+        const [tagsData, catsData, eventsData, catList, groupsData, eventGroupsData, storageData] = await Promise.all([
           loadTags(),
           loadSponsorCategories(),
           loadEvents(),
           loadSetting('category_list', DEFAULT_CATEGORIES),
           loadSponsorGroups(),
           loadEventGroups(),
+          supabase.storage.from('logos').list('', { limit: 2000 }),
         ])
         setTags(tagsData)
         setSponsorCategories(catsData)
@@ -322,8 +488,17 @@ export default function LogosSection({ showToast }) {
         setEventGroups(eventGroupsData)
         setEvents(eventsData)
         setCategoryList(catList)
-        // Merge sponsors.json with Storage
-        setAllSponsors(sponsors)
+
+        // Voeg storage-only logo's toe als sponsor-entry ontbreekt in sponsors.json
+        const storageFiles = storageData?.data || []
+        const extraFromStorage = storageFiles
+          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
+          .filter(fn => fn && !sponsors.some(s => s.filename === fn))
+          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
+
+        const combined = [...sponsors, ...extraFromStorage]
+        combined.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+        setAllSponsors(combined)
       } catch (e) {
         showToast('Fout bij laden: ' + e.message, 'error')
       } finally {
@@ -355,21 +530,76 @@ export default function LogosSection({ showToast }) {
     return true
   })
 
-  async function handleUpload(e) {
+  async function handleFolderSelect(e) {
     const files = Array.from(e.target.files)
-    if (!files.length) return
-    setUploading(true)
-    let ok = 0, fail = 0
-    for (const file of files) {
-      // Bestandsnaam zonder extensie = sponsor filename
-      const name = file.name.replace(/\.(png|svg)$/i, '')
-      const path = file.name
-      const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true })
-      if (error) { fail++; console.error(error) } else { ok++ }
-    }
-    setUploading(false)
+      .filter(f => !f.name.startsWith('.') && /\.(png|svg)$/i.test(f.name))
     fileRef.current.value = ''
-    if (ok > 0) showToast(`${ok} logo${ok > 1 ? "'s" : ''} geüpload`)
+    if (!files.length) return
+
+    // Vers ophalen: naam → upload-timestamp (ms)
+    const { data: stData } = await supabase.storage.from('logos').list('', { limit: 2000 })
+    const inStorage = new Map()
+    if (stData) {
+      for (const f of stData) {
+        inStorage.set(f.name, f.updated_at ? new Date(f.updated_at).getTime() : 0)
+      }
+    }
+
+    const categorized = files.map(file => {
+      if (!inStorage.has(file.name)) return { file, status: 'new' }
+      // Lokaal bestand nieuwer dan laatste upload → waarschijnlijk gewijzigd
+      return file.lastModified > inStorage.get(file.name)
+        ? { file, status: 'changed' }
+        : { file, status: 'existing' }
+    })
+
+    const order = { new: 0, changed: 1, existing: 2 }
+    categorized.sort((a, b) =>
+      order[a.status] !== order[b.status]
+        ? order[a.status] - order[b.status]
+        : a.file.name.localeCompare(b.file.name)
+    )
+
+    setImportFiles(categorized)
+  }
+
+  async function handleImport(selectedNames) {
+    const toUpload = importFiles.filter(f => selectedNames.has(f.file.name))
+    setImportFiles(null)
+    setImporting(true)
+    setImportProgress({ done: 0, total: toUpload.length })
+
+    let ok = 0, fail = 0
+    const previews = {}
+    for (const { file } of toUpload) {
+      const { error } = await supabase.storage.from('logos').upload(file.name, file, { upsert: true })
+      if (error) { fail++; console.error(error) } else {
+        ok++
+        // Sla lokale objectURL op — toon het logo direct vanuit geheugen, los van CDN
+        const filenameNoExt = file.name.replace(/\.(png|svg)$/i, '')
+        previews[filenameNoExt] = URL.createObjectURL(file)
+      }
+      setImportProgress(prev => ({ ...prev, done: prev.done + 1 }))
+    }
+
+    setImporting(false)
+    if (ok > 0) {
+      // Voeg nieuwe sponsors toe die nog niet in allSponsors staan
+      const newEntries = Object.keys(previews)
+        .filter(fn => !allSponsors.some(s => s.filename === fn))
+        .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
+      if (newEntries.length > 0) {
+        setAllSponsors(prev => {
+          const next = [...prev, ...newEntries]
+          next.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+          return next
+        })
+      }
+
+      setLocalPreviews(prev => ({ ...prev, ...previews }))
+      setLogoVersion(Date.now())
+      showToast(`${ok} logo${ok > 1 ? "'s" : ''} geïmporteerd`)
+    }
     if (fail > 0) showToast(`${fail} upload${fail > 1 ? 's' : ''} mislukt`, 'error')
   }
 
@@ -493,7 +723,14 @@ export default function LogosSection({ showToast }) {
             </button>
           </div>
 
-          <input ref={fileRef} type="file" multiple accept=".png,.svg" className="hidden" onChange={handleUpload} />
+          {/* Verborgen map-picker */}
+          <input
+            ref={el => { fileRef.current = el; if (el) el.webkitdirectory = true }}
+            type="file"
+            className="hidden"
+            onChange={handleFolderSelect}
+          />
+
           <button
             onClick={toggleDeleteMode}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -508,16 +745,19 @@ export default function LogosSection({ showToast }) {
             </svg>
             {deleteMode ? 'Annuleren' : "Logo's verwijderen"}
           </button>
+
           <button
             onClick={() => fileRef.current?.click()}
-            disabled={uploading}
+            disabled={importing}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            {uploading ? 'Uploaden…' : "Logo's uploaden"}
+            {importing
+              ? `Uploaden ${importProgress.done}/${importProgress.total}…`
+              : "Logo's uploaden"}
           </button>
         </div>
       </div>
@@ -527,12 +767,14 @@ export default function LogosSection({ showToast }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
           {filtered.map(sponsor => (
             <SponsorCard
-              key={sponsor.partner}
+              key={`${sponsor.partner}-${logoVersion || 0}`}
               sponsor={sponsor}
               onEdit={setEditingSponsor}
               deleteMode={deleteMode}
               isSelected={selected.has(sponsor.partner)}
               onToggleSelect={toggleSelect}
+              logoVersion={logoVersion}
+              localPreview={localPreviews[sponsor.filename]}
             />
           ))}
         </div>
@@ -540,7 +782,7 @@ export default function LogosSection({ showToast }) {
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           {filtered.map(sponsor => (
             <SponsorRow
-              key={sponsor.partner}
+              key={`${sponsor.partner}-${logoVersion || 0}`}
               sponsor={sponsor}
               tags={tags}
               sponsorGroups={sponsorGroups}
@@ -548,6 +790,8 @@ export default function LogosSection({ showToast }) {
               deleteMode={deleteMode}
               isSelected={selected.has(sponsor.partner)}
               onToggleSelect={toggleSelect}
+              logoVersion={logoVersion}
+              localPreview={localPreviews[sponsor.filename]}
             />
           ))}
         </div>
@@ -585,6 +829,15 @@ export default function LogosSection({ showToast }) {
         <div className="text-center py-16 text-gray-400 text-sm">
           Geen sponsors gevonden voor "{search}"
         </div>
+      )}
+
+      {/* Import modal */}
+      {importFiles && (
+        <ImportModal
+          files={importFiles}
+          onImport={handleImport}
+          onClose={() => setImportFiles(null)}
+        />
       )}
 
       {/* Tag editor modal */}

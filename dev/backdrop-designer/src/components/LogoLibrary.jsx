@@ -15,7 +15,8 @@ export default function LogoLibrary({
 }) {
   const [query, setQuery] = useState('')
   const [imgErrors, setImgErrors] = useState({})
-  const [storageFilenames, setStorageFilenames] = useState(null)
+  const [storageFilenames, setStorageFilenames] = useState(null)   // Set van bekende filenames
+  const [storageExtras, setStorageExtras] = useState([])            // sponsors alleen in Storage (niet in JSON)
   const [eventFilter, setEventFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
   const [viewMode, setViewMode] = useState('tile')
@@ -23,13 +24,21 @@ export default function LogoLibrary({
 
   useEffect(() => {
     async function fetchStorageFiles() {
-      const { data } = await supabase.storage.from('logos').list('', { limit: 1000 })
+      const { data } = await supabase.storage.from('logos').list('', { limit: 2000 })
       if (data) {
         const names = new Set(data.map(f => f.name.replace(/\.(png|svg)$/i, '')))
         setStorageFilenames(names)
+        // Sponsors die in storage staan maar niet in sponsors.json
+        const extras = data
+          .map(f => f.name.replace(/\.(png|svg)$/i, ''))
+          .filter(fn => fn && !sponsors.some(s => s.filename === fn))
+          .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
+        setStorageExtras(extras)
       }
     }
     fetchStorageFiles()
+    window.addEventListener('focus', fetchStorageFiles)
+    return () => window.removeEventListener('focus', fetchStorageFiles)
   }, [])
 
   // Merge static and custom sponsors; filter static op beschikbare Storage-bestanden
@@ -39,9 +48,11 @@ export default function LogoLibrary({
       ? STATIC_SPONSORS
       : STATIC_SPONSORS.filter(s => s.filename === 'BLANK' || storageFilenames.has(s.filename))
     const [blank, ...rest] = filteredStatic
-    rest.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
-    return [blank, ...rest, ...customEntries]
-  }, [customSponsors, storageFilenames])
+    const extras = storageExtras.filter(e => !customEntries.some(c => c.filename === e.filename))
+    const combined = [...rest, ...extras]
+    combined.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
+    return [blank, ...combined, ...customEntries]
+  }, [customSponsors, storageFilenames, storageExtras])
 
   function buildGroups(sponsorList) {
     const placed = new Set()
