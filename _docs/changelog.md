@@ -4,6 +4,23 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — sorteerknop admin + bulk koepel bij import
+
+### Sorteerknop (LogosSection)
+- `sortMode` state: `'alpha'` (standaard) | `'recent'` (nieuwste upload eerst)
+- `storageTimestamps` Map (filename → ms): gevuld bij mount vanuit `storage.updated_at`; pas geüploade bestanden krijgen `Date.now()` → staan meteen bovenaan
+- `filtered` omgezet naar `useMemo` met ingebakken sortering — reactief bij toggle
+- Toolbar: twee knoppen (A↓Z-icoon / klok-icoon) naast de view-toggle, zelfde stijl
+
+### Bulk koepel toewijzen bij import (ImportModal)
+- `ImportModal` krijgt `eventGroups` prop; toont dropdown "Toevoegen aan koepel:" boven de bestandenlijst (enkel zichtbaar als er koepels gedefinieerd zijn)
+- Standaard `— geen —`; bij selectie verschijnt hint *"bestaande koppelingen blijven behouden"*
+- Merge-logica: **nooit overschrijven** — als sponsor de koepel al heeft, wordt die sponsor overgeslagen (categorie blijft intact); ontbrekende koepel wordt toegevoegd met lege categorie
+- Opgeslagen via `saveSponsorGroup` per sponsor; `setSponsorGroups` bijgewerkt zodat de koepel-filter meteen actief is
+- Toast toont expliciet hoeveel logos geïmporteerd én hoeveel toegevoegd aan de koepel
+
+---
+
 ## Sessie april 2026 — logo import modal + cache-busting + storage-auto-detectie
 
 ### Folder-gebaseerde logo-import (admin LogosSection)

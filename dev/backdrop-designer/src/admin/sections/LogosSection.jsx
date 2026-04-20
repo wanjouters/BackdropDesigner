@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../../utils/supabase'
 import { logoUrl, STORAGE_BASE } from '../../utils/logoUrl'
 import {
@@ -297,12 +297,14 @@ function formatSize(bytes) {
 
 // ─── Import modal ─────────────────────────────────────────────────────────────
 
-function ImportModal({ files, onImport, onClose }) {
+function ImportModal({ files, eventGroups, onImport, onClose }) {
   const newFiles = files.filter(f => f.status === 'new')
   const changedFiles = files.filter(f => f.status === 'changed')
   const existingFiles = files.filter(f => f.status === 'existing')
 
   const [selected, setSelected] = useState(() => new Set(newFiles.map(f => f.file.name)))
+  const [bulkKoepel, setBulkKoepel] = useState('')
+  const koepelNames = Object.keys(eventGroups || {})
 
   function toggle(name) {
     setSelected(prev => {
@@ -340,6 +342,24 @@ function ImportModal({ files, onImport, onClose }) {
             </svg>
           </button>
         </div>
+
+        {/* Bulk koepel-toewijzing */}
+        {koepelNames.length > 0 && (
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
+            <span className="text-xs text-gray-500 flex-shrink-0">Toevoegen aan koepel:</span>
+            <select
+              value={bulkKoepel}
+              onChange={e => setBulkKoepel(e.target.value)}
+              className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
+            >
+              <option value="">— geen —</option>
+              {koepelNames.map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+            {bulkKoepel && (
+              <span className="text-[10px] text-gray-400 italic">bestaande koppelingen blijven behouden</span>
+            )}
+          </div>
+        )}
 
         <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
 
@@ -432,7 +452,7 @@ function ImportModal({ files, onImport, onClose }) {
             Annuleren
           </button>
           <button
-            onClick={() => onImport(selected)}
+            onClick={() => onImport(selected, bulkKoepel)}
             disabled={selected.size === 0}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40"
           >
@@ -463,6 +483,8 @@ export default function LogosSection({ showToast }) {
   const [selected, setSelected] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('tile')
+  const [sortMode, setSortMode] = useState('alpha')            // 'alpha' | 'recent'
+  const [storageTimestamps, setStorageTimestamps] = useState({}) // filename → upload ms
   const [importFiles, setImportFiles] = useState(null)        // null = modal dicht
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState({ done: 0, total: 0 })
@@ -491,14 +513,19 @@ export default function LogosSection({ showToast }) {
 
         // Voeg storage-only logo's toe als sponsor-entry ontbreekt in sponsors.json
         const storageFiles = storageData?.data || []
+        const timestamps = {}
+        for (const f of storageFiles) {
+          const fn = f.name.replace(/\.(png|svg)$/i, '')
+          if (fn) timestamps[fn] = f.updated_at ? new Date(f.updated_at).getTime() : 0
+        }
+        setStorageTimestamps(timestamps)
+
         const extraFromStorage = storageFiles
           .map(f => f.name.replace(/\.(png|svg)$/i, ''))
           .filter(fn => fn && !sponsors.some(s => s.filename === fn))
           .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
 
-        const combined = [...sponsors, ...extraFromStorage]
-        combined.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
-        setAllSponsors(combined)
+        setAllSponsors([...sponsors, ...extraFromStorage])
       } catch (e) {
         showToast('Fout bij laden: ' + e.message, 'error')
       } finally {
@@ -508,27 +535,37 @@ export default function LogosSection({ showToast }) {
     load()
   }, [])
 
-  const filtered = allSponsors.filter(s => {
-    const matchesSearch = s.partner.toLowerCase().includes(search.toLowerCase()) ||
-      s.filename.toLowerCase().includes(search.toLowerCase())
-    if (!matchesSearch) return false
-    if (!filterValue) return true
-    if (filterValue.startsWith('event:')) {
-      const ev = filterValue.slice(6)
-      // Directe event-tag
-      if ((tags[s.partner] || []).includes(ev)) return true
-      // Via koepel: welke koepels bevatten dit event?
-      const koepelsMetEvent = Object.keys(eventGroups).filter(grp =>
-        (eventGroups[grp] || []).includes(ev)
-      )
-      return koepelsMetEvent.some(grp => grp in (sponsorGroups[s.partner] || {}))
+  const filtered = useMemo(() => {
+    const result = allSponsors.filter(s => {
+      const matchesSearch = s.partner.toLowerCase().includes(search.toLowerCase()) ||
+        s.filename.toLowerCase().includes(search.toLowerCase())
+      if (!matchesSearch) return false
+      if (!filterValue) return true
+      if (filterValue.startsWith('event:')) {
+        const ev = filterValue.slice(6)
+        // Directe event-tag
+        if ((tags[s.partner] || []).includes(ev)) return true
+        // Via koepel: welke koepels bevatten dit event?
+        const koepelsMetEvent = Object.keys(eventGroups).filter(grp =>
+          (eventGroups[grp] || []).includes(ev)
+        )
+        return koepelsMetEvent.some(grp => grp in (sponsorGroups[s.partner] || {}))
+      }
+      if (filterValue.startsWith('koepel:')) {
+        const grp = filterValue.slice(7)
+        return grp in (sponsorGroups[s.partner] || {})
+      }
+      return true
+    })
+
+    if (sortMode === 'recent') {
+      // Nieuwste upload eerst; onbekende timestamps onderaan
+      result.sort((a, b) => (storageTimestamps[b.filename] || 0) - (storageTimestamps[a.filename] || 0))
+    } else {
+      result.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
     }
-    if (filterValue.startsWith('koepel:')) {
-      const grp = filterValue.slice(7)
-      return grp in (sponsorGroups[s.partner] || {})
-    }
-    return true
-  })
+    return result
+  }, [allSponsors, search, filterValue, tags, eventGroups, sponsorGroups, sortMode, storageTimestamps])
 
   async function handleFolderSelect(e) {
     const files = Array.from(e.target.files)
@@ -563,7 +600,7 @@ export default function LogosSection({ showToast }) {
     setImportFiles(categorized)
   }
 
-  async function handleImport(selectedNames) {
+  async function handleImport(selectedNames, bulkKoepel) {
     const toUpload = importFiles.filter(f => selectedNames.has(f.file.name))
     setImportFiles(null)
     setImporting(true)
@@ -571,13 +608,21 @@ export default function LogosSection({ showToast }) {
 
     let ok = 0, fail = 0
     const previews = {}
+    const successPartners = []   // partner-namen van geslaagde uploads (voor bulk koepel)
+    const newTimestamps = {}
+    const now = Date.now()
+
     for (const { file } of toUpload) {
       const { error } = await supabase.storage.from('logos').upload(file.name, file, { upsert: true })
       if (error) { fail++; console.error(error) } else {
         ok++
-        // Sla lokale objectURL op — toon het logo direct vanuit geheugen, los van CDN
         const filenameNoExt = file.name.replace(/\.(png|svg)$/i, '')
+        // Sla lokale objectURL op — toon het logo direct vanuit geheugen, los van CDN
         previews[filenameNoExt] = URL.createObjectURL(file)
+        newTimestamps[filenameNoExt] = now
+        // Bepaal partner-naam (bestaand of auto-gegenereerd)
+        const existing = allSponsors.find(s => s.filename === filenameNoExt)
+        successPartners.push(existing ? existing.partner : filenameNoExt.replace(/_/g, ' '))
       }
       setImportProgress(prev => ({ ...prev, done: prev.done + 1 }))
     }
@@ -589,16 +634,37 @@ export default function LogosSection({ showToast }) {
         .filter(fn => !allSponsors.some(s => s.filename === fn))
         .map(fn => ({ partner: fn.replace(/_/g, ' '), filename: fn, _fromStorage: true }))
       if (newEntries.length > 0) {
-        setAllSponsors(prev => {
-          const next = [...prev, ...newEntries]
-          next.sort((a, b) => a.partner.localeCompare(b.partner, 'nl'))
-          return next
-        })
+        setAllSponsors(prev => [...prev, ...newEntries])
       }
 
       setLocalPreviews(prev => ({ ...prev, ...previews }))
+      setStorageTimestamps(prev => ({ ...prev, ...newTimestamps }))
       setLogoVersion(Date.now())
-      showToast(`${ok} logo${ok > 1 ? "'s" : ''} geïmporteerd`)
+
+      // Bulk koepel toewijzen (merge: nooit bestaande categorie overschrijven)
+      if (bulkKoepel && successPartners.length > 0) {
+        const updates = {}
+        for (const partner of successPartners) {
+          const existing = sponsorGroups[partner] || {}
+          // Sla over als deze koepel al bij de sponsor hoort — bestaande categorie behouden
+          if (bulkKoepel in existing) continue
+          updates[partner] = { ...existing, [bulkKoepel]: '' }
+        }
+        const updateEntries = Object.entries(updates)
+        if (updateEntries.length > 0) {
+          try {
+            await Promise.all(updateEntries.map(([p, g]) => saveSponsorGroup(p, g)))
+            setSponsorGroups(prev => ({ ...prev, ...updates }))
+            showToast(`${ok} logo${ok > 1 ? "'s" : ''} geïmporteerd · ${updateEntries.length} toegevoegd aan ${bulkKoepel}`)
+          } catch (e) {
+            showToast('Koepel-toewijzing gedeeltelijk mislukt: ' + e.message, 'error')
+          }
+        } else {
+          showToast(`${ok} logo${ok > 1 ? "'s" : ''} geïmporteerd · allemaal al in ${bulkKoepel}`)
+        }
+      } else {
+        showToast(`${ok} logo${ok > 1 ? "'s" : ''} geïmporteerd`)
+      }
     }
     if (fail > 0) showToast(`${fail} upload${fail > 1 ? 's' : ''} mislukt`, 'error')
   }
@@ -699,6 +765,30 @@ export default function LogosSection({ showToast }) {
         <span className="text-sm text-gray-400">{filtered.length} sponsors</span>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Sort toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setSortMode('alpha')}
+              title="Alfabetisch sorteren"
+              className={`p-2 transition-colors ${sortMode === 'alpha' ? 'bg-gray-900 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M3 7h12M3 12h9M3 17h6M17 5v14m0 0l-3-3m3 3l3-3" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setSortMode('recent')}
+              title="Laatst toegevoegd"
+              className={`p-2 transition-colors ${sortMode === 'recent' ? 'bg-gray-900 text-white' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
+
           {/* View toggle */}
           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
             <button
@@ -835,6 +925,7 @@ export default function LogosSection({ showToast }) {
       {importFiles && (
         <ImportModal
           files={importFiles}
+          eventGroups={eventGroups}
           onImport={handleImport}
           onClose={() => setImportFiles(null)}
         />

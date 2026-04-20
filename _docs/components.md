@@ -109,8 +109,10 @@
 - `SponsorRow`: rij met logo-thumbnail, naam, koepel/event-badges, hover-editknop
 - Bulk delete modus met checkbox-selectie en rode bevestigingsbalk onderaan (werkt in beide views)
 - **Folder-import**: `ImportModal` met drie secties (Nieuw / Bijgewerkt / Al aanwezig), detectie via `file.lastModified` vs `storage.updated_at`
+- `ImportModal` accepteert `eventGroups` prop: toont koepel-dropdown voor bulk-toewijzing na import (merge-logica — bestaande koepels nooit overschreven)
 - `localPreviews` state: objectURLs van net geüploade bestanden → directe weergave los van CDN; `logoVersion` timestamp als key-remount + URL cache-buster
-- `allSponsors` = `sponsors.json` + storage-bestanden zonder JSON-entry (auto-gegenereerde entries, `_fromStorage: true`), gesorteerd alfabetisch (NL locale)
+- `allSponsors` = `sponsors.json` + storage-bestanden zonder JSON-entry (auto-gegenereerde entries, `_fromStorage: true`)
+- `sortMode` state (`'alpha'` | `'recent'`): toggle in toolbar; `storageTimestamps` Map voor "recent"-sortering; `filtered` via `useMemo`
 
 ### `sections/FormatenSection.jsx`
 - CRUD, tags, drag-reorder, eenmalige import uit `backdropFormats.json`
