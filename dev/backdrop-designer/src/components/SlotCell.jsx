@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import SponsorPicker from './SponsorPicker'
 
-export default function SlotCell({ id, index, value, onAssign, onDropSponsor, colLabel, rowLabel, isSelected, onSelect }) {
+export default function SlotCell({ id, index, value, onAssign, onDropSponsor, colLabel, rowLabel, isSelected, onSelect, onSweepStart, onSweepEnter }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -25,13 +25,36 @@ export default function SlotCell({ id, index, value, onAssign, onDropSponsor, co
 
   const isBlank = !value || value === 'BLANK'
 
+  function handleMouseDown(e) {
+    if (e.button !== 0 || !e.altKey) return
+    if (e.target.closest('[data-drag-handle]')) return
+    e.preventDefault()  // voorkom tekst-selectie
+    onSweepStart?.(index)
+  }
+
+  function handleMouseEnter(e) {
+    if (!onSweepEnter) return
+    // Zelfde inset-logica als preview: alleen triggeren als cursor duidelijk
+    // binnen de cel is (niet bij een hoek of rand)
+    const INSET = 6
+    const r = e.currentTarget.getBoundingClientRect()
+    if (
+      e.clientX >= r.left + INSET && e.clientX <= r.right  - INSET &&
+      e.clientY >= r.top  + INSET && e.clientY <= r.bottom - INSET
+    ) {
+      onSweepEnter(index)
+    }
+  }
+
   function handleClick(e) {
     if (e.target.closest('[data-drag-handle]')) return
+    if (e.altKey) return  // sweep wordt afgehandeld via mousedown/mouseenter
     onSelect(index, e.shiftKey)
   }
 
   function handleDoubleClick(e) {
     if (e.target.closest('[data-drag-handle]')) return
+    if (e.altKey) return
     setPickerOpen(true)
   }
 
@@ -60,6 +83,8 @@ export default function SlotCell({ id, index, value, onAssign, onDropSponsor, co
       className="relative"
     >
       <motion.div
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onDragOver={handleDragOver}

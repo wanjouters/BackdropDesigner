@@ -14,7 +14,7 @@ import {
   CHAIR_W_MM,
 } from './preview/constants'
 
-export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSlot, onDropSponsor, customLogos, showRuler, activeOverlay, onOverlayChange }) {
+export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSlot, onSweepSlot, onClearSelection, onDropSponsor, customLogos, showRuler, activeOverlay, onOverlayChange }) {
   const containerRef = useRef(null)
   const [baseScale, setBaseScale] = useState(0) // 0 = not yet measured by ResizeObserver
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -156,34 +156,94 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
   const [isDragging, setIsDragging] = useState(false)
   const [panModifier, setPanModifier] = useState(false)
 
+  // Sweep-selectie — Option/Alt ingedrukt houden en slepen
+  const isSweepingRef = useRef(false)
+  const lastSweepIndexRef = useRef(-1)
+  const hadSweepRef = useRef(false)     // voorkomt dat click-na-sweep de selectie wist
+  const [altModifier, setAltModifier] = useState(false)
+
+  // Ref naar altijd-actuele waarden voor gebruik in stabiele event handlers
+  const sweepStateRef = useRef({ scale: 0, cellPositions: [], CellW_mm: 0, cellH: 0 })
+  const onSweepSlotRef = useRef(onSweepSlot)
+  useEffect(() => { onSweepSlotRef.current = onSweepSlot }, [onSweepSlot])
+
   useEffect(() => {
-    function onKey(e) { setPanModifier(e.metaKey || e.ctrlKey) }
+    function onKey(e) {
+      setPanModifier(e.metaKey || e.ctrlKey)
+      setAltModifier(e.altKey)
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', onKey)
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey) }
   }, [])
 
+  // Helper: welke cel zit onder de muis? Retourneert het cell-object of null.
+  // Inset van 8px (omgezet naar mm) zodat de cursor duidelijk BINNEN de cel
+  // moet zijn — voorkomt hoek-clipping bij diagonaal slepen.
+  function hitTestCell(e) {
+    const el = containerRef.current
+    if (!el) return null
+    const rect = el.getBoundingClientRect()
+    const { scale: s, cellPositions: cp, CellW_mm: cw, cellH: ch } = sweepStateRef.current
+    if (!s) return null
+    const mmX = ((e.clientX - rect.left) + el.scrollLeft - 400) / s
+    const mmY = ((e.clientY - rect.top)  + el.scrollTop  - 400) / s
+    const inset = 8 / s   // 8px inset in mm-eenheden (schaalonafhankelijk)
+    return cp.find(({ x, y }) =>
+      mmX >= x + inset && mmX < x + cw - inset &&
+      mmY >= y + inset && mmY < y + ch - inset
+    ) ?? null
+  }
+
   const handleMouseDown = useCallback(e => {
     if (e.button !== 0) return
-    if (!e.metaKey && !e.ctrlKey) return   // require Cmd (Mac) or Ctrl (Win/Linux)
+
+    // Option/Alt → sweep-selectie
+    if (e.altKey) {
+      e.preventDefault()
+      isSweepingRef.current = true
+      hadSweepRef.current = true
+      lastSweepIndexRef.current = -1
+      const cell = hitTestCell(e)
+      if (cell) {
+        lastSweepIndexRef.current = cell.index
+        onSweepSlotRef.current(cell.index)
+      }
+      return
+    }
+
+    // Cmd/Ctrl → pan (bestaand gedrag)
+    if (!e.metaKey && !e.ctrlKey) return
     const el = containerRef.current
     if (!el) return
     isPanning.current = true
     panStart.current = { x: e.clientX, y: e.clientY, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop }
     setIsDragging(true)
     e.preventDefault()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMouseMove = useCallback(e => {
+    // Sweep
+    if (isSweepingRef.current) {
+      const cell = hitTestCell(e)
+      if (cell && cell.index !== lastSweepIndexRef.current) {
+        lastSweepIndexRef.current = cell.index
+        onSweepSlotRef.current(cell.index)
+      }
+      return
+    }
+    // Pan
     if (!isPanning.current) return
     const el = containerRef.current
     if (!el) return
     el.scrollLeft = panStart.current.scrollLeft - (e.clientX - panStart.current.x)
     el.scrollTop = panStart.current.scrollTop - (e.clientY - panStart.current.y)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMouseUp = useCallback(() => {
     isPanning.current = false
+    isSweepingRef.current = false
+    lastSweepIndexRef.current = -1
     setIsDragging(false)
   }, [])
 
@@ -218,6 +278,9 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
     return { x, y, value, index: i }
   })
 
+  // Sweep state ref bijwerken — event handlers hebben altijd actuele waarden
+  sweepStateRef.current = { scale, cellPositions, CellW_mm, cellH }
+
   // Bar position
   let barY = null
   if (hasBar) {
@@ -235,16 +298,26 @@ export default function PreviewCanvas({ format, slots, selectedSlots, onSelectSl
   const scaledW = (CanvasWidth_mm || 0) * scale
   const scaledH = (CanvasHeight_mm || 0) * scale
 
+  // Klik buiten alle cellen → selectie wissen
+  function handleContainerClick(e) {
+    if (e.altKey || e.metaKey || e.ctrlKey) return
+    // Negeer de click die volgt op een sweep (mouseup → click)
+    if (hadSweepRef.current) { hadSweepRef.current = false; return }
+    const cell = hitTestCell(e)
+    if (!cell) onClearSelection?.()
+  }
+
   return (
     <div className="flex-1 rounded-xl bg-gray-400 relative" style={{ minHeight: 0 }}>
     <div
       ref={containerRef}
-      style={{ position: 'absolute', inset: 0, overflow: 'auto', cursor: isDragging ? 'grabbing' : panModifier ? 'grab' : 'default' }}
+      style={{ position: 'absolute', inset: 0, overflow: 'auto', cursor: isDragging ? 'grabbing' : altModifier ? 'crosshair' : panModifier ? 'grab' : 'default' }}
       onScroll={e => setRulerScroll({ left: e.target.scrollLeft, top: e.target.scrollTop })}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onClick={handleContainerClick}
     >
       {/* Scrollable inner area — explicit size gives reliable scroll range in all directions */}
       <div style={{

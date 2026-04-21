@@ -4,6 +4,28 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie april 2026 — Option+sleep sweep-selectie + deselect buiten canvas
+
+### Option/Alt + klik/slepen = sweep-selectie
+- `App.jsx`: `handleSweepSlot(index)` — voegt een cel toe aan selectie zonder te wissen; doorgegeven als `onSweepSlot` aan beide canvassen
+- `PreviewCanvas.jsx`: op `alt+mousedown` start sweep; `mousemove` hit-test converteert screencoördinaten via scroll offset en schaal naar mm, zoekt cel in `cellPositions`; `sweepStateRef` geeft event handlers (stable `useCallback`) altijd toegang tot de actuele `scale` en `cellPositions`; cursor wordt `crosshair` bij alt ingedrukt
+- `Cell.jsx`: `onClick` slaat over bij `e.altKey` — voorkomt conflict met sweep
+- `GridCanvas.jsx`: `sweepingRef` + global mouseup listener; `handleSweepStart` en `handleSweepEnter` doorgegeven aan `SlotCell`
+- `SlotCell.jsx`: `onMouseDown` met `altKey` = sweep start; `onMouseEnter` = sweep enter; `handleClick` en `handleDoubleClick` skippen bij `altKey`
+
+### Hit-test inset — hoek-clipping voorkomen
+- Cel is pas actief wanneer cursor minstens **8px** (preview) / **6px** (grid) van de celrand verwijderd is
+- Preview: `const inset = 8 / s` (pixel-naar-mm via schaal) in `hitTestCell`
+- Grid: `onMouseEnter` controleert `e.clientX/Y` vs `getBoundingClientRect()` + inset
+
+### Deselect bij klik buiten canvas (preview)
+- `onClearSelection` prop op `PreviewCanvas`; `handleContainerClick` op de scroll-container
+- `hitTestCell` → als geen cel gevonden → `onClearSelection()`, selectie gewist
+- `hadSweepRef` voorkomt dat de click die na mouseup volgt (na een sweep) de selectie wist
+- Grijze rand, canvas achtergrond én lege ruimte tussen cellen wissen de selectie
+
+---
+
 ## Sessie april 2026 — duplicate-fix, delete alle varianten, normalisatie overal
 
 ### Oorzaak duplicate sponsors bij sort-toggle (LogosSection)

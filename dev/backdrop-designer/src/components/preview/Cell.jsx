@@ -26,7 +26,7 @@ export default function Cell({ x, y, width, height, value, index, isSelected, ca
 
   return (
     <div
-      onClick={e => onSelect(index, e.shiftKey)}
+      onClick={e => { if (e.altKey) return; onSelect(index, e.shiftKey) }}
       onDragOver={handleDragOver}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}

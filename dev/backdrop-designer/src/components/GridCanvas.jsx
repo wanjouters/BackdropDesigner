@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -12,8 +13,26 @@ import {
 } from '@dnd-kit/sortable'
 import SlotCell from './SlotCell'
 
-export default function GridCanvas({ format, slots, onSlotsChange, selectedSlots, onSelectSlot, onDropSponsor }) {
+export default function GridCanvas({ format, slots, onSlotsChange, selectedSlots, onSelectSlot, onSweepSlot, onDropSponsor }) {
   const { Cols, Rows } = format
+
+  // Sweep-selectie state (Option+drag)
+  const sweepingRef = useRef(false)
+
+  useEffect(() => {
+    function handleMouseUp() { sweepingRef.current = false }
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, [])
+
+  function handleSweepStart(index) {
+    sweepingRef.current = true
+    onSweepSlot(index)
+  }
+
+  function handleSweepEnter(index) {
+    if (sweepingRef.current) onSweepSlot(index)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -63,6 +82,8 @@ export default function GridCanvas({ format, slots, onSlotsChange, selectedSlots
                   rowLabel={rowLabels[row]}
                   isSelected={selectedSlots.has(i)}
                   onSelect={onSelectSlot}
+                  onSweepStart={handleSweepStart}
+                  onSweepEnter={handleSweepEnter}
                   onDropSponsor={onDropSponsor}
                   onAssign={(idx, name) => {
                     const next = [...slots]

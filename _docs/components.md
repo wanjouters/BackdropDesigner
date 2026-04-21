@@ -48,8 +48,15 @@
 
 ### `components/GridCanvas.jsx`
 - Rasterweergave met klikbare slots (grid-view, niet preview)
+- `onSweepSlot` prop; `sweepingRef` + global mouseup listener; `handleSweepStart`/`handleSweepEnter` doorgegeven aan `SlotCell`
 
 ### `components/PreviewCanvas.jsx` + `components/preview/`
+- `onSweepSlot` prop: cel toevoegen aan selectie (Option+drag)
+- `onClearSelection` prop: selectie wissen bij klik buiten cellen
+- `sweepStateRef`: geeft stabiele event handlers altijd toegang tot actuele `scale` en `cellPositions`
+- `hitTestCell(e)`: screencoördinaat → mm → cel; met 8px inset (pixel-to-mm via schaal) voor hoek-tolerantie
+- `hadSweepRef`: click die volgt op een sweep wordt genegeerd zodat selectie niet gewist wordt
+- Cursor: `crosshair` bij alt ingedrukt, `grab`/`grabbing` bij cmd/ctrl
 - Shell-component voor de schaalbare preview met logo's uit Supabase Storage
 - Subcomponenten leven in `components/preview/`:
   - `Cell.jsx`: één gridvak met drop-target + fallback-tekst
@@ -78,8 +85,12 @@
 - Zoekveld met × wis-knop
 - Module-level cache (`_cache`/`_pending`): laadt storage één keer voor alle instanties; `seenKeys` Map normaliseert en dedupliceert
 
+### `components/preview/Cell.jsx`
+- `onClick` slaat over bij `e.altKey` — sweep-selectie wordt afgehandeld door `PreviewCanvas`
+
 ### `components/SlotCell.jsx`
 - Individueel gridvak
+- `onSweepStart` / `onSweepEnter` props voor Option+sleep selectie; 6px inset-check in `onMouseEnter`; `handleClick`/`handleDoubleClick` skippen bij `altKey`
 
 ### `components/FrequencyPanel.jsx`
 - Frequentietelling sponsors met ongeldig-detectie (t.o.v. `sponsors` prop uit `useAppData`)

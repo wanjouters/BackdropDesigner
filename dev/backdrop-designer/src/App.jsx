@@ -329,6 +329,14 @@ export default function App({ session: initialSession }) {
     })
   }
 
+  // Option/Alt + sleep: voeg cel toe aan selectie (nooit wissen)
+  function handleSweepSlot(index) {
+    setSelectedSlots(prev => {
+      if (prev.has(index)) return prev
+      return new Set([...prev, index])
+    })
+  }
+
   function handleDropOnSlot(slotIndex, sponsorName) {
     const next = [...slots]
     if (selectedSlots.has(slotIndex) && selectedSlots.size > 1) {
@@ -873,6 +881,7 @@ export default function App({ session: initialSession }) {
                   onSlotsChange={setSlots}
                   selectedSlots={selectedSlots}
                   onSelectSlot={handleSelectSlot}
+                  onSweepSlot={handleSweepSlot}
                   onDropSponsor={handleDropOnSlot}
                 />
               </div>
@@ -882,6 +891,8 @@ export default function App({ session: initialSession }) {
                 slots={slots}
                 selectedSlots={selectedSlots}
                 onSelectSlot={handleSelectSlot}
+                onSweepSlot={handleSweepSlot}
+                onClearSelection={() => setSelectedSlots(new Set())}
                 onDropSponsor={handleDropOnSlot}
                 customLogos={customLogos}
                 showRuler={showRuler}
