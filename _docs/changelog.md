@@ -4,6 +4,23 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie mei 2026 — Compacte form layout in FormatEditModal
+
+### Verticale compactheid
+- Section-header padding: `py-3` → `py-2`, sectie-content bodem: `pb-5` → `pb-3`
+- Input/select hoogte: `px-2 py-1.5` → `px-2 py-1` (alle velden in de modal)
+- Ruimte tussen veldgroepen: `space-y-3` → `space-y-2`, grid-gaps: `gap-3` → `gap-2`
+
+### Horizontale compactheid — field sizing naar content
+- `NumField`: vaste `w-20` (80px) i.p.v. `w-full` — past bij mm-waarden en decimalen
+- `SelectField`: `min-w-[120px]` wrapper — leesbaar maar niet groter dan nodig
+- `TextField`: `flex-1 min-w-[100px]` wrapper — groeit mee in flex-context
+- Alle `grid grid-cols-N` → `flex flex-wrap items-end gap-x-3 gap-y-2` — velden staan naast elkaar, wrappen bij gebrek aan ruimte
+- Preset-selects in Canvas en Cel: `max-w-[220px]` — nemen niet de volle breedte
+- Modal: `max-w-4xl` → `max-w-3xl`
+
+---
+
 ## Sessie april 2026 — Option+sleep sweep-selectie + deselect buiten canvas
 
 ### Option/Alt + klik/slepen = sweep-selectie

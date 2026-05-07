@@ -63,6 +63,40 @@ Elk zoekveld in de app krijgt een × wis-knop rechts wanneer er tekst in staat. 
 
 ---
 
+## Admin form — field sizing patroon
+
+In admin-modals met meerdere numerieke en tekstvelden worden inputs gesized naar hun inhoud, niet naar de beschikbare containerruimte.
+
+### Componentregels
+
+| Component | Breedte | Reden |
+|---|---|---|
+| `NumField` | `w-20` (80px) vast | Voldoende voor 4-cijferige mm-waarden en decimalen |
+| `SelectField` | `min-w-[120px]` op wrapper | Leesbaar voor korte opties (NONE/BAR/LOGO) |
+| `TextField` | `flex-1 min-w-[100px]` op wrapper | Vult beschikbare ruimte, wrapat bij gebrek aan ruimte |
+| Preset-selects | `max-w-[220px]` | Nemen niet de volle breedte van de sectie |
+
+### Layout binnen secties
+
+Gebruik `flex flex-wrap items-end gap-x-3 gap-y-2` in plaats van `grid grid-cols-N`:
+- Velden staan naast elkaar zolang er ruimte is
+- Wrappen automatisch zonder vaste kolombreedte af te dwingen
+- Samen met `NumField`'s vaste breedte: logische groepering zonder verspilde ruimte
+
+```jsx
+<div className="flex flex-wrap items-end gap-x-3 gap-y-2">
+  <NumField label="Breedte" unit="mm" ... />
+  <LinkBtn ... />
+  <NumField label="Hoogte" unit="mm" ... />
+  <NumField label="Schaal" ... />
+  <NumField label="Bleed" unit="mm" ... />
+</div>
+```
+
+**Toegepast in**: `FormatEditModal.jsx` (alle secties in rechterkolom).
+
+---
+
 ## Bulk delete patroon
 
 Bij conflict tussen per-kaart delete-knop en andere per-kaart acties (tag-icoon, bewerk-icoon, etc.) → gebruik een **toggle-modus** in plaats van per-item acties.

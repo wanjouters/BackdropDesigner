@@ -179,7 +179,7 @@ function Section({ title, defaultOpen = true, children }) {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-6 py-3 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-2 text-left hover:bg-gray-50 transition-colors"
       >
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">{title}</span>
         <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
@@ -187,15 +187,15 @@ function Section({ title, defaultOpen = true, children }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {open && <div className="px-6 pb-5">{children}</div>}
+      {open && <div className="px-6 pb-3">{children}</div>}
     </div>
   )
 }
 
 function NumField({ label, value, onChange, step = 1, min, unit, readOnly }) {
   return (
-    <div className="flex flex-col gap-1 min-w-0">
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 truncate">
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 whitespace-nowrap">
         {label}{unit && <span className="font-normal normal-case tracking-normal ml-0.5 text-gray-300">{unit}</span>}
       </label>
       <input
@@ -205,7 +205,7 @@ function NumField({ label, value, onChange, step = 1, min, unit, readOnly }) {
         step={step}
         min={min}
         readOnly={readOnly}
-        className={`w-full border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+        className={`w-20 border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 ${
           readOnly ? 'bg-gray-50 text-gray-400 border-gray-100' : 'border-gray-200'
         }`}
       />
@@ -215,12 +215,12 @@ function NumField({ label, value, onChange, step = 1, min, unit, readOnly }) {
 
 function SelectField({ label, value, onChange, options }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 min-w-[120px]">
       <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</label>
       <select
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
-        className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+        className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
       >
         {options.map(o => (
           <option key={typeof o === 'string' ? o : o.value} value={typeof o === 'string' ? o : o.value}>
@@ -234,14 +234,14 @@ function SelectField({ label, value, onChange, options }) {
 
 function TextField({ label, value, onChange, placeholder }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 flex-1 min-w-[100px]">
       <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</label>
       <input
         type="text"
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+        className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
       />
     </div>
   )
@@ -457,7 +457,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}
         onMouseDown={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -489,7 +489,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                 value={form.Beschrijving ?? ''}
                 onChange={e => set('Beschrijving', e.target.value)}
                 placeholder="Bv. Backdrop Flash interview"
-                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
               />
             </div>
 
@@ -522,7 +522,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                     onFocus={() => setTagSuggestOpen(true)}
                     onBlur={() => setTimeout(() => setTagSuggestOpen(false), 150)}
                     placeholder="Tag toevoegen…"
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
                   />
                   <button type="button" onClick={() => { addTag(); setTagSuggestOpen(false) }}
                     className="px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-lg hover:bg-gray-900 transition-colors">
@@ -598,7 +598,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                   }
                 }}
                 disabled={backgroundPresets.length === 0}
-                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
+                className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
               >
                 <option value="">{backgroundPresets.length === 0 ? '— Geen presets —' : '— Aangepast —'}</option>
                 {backgroundPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -616,7 +616,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                     type="text"
                     value={form.BackgroundColor_Hex || ''}
                     onChange={e => set('BackgroundColor_Hex', e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono bg-white"
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono bg-white"
                   />
                 </div>
               </div>
@@ -649,16 +649,16 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Canvas */}
           <Section title="Canvas" defaultOpen={true}>
-            <div className="space-y-3">
+            <div className="space-y-2">
 
               {/* Canvas preset */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 max-w-[220px]">
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Preset</label>
                 <select
                   value={findMatchingCanvasPreset()}
                   onChange={e => applyCanvasPreset(e.target.value)}
                   disabled={canvasPresets.length === 0}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
+                  className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
                 >
                   <option value="">{canvasPresets.length === 0 ? '— Geen presets —' : '— Aangepast —'}</option>
                   {canvasPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -673,20 +673,20 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
               </div>
 
               {/* Schaal + Bleed */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <NumField label="Schaal" value={form.Scale} onChange={v => set('Scale', v)} step={0.01} min={0.01} />
                 <NumField label="Bleed" value={form.Bleed_mm} onChange={v => set('Bleed_mm', v)} step={1} unit="mm" />
               </div>
 
               {/* Artboard (readonly) */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <NumField label="Artboard breedte" value={form.ArtboardWidth_mm} onChange={() => {}} step={10} unit="mm" readOnly />
                 <NumField label="Artboard hoogte" value={form.ArtboardHeight_mm} onChange={() => {}} step={10} unit="mm" readOnly />
               </div>
               <p className="text-[10px] text-gray-300">Artboard-afmetingen worden automatisch berekend (Canvas × Schaal).</p>
 
               {/* Aanpassingsmodus bij canvas-wijziging */}
-              <label className="flex items-center gap-3 pt-1 cursor-pointer select-none">
+              <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
                 <span className="flex-1 text-xs text-gray-500">
                   {form.FixedCellSize ? 'Cellen vast, raster past' : 'Raster vast, cellen passen'}
                 </span>
@@ -707,7 +707,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Grid */}
           <Section title="Grid" defaultOpen={true}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
               <NumField label="Kolommen" value={form.Cols} onChange={v => set('Cols', Math.max(1, Math.round(v)))} step={1} min={1} />
               <NumField label="Rijen" value={form.Rows} onChange={v => set('Rows', Math.max(1, Math.round(v)))} step={1} min={1} />
             </div>
@@ -715,21 +715,21 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Cel */}
           <Section title="Cel" defaultOpen={true}>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Cell preset */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 max-w-[220px]">
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Preset</label>
                 <select
                   value={findMatchingCellPreset()}
                   onChange={e => applyCellPreset(e.target.value)}
                   disabled={cellPresets.length === 0}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
+                  className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-300"
                 >
                   <option value="">{cellPresets.length === 0 ? '— Geen presets —' : '— Aangepast —'}</option>
                   {cellPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <NumField label="Breedte" value={form.CellW_mm} onChange={v => set('CellW_mm', v)} step={1} unit="mm" />
                 <NumField label="Verhouding (B/H)" value={form.CellAspect} onChange={v => set('CellAspect', v)} step={0.001} />
                 <NumField label="Hoogte" value={form.CellH_mm} onChange={() => {}} unit="mm" readOnly />
@@ -749,7 +749,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Marges */}
           <Section title="Marges" defaultOpen={true}>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-end gap-2">
                 <NumField label="Links"   value={form.MarginLeft_mm}   onChange={v => set('MarginLeft_mm', v)}   step={0.5} unit="mm" />
                 <LinkBtn linked={marginHLinked} onToggle={() => setMarginHLinked(v => !v)} />
@@ -766,7 +766,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Header */}
           <Section title="Header" defaultOpen={false}>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <SelectField
                 label="Type"
                 value={form.HeaderType}
@@ -774,7 +774,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                 options={['NONE', 'BAR', 'LOGO', 'CUSTOM']}
               />
               {form.HeaderType !== 'NONE' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                   <NumField label="Hoogte" value={form.HeaderHeight_mm} onChange={v => set('HeaderHeight_mm', v)} step={1} unit="mm" />
                   <NumField label="Marge" value={form.HeaderMargin_mm} onChange={v => set('HeaderMargin_mm', v)} step={1} unit="mm" />
                 </div>
@@ -784,8 +784,8 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Divider bar */}
           <Section title="Divider bar" defaultOpen={false}>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <SelectField
                   label="Type"
                   value={form.DefaultBarType}
@@ -800,7 +800,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                 />
               </div>
               {form.DefaultBarType !== 'NONE' && (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                   <NumField label="Hoogte" value={form.DefaultBarHeight_mm} onChange={v => set('DefaultBarHeight_mm', v)} step={1} unit="mm" />
                   <NumField label="Gap boven" value={form.DefaultBarGapTop_mm} onChange={v => set('DefaultBarGapTop_mm', v)} step={1} unit="mm" />
                   <NumField label="Gap onder" value={form.DefaultBarGapBottom_mm} onChange={v => set('DefaultBarGapBottom_mm', v)} step={1} unit="mm" />
@@ -811,7 +811,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
 
           {/* Illustrator */}
           <Section title="Illustrator & Metadata" defaultOpen={false}>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                   Code
@@ -823,7 +823,7 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                     value={form.Code ?? ''}
                     onChange={e => { setCodeManual(true); set('Code', e.target.value.toUpperCase()) }}
                     placeholder={autoCode(form.Beschrijving || '')}
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono"
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono"
                   />
                   {codeManual && (
                     <button type="button"
@@ -834,12 +834,12 @@ export default function FormatEditModal({ format, allTags = [], cellPresets = []
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <TextField label="Categorie" value={form.Categorie} onChange={v => set('Categorie', v)} />
                 <TextField label="Event style" value={form.EventStyle} onChange={v => set('EventStyle', v)} />
                 <TextField label="Variant" value={form.Variant} onChange={v => set('Variant', v)} placeholder="Bv. WIDE" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                 <TextField label="Artboard naampatroon" value={form.ArtboardNamePattern} onChange={v => set('ArtboardNamePattern', v)} />
                 <TextField label="Laag prefix" value={form.LayerPrefix} onChange={v => set('LayerPrefix', v)} />
               </div>

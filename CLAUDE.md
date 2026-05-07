@@ -48,22 +48,6 @@ Het README.md in de repo-root is voor externe lezers; dit CLAUDE.md + `_docs/` i
 
 ---
 
-## Sessie afsluiten — trigger: "sessie afsluiten"
-
-Wanneer de gebruiker **"sessie afsluiten"** zegt, voert Claude altijd deze stappen uit in volgorde:
-
-1. **`_docs/changelog.md`** — controleer of er een entry is voor deze sessie; zo niet, voeg die toe bovenaan met alles wat veranderd is
-2. **`_docs/components.md`** — bijwerken als er componenten bij zijn gekomen, hernoemd of verwijderd
-3. **`_docs/architecture.md`** — bijwerken als DB-structuur, tabellen of datamodel zijn gewijzigd
-4. **`_docs/design-system.md`** — bijwerken als er nieuwe UX-patronen zijn toegevoegd
-5. **`CLAUDE.md`** (dit bestand) — bijwerken als er nieuwe project-conventies of beslissingen zijn genomen
-6. **Commit** — met een beknopte boodschap die de sessie samenvat (`feat:`, `fix:`, `refactor:` prefix)
-7. **Push** naar remote (`git push`)
-
-Claude voert deze stappen **automatisch** uit zonder extra goedkeuring te vragen, omdat "sessie afsluiten" zelf de goedkeuring is.
-
----
-
 ## Snelle feiten
 
 - **Supabase project**: `holypriabntrbxpnsjfe`, EU West
@@ -71,3 +55,9 @@ Claude voert deze stappen **automatisch** uit zonder extra goedkeuring te vragen
 - **Env vars**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (niet committen; zie `.env.local` lokaal + Vercel env)
 - **Sponsor namen**: UPPERCASE, spaties. Filenames: underscores. Lege slots = `BLANK`.
 - **Beheer** (tags, koepels, formaten, logo's, users): allemaal in de **admin** (`src/admin/`), niet meer in de main app.
+
+## Development
+
+- **Dev server:** `npm run dev` → `http://localhost:5173` (fixed port via `vite.config.js`)
+- Run from `dev/backdrop-designer/`
+- Start the dev server at the beginning of every session before making or previewing changes
