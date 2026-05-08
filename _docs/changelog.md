@@ -4,6 +4,35 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie mei 2026 — FormatEditModal herstructurering: scrollpaneel + schaal + bleed
+
+### Layout: van accordions naar één scrollbaar rechterpaneel
+- Alle inklapbare `Section`-accordions vervangen door een vaste scrollbare rechterkolom
+- `SectionHeading` component toegevoegd: `label + horizontale lijn` — standaard sectie-scheidingspatroon
+- Modal krijgt een vaste hoogte via `style={{ height: 'min(720px, calc(100vh - 48px))' }}` — springt niet meer bij wisselen van inhoud
+- Typografie-hiërarchie gecorrigeerd: labels `text-[11px] font-medium`, sectiekoppen `text-[11px] font-semibold tracking-widest`
+- Linkerpaneel versmald van `w-72` naar `w-64`
+
+### Linkerpaneel: Code-veld verplaatst
+- Code-veld staat nu direct onder Naam (met `(auto)` indicator + inline Reset-knop)
+- Achtergrond verplaatst naar de rechterscrollkolom als eigen sectie
+
+### Schaal: 3 vaste knoppen
+- `NumField` voor schaal vervangen door 3 segmented knoppen: `[1:1] [1:2] [1:10]`
+- Canvas > 5000 mm: 1:1 en 1:2 worden automatisch uitgeschakeld (grijs); amber melding verschijnt
+- Auto-enforcement in `set()`, `applyCanvasPreset()`, en nieuwe `applyScale()` functie
+
+### Bleed: toggle in plaats van nummerveld
+- Bleed is altijd 10 mm fysiek; artboard-waarde = `10 × schaal` (10 / 5 / 1 mm)
+- On/off toggle; subtekst toont actuele waarde (`1 mm rondom` etc.)
+- Nieuwe `toggleBleed(enabled)` functie; `bleedEnabled` state
+- Standaard aan; initialisatie leest `format.Bleed_mm > 0`
+
+### FixedCellSize default gecorrigeerd
+- Default was `false` (toonde "Raster vast, cellen passen") — nu `true` ("Cellen vast, raster past")
+
+---
+
 ## Sessie mei 2026 — Compacte form layout in FormatEditModal
 
 ### Verticale compactheid

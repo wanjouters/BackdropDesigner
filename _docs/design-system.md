@@ -28,6 +28,54 @@ Backdrop sluit op klik buiten de modal. **Altijd `onMouseDown` gebruiken, niet `
 
 **Toegepast in**: `FormatEditModal`, `TagEditor` in `LogosSection`, `SaveModal`, delete-confirm in `FormatenSection`.
 
+### Vaste modalhoogte — geen springende modals
+
+Modals met variabele inhoud (tabs, conditionele velden) krijgen een vaste hoogte zodat ze niet springen:
+
+```jsx
+<div
+  style={{ height: 'min(720px, calc(100vh - 48px))' }}
+  className="… flex flex-col overflow-hidden"
+>
+```
+
+De content-zone binnen de modal heeft `flex-1 overflow-y-auto` zodat de inhoud scrollt. **Toegepast in**: `FormatEditModal`.
+
+### SectionHeading — sectie-scheidingspatroon
+
+Voor modals en panelen met meerdere inhoudsgroepen (zonder accordion):
+
+```jsx
+function SectionHeading({ children }) {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">{children}</span>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
+  )
+}
+```
+
+Label links, dunne lijn loopt door tot rechts. Secties worden gescheiden door `space-y-8` op de container.
+
+### Segmented scale-knoppen
+
+Voor opties die een kleine, gesloten set vormen en waarbij de actieve waarde altijd zichtbaar moet zijn — gebruik pill-knoppen in een rij, niet een dropdown:
+
+```jsx
+{[{ label: '1:1', value: 1 }, { label: '1:2', value: 0.5 }, { label: '1:10', value: 0.1 }].map(s => (
+  <button
+    className={active ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}
+  >
+    {s.label}
+  </button>
+))}
+```
+
+Disabled knoppen krijgen `border-gray-100 text-gray-300 cursor-not-allowed`. **Toegepast in**: Schaal-selector in `FormatEditModal`.
+
+---
+
 ### Inklapbare secties in plaats van dropdowns
 
 Binnen modals met `overflow-hidden` of beperkte hoogte: gebruik inline inklapbare secties (zie `CheckSection`-patroon) in plaats van absolute-positioned dropdowns — die worden geclipt.

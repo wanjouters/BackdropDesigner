@@ -135,10 +135,16 @@
 - Berekent `allTags` (deduplicated, gesorteerd) en geeft ze door aan `FormatEditModal`
 
 ### `sections/FormatEditModal.jsx`
-- Volledig formulier in inklapbare secties: Naam & Tags / Canvas / Grid / Cel / Gutter / Marges / Header / Divider / Illustrator / Notities
-- HEX + CMYK voor achtergrondkleur ("CMYK berekenen van HEX" knop via `hexToCmyk()`)
+- Twee-kolom layout: links identiteit (Naam, Code, Tags, Preview SVG, Stats), rechts één scrollbare instellingenkolom
+- Secties rechts (vaste volgorde, geen accordions): Canvas → Grid & Cel → Gutter & Marges → Achtergrond → Header → Divider bar → Illustrator & Metadata → Notities
+- `SectionHeading` component: `label + h-px bg-gray-100` horizontale lijn — herbruikbaar sectie-scheidingspatroon
+- Modal heeft vaste hoogte `min(720px, calc(100vh-48px))` — springt niet bij scrollpositie
+- **Schaal**: 3 knoppen `[1:1] [1:2] [1:10]`; auto-enforcement 1:10 bij canvas > 5000 mm via `applyScale()` en in `set()` voor canvas-wijzigingen; ook in `applyCanvasPreset()`
+- **Bleed**: on/off toggle; altijd 10 mm fysiek → `Bleed_mm = 10 × Scale`; `bleedEnabled` state; `toggleBleed(enabled)` functie
+- **FixedCellSize default**: `true` ("Cellen vast, raster past")
+- HEX + CMYK voor achtergrondkleur (`hexToCmyk()`); `→ CMYK` knop inline naast HEX-input
 - Tag autocomplete op basis van `allTags` prop
-- `FormatPreview` SVG component aanwezig maar voorlopig verborgen
+- Code-veld in linkerpaneel met `(auto)` indicator en inline Reset-knop
 
 ### `sections/EventsSection.jsx`
 - Events + Koepels beheren
