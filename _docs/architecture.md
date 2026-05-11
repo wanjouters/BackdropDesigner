@@ -57,7 +57,7 @@ Alle persistente state wordt opgeslagen in **Supabase (PostgreSQL)** via `src/ut
 
 | Tabel | Inhoud |
 |---|---|
-| `designs` | Opgeslagen ontwerpen — `id, name, format_code, format, slots, folder, saved_at, updated_at` |
+| `designs` | Opgeslagen ontwerpen — `id, name, format_code, format, slots, folder, event, edition, user_id, created_by_name, saved_at, updated_at` (`updated_at` heeft geen DB-default — enkel gevuld bij effectieve bewerking) |
 | `events` | Eventcodes — `code, sort_order` |
 | `event_groups` | Koepels — `name, event_codes` |
 | `sponsor_event_tags` | Event-tags + categorie per sponsor per event — `sponsor_name, event_code, category` |

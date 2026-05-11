@@ -4,6 +4,27 @@ Nieuwste sessies bovenaan. Bestaande entries **niet** wijzigen — alleen toevoe
 
 ---
 
+## Sessie 11 mei 2026 — Gebruikersbeheer, uitnodigingsflow, rolbeveiliging + designs uitbreidingen
+
+### Uitnodigingsflow
+- Edge Function `admin-users` v4: `redirectTo` parameter doorgegeven aan `inviteUserByEmail`
+- `GebruikersSection`: stuurt `redirectTo: origin + '/?invited=1'` mee bij uitnodigen
+- `AppPage`: `isInvited` state detecteert `?invited=1` in URL — toont `PasswordResetForm` zodat uitgenodigde gebruikers meteen een wachtwoord instellen
+
+### Rolgebaseerde toegang
+- `AdminPage`: rolcheck op `app_metadata.role` — niet-admins zien `UserProfilePage` i.p.v. `AdminLayout`
+- `UserProfilePage` (nieuw, inline in `AdminPage.jsx`): naam wijzigen + wachtwoord wijzigen + uitloggen
+- Accountmenu in `App.jsx`: toont "Instellingen" (tandwiel) voor admins, "Mijn profiel" (persoon) voor gebruikers — beide linken naar `/instellingen`
+
+### Designs — event, editie, maker en bewerkdatum
+- DB migraties: `event text`, `edition integer`, `created_by_name text` toegevoegd aan `designs`; `updated_at` default `now()` verwijderd (was altijd gevuld, ook zonder bewerking)
+- `db/designs.js`: `loadDesigns`, `saveDesign`, `updateDesign`, `duplicateDesign` verwerken `event`, `edition`, `user_id`, `created_by_name`; nieuwe functie `updateDesignMeta(id, { name, event, edition })`
+- `App.jsx`: `handleSaveDesign` en `handleDuplicateDesign` geven `authSession`-info mee; `editingMetaDesign` state + `handleSaveMetaDesign` voor achteraf bewerken van naam/event/editie; `handleUpdateDesign` bewaart event/edition
+- `DesignRow`: potlood opent `SaveModal` (naam + event + editie) i.p.v. inline rename; toont maker en bijgewerkt-datum op eigen regel
+- `SavedDesignsPanel`: toggle **Alle / Mijn ontwerpen** filtert op `userId`; `onlyMine` state + `currentUserId` prop
+
+---
+
 ## Sessie mei 2026 — FormatEditModal herstructurering: scrollpaneel + schaal + bleed
 
 ### Layout: van accordions naar één scrollbaar rechterpaneel

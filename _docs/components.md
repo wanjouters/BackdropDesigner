@@ -107,7 +107,14 @@
 ## Admin (`src/admin/`)
 
 ### `AdminPage.jsx`
-- Auth-guard: toont `AdminLogin` of `AdminLayout`
+- Auth-guard: toont `AdminLogin`, `PasswordResetForm`, `UserProfilePage` of `AdminLayout`
+- Rolcheck op `session.user.app_metadata?.role === 'admin'` — niet-admins krijgen `UserProfilePage`
+
+### `UserProfilePage` (inline in `AdminPage.jsx`)
+- Toegankelijk voor alle ingelogde gebruikers via `/instellingen`
+- Naam wijzigen via `supabase.auth.updateUser({ data: { name } })`
+- Wachtwoord wijzigen via `supabase.auth.updateUser({ password })`
+- Uitloggen + redirect naar `/`
 
 ### `AdminLogin.jsx`
 - Magic link login-formulier (Supabase Auth)
