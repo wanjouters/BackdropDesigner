@@ -4,11 +4,14 @@ export default function DesignRow({ d, isLoaded, onLoad, onDelete, onEditMeta, o
       <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
         <p className={`text-xs font-medium truncate ${isLoaded ? 'text-blue-700' : 'text-gray-800'}`}>{d.name}</p>
         <p className="text-[10px] text-gray-400 truncate">
-          {[d.formatCode, new Date(d.savedAt).toLocaleDateString('nl-BE'), d.createdByName].filter(Boolean).join(' · ')}
+          {[d.formatCode, new Date(d.savedAt).toLocaleDateString('nl-BE')].filter(Boolean).join(' · ')}
         </p>
-        {d.updatedAt && (
+        {(d.createdByName || d.updatedAt) && (
           <p className="text-[10px] text-gray-300 truncate">
-            {'bijgewerkt ' + new Date(d.updatedAt).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            {[
+              d.createdByName ? 'door ' + d.createdByName : null,
+              d.updatedAt ? 'bijgewerkt ' + new Date(d.updatedAt).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : null
+            ].filter(Boolean).join(' · ')}
           </p>
         )}
       </button>
