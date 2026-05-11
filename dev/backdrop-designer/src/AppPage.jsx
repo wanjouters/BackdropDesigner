@@ -189,11 +189,15 @@ export default function AppPage() {
     const search = new URLSearchParams(window.location.search)
     return search.get('type') === 'recovery' || window.location.hash.includes('type=recovery')
   })
+  const [isInvited, setIsInvited] = useState(() => {
+    const search = new URLSearchParams(window.location.search)
+    return search.get('invited') === '1'
+  })
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
-      if (event === 'USER_UPDATED') setIsRecovery(false)
+      if (event === 'USER_UPDATED') { setIsRecovery(false); setIsInvited(false) }
       setSession(session)
       setLoading(false)
     })
@@ -210,6 +214,7 @@ export default function AppPage() {
     </div>
   )
   if (isRecovery) return <PasswordResetForm />
+  if (isInvited && session) return <PasswordResetForm />
   if (!session) return <AppLogin />
   return <App session={session} />
 }

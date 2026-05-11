@@ -199,7 +199,7 @@ export default function GebruikersSection({ showToast }) {
     if (!inviteEmail.trim()) return
     setInviting(true)
     try {
-      await callEdge('invite', { email: inviteEmail.trim() })
+      await callEdge('invite', { email: inviteEmail.trim(), redirectTo: window.location.origin + '/?invited=1' })
       showToast('Uitnodiging verstuurd naar ' + inviteEmail.trim())
       setInviteEmail('')
       loadUsers()
