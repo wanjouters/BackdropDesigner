@@ -680,6 +680,7 @@ export default function App({ session: initialSession }) {
                     designs={savedDesigns}
                     events={events}
                     loadedDesignId={loadedDesignId}
+                    currentUserId={authSession?.user?.id ?? null}
                     onLoad={handleLoadDesign}
                     onDelete={handleDeleteDesign}
                     onEditMeta={setEditingMetaDesign}

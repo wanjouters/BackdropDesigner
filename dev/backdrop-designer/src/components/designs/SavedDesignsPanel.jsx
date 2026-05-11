@@ -1,20 +1,22 @@
 import { useState, useMemo } from 'react'
 import DesignRow from './DesignRow'
 
-export default function SavedDesignsPanel({ designs, events, loadedDesignId, onLoad, onDelete, onEditMeta, onDuplicate }) {
+export default function SavedDesignsPanel({ designs, events, loadedDesignId, currentUserId, onLoad, onDelete, onEditMeta, onDuplicate }) {
   var [query, setQuery] = useState('')
+  var [onlyMine, setOnlyMine] = useState(false)
   var [collapsedEvents, setCollapsedEvents] = useState({})
   var [collapsedEditions, setCollapsedEditions] = useState({})
 
   var filtered = useMemo(function() {
-    if (!query.trim()) return designs
+    var base = (onlyMine && currentUserId) ? designs.filter(function(d) { return d.userId === currentUserId }) : designs
+    if (!query.trim()) return base
     var q = query.toLowerCase()
-    return designs.filter(function(d) {
+    return base.filter(function(d) {
       return (d.name || '').toLowerCase().includes(q) ||
         (d.event || '').toLowerCase().includes(q) ||
         String(d.edition || '').includes(q)
     })
-  }, [designs, query])
+  }, [designs, query, onlyMine, currentUserId])
 
   var grouped = useMemo(function() {
     var eventMap = {}
@@ -82,7 +84,7 @@ export default function SavedDesignsPanel({ designs, events, loadedDesignId, onL
 
   return (
     <div className="flex flex-col h-full">
-      <div className="relative mb-2 flex-shrink-0">
+      <div className="relative mb-1.5 flex-shrink-0">
         <input type="text" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Zoek ontwerp..."
           className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
@@ -94,6 +96,22 @@ export default function SavedDesignsPanel({ designs, events, loadedDesignId, onL
           </button>
         )}
       </div>
+      {currentUserId && (
+        <div className="flex mb-2 flex-shrink-0">
+          <button
+            onClick={() => setOnlyMine(false)}
+            className={'flex-1 text-[11px] py-1 rounded-l-lg border transition-colors ' + (!onlyMine ? 'bg-gray-900 text-white border-gray-900 font-medium' : 'bg-white text-gray-400 border-gray-200 hover:text-gray-600')}
+          >
+            Alle
+          </button>
+          <button
+            onClick={() => setOnlyMine(true)}
+            className={'flex-1 text-[11px] py-1 rounded-r-lg border-t border-b border-r transition-colors ' + (onlyMine ? 'bg-gray-900 text-white border-gray-900 font-medium' : 'bg-white text-gray-400 border-gray-200 hover:text-gray-600')}
+          >
+            Mijn ontwerpen
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto min-h-0">
         {grouped.length === 0 && (
           <p className="text-xs text-gray-400 text-center py-4 italic">Geen resultaten.</p>
