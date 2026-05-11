@@ -28,7 +28,7 @@ export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
           <div>
             <label className="block text-xs text-gray-500 mb-1">Event</label>
             <select value={event} onChange={e => setEvent(e.target.value)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
               <option value="">Geen event</option>
               {events.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
@@ -37,7 +37,7 @@ export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
             <label className="block text-xs text-gray-500 mb-1">Editie (jaar)</label>
             <input type="number" value={edition}
               onChange={e => setEdition(parseInt(e.target.value, 10) || currentYear)}
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
               min={2000} max={2100}
             />
           </div>
@@ -46,7 +46,7 @@ export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
             <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); if (e.key === 'Escape') onCancel() }}
               placeholder="Bijv. Startpodium — Variant A"
-              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
+              className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
             Annuleren
           </button>
           <button onClick={handleConfirm} disabled={!name.trim()}
-            className="text-xs px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="text-xs px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
             Opslaan
           </button>
         </div>

@@ -28,7 +28,7 @@ export async function saveDesignFolders(folders) {
 export async function loadDesigns() {
   const { data, error } = await supabase
     .from('designs')
-    .select('id, name, format_code, format, slots, folder, saved_at, updated_at')
+    .select('id, name, format_code, format, slots, folder, event, edition, saved_at, updated_at')
     .order('saved_at', { ascending: false })
   if (error) throw error
   return data.map(r => ({
@@ -38,11 +38,13 @@ export async function loadDesigns() {
     format: r.format,
     slots: r.slots,
     folder: r.folder,
+    event: r.event ?? null,
+    edition: r.edition ?? null,
     savedAt: r.saved_at,
   }))
 }
 
-export async function saveDesign({ id, name, formatCode, format, slots, folder }) {
+export async function saveDesign({ id, name, formatCode, format, slots, folder, event, edition }) {
   const { data, error } = await supabase
     .from('designs')
     .insert({
@@ -52,6 +54,8 @@ export async function saveDesign({ id, name, formatCode, format, slots, folder }
       format,
       slots,
       folder: folder || null,
+      event: event || null,
+      edition: edition || null,
     })
     .select('id')
     .single()
@@ -59,7 +63,7 @@ export async function saveDesign({ id, name, formatCode, format, slots, folder }
   return data.id
 }
 
-export async function updateDesign({ id, name, formatCode, format, slots, folder }) {
+export async function updateDesign({ id, name, formatCode, format, slots, folder, event, edition }) {
   const { error } = await supabase
     .from('designs')
     .update({
@@ -68,6 +72,21 @@ export async function updateDesign({ id, name, formatCode, format, slots, folder
       format,
       slots,
       folder: folder || null,
+      event: event || null,
+      edition: edition || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function updateDesignMeta(id, { name, event, edition }) {
+  const { error } = await supabase
+    .from('designs')
+    .update({
+      name,
+      event: event || null,
+      edition: edition || null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -102,6 +121,8 @@ export async function duplicateDesign(id) {
       format: src.format,
       slots: src.slots,
       folder: src.folder,
+      event: src.event || null,
+      edition: src.edition || null,
     })
     .select('id')
     .single()

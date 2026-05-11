@@ -77,7 +77,7 @@ export default function App({ session: initialSession }) {
   const [activeOverlay, setActiveOverlay] = useState(null) // null | 'person' | 'chair'
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [saveModalDefaults, setSaveModalDefaults] = useState(null)
-  const [renamingDesign, setRenamingDesign] = useState(null)
+  const [editingMetaDesign, setEditingMetaDesign] = useState(null)
   const [advanceDir, setAdvanceDirState] = useState(() => localStorage.getItem('backdropDesigner_advanceDir') || 'r')
   const [confirmAction, setConfirmAction] = useState(null)   // { message, onConfirm, confirmLabel, variant }
   const [draftRestoreData, setDraftRestoreData] = useState(null)
@@ -143,7 +143,7 @@ export default function App({ session: initialSession }) {
     showToast(`Alle "${from}" vervangen door "${to}"`, 'success')
   }
 
-  async function handleSaveDesign({ name }) {
+  async function handleSaveDesign({ name, event, edition }) {
     const designName = name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`
     try {
       const id = await db.saveDesign({
@@ -152,6 +152,8 @@ export default function App({ session: initialSession }) {
         format: { ...editedFormat },
         slots: [...slots],
         folder: null,
+        event: event || null,
+        edition: edition || null,
       })
       const newDesign = {
         id,
@@ -160,6 +162,8 @@ export default function App({ session: initialSession }) {
         format: { ...editedFormat },
         slots: [...slots],
         folder: null,
+        event: event || null,
+        edition: edition || null,
         savedAt: new Date().toISOString(),
       }
       setSavedDesigns(prev => [newDesign, ...prev])
@@ -194,14 +198,17 @@ export default function App({ session: initialSession }) {
 
   async function handleUpdateDesign() {
     if (!loadedDesignId) return
+    const currentDesign = savedDesigns.find(d => d.id === loadedDesignId)
     try {
       await db.updateDesign({
         id: loadedDesignId,
-        name: savedDesigns.find(d => d.id === loadedDesignId)?.name || 'Ontwerp',
+        name: currentDesign?.name || 'Ontwerp',
         formatCode: editedFormat?.Code || '',
         format: { ...editedFormat },
         slots: [...slots],
-        folder: savedDesigns.find(d => d.id === loadedDesignId)?.folder || null,
+        folder: currentDesign?.folder || null,
+        event: currentDesign?.event || null,
+        edition: currentDesign?.edition || null,
       })
       setSavedDesigns(prev => prev.map(d =>
         d.id === loadedDesignId
@@ -246,15 +253,18 @@ export default function App({ session: initialSession }) {
     })
   }
 
-  async function handleRenameDesign(id, newName) {
-    const val = newName.trim()
-    if (!val) return
+  async function handleSaveMetaDesign({ name, event, edition }) {
+    const id = editingMetaDesign.id
     try {
-      await db.renameDesign(id, val)
-      setSavedDesigns(prev => prev.map(d => d.id === id ? { ...d, name: val } : d))
-      setRenamingDesign(null)
+      await db.updateDesignMeta(id, { name: name.trim(), event: event || null, edition: edition || null })
+      setSavedDesigns(prev => prev.map(d =>
+        d.id === id ? { ...d, name: name.trim(), event: event || null, edition: edition || null } : d
+      ))
+      setEditingMetaDesign(null)
+      showToast('Ontwerp bijgewerkt', 'success')
     } catch (err) {
       console.error(err)
+      showToast('Fout bij opslaan', 'error')
     }
   }
 
@@ -657,12 +667,10 @@ export default function App({ session: initialSession }) {
                   <SavedDesignsPanel
                     designs={savedDesigns}
                     events={events}
-                    renamingDesign={renamingDesign}
                     loadedDesignId={loadedDesignId}
                     onLoad={handleLoadDesign}
                     onDelete={handleDeleteDesign}
-                    onRename={handleRenameDesign}
-                    onStartRename={setRenamingDesign}
+                    onEditMeta={setEditingMetaDesign}
                     onDuplicate={handleDuplicateDesign}
                   />
                 </div>
@@ -941,6 +949,15 @@ export default function App({ session: initialSession }) {
           defaults={saveModalDefaults}
           onConfirm={handleSaveDesign}
           onCancel={() => { setShowSaveModal(false); setSaveModalDefaults(null) }}
+        />
+      )}
+
+      {editingMetaDesign && (
+        <SaveModal
+          events={events}
+          defaults={{ name: editingMetaDesign.name, event: editingMetaDesign.event, edition: editingMetaDesign.edition }}
+          onConfirm={handleSaveMetaDesign}
+          onCancel={() => setEditingMetaDesign(null)}
         />
       )}
 

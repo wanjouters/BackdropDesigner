@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import DesignRow from './DesignRow'
 
-export default function SavedDesignsPanel({ designs, events, renamingDesign, loadedDesignId, onLoad, onDelete, onRename, onStartRename, onDuplicate }) {
+export default function SavedDesignsPanel({ designs, events, loadedDesignId, onLoad, onDelete, onEditMeta, onDuplicate }) {
   var [query, setQuery] = useState('')
   var [collapsedEvents, setCollapsedEvents] = useState({})
   var [collapsedEditions, setCollapsedEditions] = useState({})
@@ -135,9 +135,8 @@ export default function SavedDesignsPanel({ designs, events, renamingDesign, loa
                     )}
                     {!isEditionCollapsed(evKey, yearKey) && editionGroup.designs.map(function(d) {
                       return (
-                        <DesignRow key={d.id} d={d} renamingDesign={renamingDesign} isLoaded={loadedDesignId === d.id}
-                          onLoad={onLoad} onDelete={onDelete} onRename={onRename}
-                          onStartRename={onStartRename} onDuplicate={onDuplicate}
+                        <DesignRow key={d.id} d={d} isLoaded={loadedDesignId === d.id}
+                          onLoad={onLoad} onDelete={onDelete} onEditMeta={onEditMeta} onDuplicate={onDuplicate}
                         />
                       )
                     })}
