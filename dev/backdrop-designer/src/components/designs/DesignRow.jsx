@@ -3,7 +3,15 @@ export default function DesignRow({ d, isLoaded, onLoad, onDelete, onEditMeta, o
     <div className={`group flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ml-2 ${isLoaded ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
       <button onClick={() => onLoad(d)} className="flex-1 text-left min-w-0">
         <p className={`text-xs font-medium truncate ${isLoaded ? 'text-blue-700' : 'text-gray-800'}`}>{d.name}</p>
-        <p className="text-[10px] text-gray-400">{d.formatCode}{d.formatCode ? ' · ' : ''}{new Date(d.savedAt).toLocaleDateString('nl-BE')}</p>
+        <p className="text-[10px] text-gray-400 truncate">
+          {d.formatCode}{d.formatCode ? ' · ' : ''}{new Date(d.savedAt).toLocaleDateString('nl-BE')}
+          {d.createdByName ? ` · ${d.createdByName}` : ''}
+        </p>
+        {d.updatedAt && (
+          <p className="text-[10px] text-gray-300 truncate">
+            bijgewerkt {new Date(d.updatedAt).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
       </button>
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         <button onClick={e => { e.stopPropagation(); onDuplicate(d) }} title="Dupliceren"

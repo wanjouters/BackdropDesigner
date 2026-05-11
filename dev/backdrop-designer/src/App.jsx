@@ -145,6 +145,8 @@ export default function App({ session: initialSession }) {
 
   async function handleSaveDesign({ name, event, edition }) {
     const designName = name || `${editedFormat?.Code || 'Ontwerp'} — ${new Date().toLocaleDateString('nl-BE')}`
+    const createdByName = authSession?.user?.user_metadata?.name || authSession?.user?.email || null
+    const userId = authSession?.user?.id || null
     try {
       const id = await db.saveDesign({
         name: designName,
@@ -154,6 +156,8 @@ export default function App({ session: initialSession }) {
         folder: null,
         event: event || null,
         edition: edition || null,
+        userId,
+        createdByName,
       })
       const newDesign = {
         id,
@@ -164,7 +168,10 @@ export default function App({ session: initialSession }) {
         folder: null,
         event: event || null,
         edition: edition || null,
+        userId,
+        createdByName,
         savedAt: new Date().toISOString(),
+        updatedAt: null,
       }
       setSavedDesigns(prev => [newDesign, ...prev])
       setLoadedDesignId(id)
@@ -180,13 +187,18 @@ export default function App({ session: initialSession }) {
   }
 
   async function handleDuplicateDesign(design) {
+    const createdByName = authSession?.user?.user_metadata?.name || authSession?.user?.email || null
+    const userId = authSession?.user?.id || null
     try {
-      const newId = await db.duplicateDesign(design.id)
+      const newId = await db.duplicateDesign(design.id, { userId, createdByName })
       const copy = {
         ...design,
         id: newId,
         name: design.name + ' (kopie)',
+        userId,
+        createdByName,
         savedAt: new Date().toISOString(),
+        updatedAt: null,
       }
       setSavedDesigns(prev => [copy, ...prev])
       showToast('"' + copy.name + '" aangemaakt', 'success')
@@ -212,7 +224,7 @@ export default function App({ session: initialSession }) {
       })
       setSavedDesigns(prev => prev.map(d =>
         d.id === loadedDesignId
-          ? { ...d, format: { ...editedFormat }, slots: [...slots], savedAt: new Date().toISOString() }
+          ? { ...d, format: { ...editedFormat }, slots: [...slots], updatedAt: new Date().toISOString() }
           : d
       ))
       clearDraft()

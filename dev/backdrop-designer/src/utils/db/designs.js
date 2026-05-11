@@ -28,7 +28,7 @@ export async function saveDesignFolders(folders) {
 export async function loadDesigns() {
   const { data, error } = await supabase
     .from('designs')
-    .select('id, name, format_code, format, slots, folder, event, edition, saved_at, updated_at')
+    .select('id, name, format_code, format, slots, folder, event, edition, user_id, created_by_name, saved_at, updated_at')
     .order('saved_at', { ascending: false })
   if (error) throw error
   return data.map(r => ({
@@ -40,11 +40,14 @@ export async function loadDesigns() {
     folder: r.folder,
     event: r.event ?? null,
     edition: r.edition ?? null,
+    userId: r.user_id ?? null,
+    createdByName: r.created_by_name ?? null,
     savedAt: r.saved_at,
+    updatedAt: r.updated_at ?? null,
   }))
 }
 
-export async function saveDesign({ id, name, formatCode, format, slots, folder, event, edition }) {
+export async function saveDesign({ id, name, formatCode, format, slots, folder, event, edition, userId, createdByName }) {
   const { data, error } = await supabase
     .from('designs')
     .insert({
@@ -56,6 +59,8 @@ export async function saveDesign({ id, name, formatCode, format, slots, folder, 
       folder: folder || null,
       event: event || null,
       edition: edition || null,
+      user_id: userId || null,
+      created_by_name: createdByName || null,
     })
     .select('id')
     .single()
@@ -106,7 +111,7 @@ export async function renameDesign(id, name) {
   if (error) throw error
 }
 
-export async function duplicateDesign(id) {
+export async function duplicateDesign(id, { userId, createdByName } = {}) {
   const { data: src, error: fetchErr } = await supabase
     .from('designs')
     .select('*')
@@ -123,6 +128,8 @@ export async function duplicateDesign(id) {
       folder: src.folder,
       event: src.event || null,
       edition: src.edition || null,
+      user_id: userId || null,
+      created_by_name: createdByName || null,
     })
     .select('id')
     .single()
