@@ -86,6 +86,96 @@ function PasswordResetForm() {
   )
 }
 
+function UserProfilePage({ session }) {
+  const [name, setName] = useState(session.user.user_metadata?.name ?? '')
+  const [savingName, setSavingName] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [savingPw, setSavingPw] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+
+  async function handleSaveName(e) {
+    e.preventDefault()
+    setSavingName(true)
+    setError(null)
+    setSuccess(null)
+    const { error } = await supabase.auth.updateUser({ data: { name: name.trim() } })
+    setSavingName(false)
+    if (error) { setError(error.message); return }
+    setSuccess('Naam opgeslagen')
+  }
+
+  async function handleSavePassword(e) {
+    e.preventDefault()
+    if (password !== confirm) { setError('Wachtwoorden komen niet overeen.'); return }
+    if (password.length < 8) { setError('Wachtwoord moet minstens 8 tekens lang zijn.'); return }
+    setSavingPw(true)
+    setError(null)
+    setSuccess(null)
+    const { error } = await supabase.auth.updateUser({ password })
+    setSavingPw(false)
+    if (error) { setError(error.message); return }
+    setSuccess('Wachtwoord gewijzigd')
+    setPassword('')
+    setConfirm('')
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <span className="font-semibold text-gray-900 text-sm">Mijn profiel</span>
+        <a href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">← Terug naar de app</a>
+      </div>
+      <div className="flex-1 p-8 max-w-md mx-auto w-full space-y-4">
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="text-sm font-semibold text-gray-800 mb-4">Naam</h2>
+          <form onSubmit={handleSaveName} className="flex gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Voor- en achternaam"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+            />
+            <button type="submit" disabled={savingName}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+              {savingName ? 'Opslaan…' : 'Opslaan'}
+            </button>
+          </form>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="text-sm font-semibold text-gray-800 mb-4">Wachtwoord wijzigen</h2>
+          <form onSubmit={handleSavePassword} className="space-y-3">
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="Nieuw wachtwoord (min. 8 tekens)" required autoComplete="new-password"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+              placeholder="Bevestig wachtwoord" required autoComplete="new-password"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+            <button type="submit" disabled={savingPw || !password || !confirm}
+              className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+              {savingPw ? 'Opslaan…' : 'Wachtwoord wijzigen'}
+            </button>
+          </form>
+        </div>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
+        {success && <p className="text-xs text-green-600">{success}</p>}
+
+        <button
+          onClick={() => supabase.auth.signOut().then(() => { window.location.href = '/' })}
+          className="w-full py-2 border border-gray-200 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+        >
+          Uitloggen
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -120,5 +210,6 @@ export default function AdminPage() {
   // Recovery check VÓÓR session check — recovery heeft een sessie maar wil geen admin tonen
   if (isRecovery) return <PasswordResetForm />
   if (!session) return <AdminLogin />
+  if (session.user.app_metadata?.role !== 'admin') return <UserProfilePage session={session} />
   return <AdminLayout session={session} />
 }
