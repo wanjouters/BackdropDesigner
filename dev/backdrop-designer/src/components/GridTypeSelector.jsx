@@ -50,7 +50,7 @@ export default function GridTypeSelector({ selected, onSelect, formats = [] }) {
         <input
           type="text" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Zoek formaat..."
-          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+          className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
         {query && (
           <button onClick={() => setQuery('')}

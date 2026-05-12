@@ -12,11 +12,11 @@ export default function NumInput({ label, value, onChange, unit = 'mm', min, ste
           step={step}
           readOnly={readOnly}
           onChange={e => !readOnly && onChange(parseFloat(e.target.value) || 0)}
-          className={`text-xs px-1.5 py-1 border rounded text-right tabular-nums
+          className={`text-xs px-1.5 py-1.5 border rounded text-right tabular-nums
             ${wide ? 'w-full' : 'w-14'}
             ${readOnly
               ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-default'
-              : 'border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300'
+              : 'border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400'
             }`}
         />
         {unit && <span className="text-[9px] text-gray-300">{unit}</span>}

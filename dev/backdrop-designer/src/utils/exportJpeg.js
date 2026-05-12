@@ -4,6 +4,7 @@ import { logoUrl } from './logoUrl'
 function loadImage(src) {
   return new Promise(resolve => {
     const img = new Image()
+    img.crossOrigin = 'anonymous'
     img.onload = () => resolve(img)
     img.onerror = () => resolve(null)
     img.src = src
@@ -129,5 +130,7 @@ export async function exportJpeg(format, slots, customLogos = {}) {
   const a = document.createElement('a')
   a.href = dataUrl
   a.download = `${Code}_preview.jpg`
+  document.body.appendChild(a)
   a.click()
+  document.body.removeChild(a)
 }

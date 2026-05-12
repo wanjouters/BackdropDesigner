@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react'
 import DesignRow from './DesignRow'
 
+function toTitleCase(s) {
+  if (!s) return s
+  return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
 export default function SavedDesignsPanel({ designs, events, loadedDesignId, currentUserId, onLoad, onDelete, onEditMeta, onDuplicate }) {
   var [query, setQuery] = useState('')
   var [onlyMine, setOnlyMine] = useState(false)
@@ -127,8 +132,8 @@ export default function SavedDesignsPanel({ designs, events, loadedDesignId, cur
                   style={{ transform: isEventCollapsed(evKey) ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
                   <path d="M2 3.5l3 3 3-3"/>
                 </svg>
-                <span className="text-xs font-bold text-gray-600 uppercase tracking-wide truncate flex-1">
-                  {group.event || 'Overig'}
+                <span className="text-xs font-bold text-gray-600 tracking-wide truncate flex-1">
+                  {toTitleCase(group.event) || 'Overig'}
                 </span>
                 {!group.event && (
                   <span className="text-[9px] text-gray-300 mr-1 flex-shrink-0" title="Sla op met een event en editie om te groeperen">zonder event</span>

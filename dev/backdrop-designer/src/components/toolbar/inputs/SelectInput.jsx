@@ -5,7 +5,7 @@ export default function SelectInput({ label, value, options, onChange, wide }) {
       <select
         value={value ?? 'NONE'}
         onChange={e => onChange(e.target.value)}
-        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 ${wide ? 'w-full' : ''}`}
+        className={`text-xs px-1.5 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 ${wide ? 'w-full' : ''}`}
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>

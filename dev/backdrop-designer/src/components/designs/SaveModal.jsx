@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { modalVariants, backdropVariants } from '../../utils/animations'
 
+function toTitleCase(s) {
+  if (!s) return s
+  return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
 export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
   var currentYear = new Date().getFullYear()
   var [event, setEvent] = useState(defaults && defaults.event ? defaults.event : '')
@@ -30,7 +35,7 @@ export default function SaveModal({ events, defaults, onConfirm, onCancel }) {
             <select value={event} onChange={e => setEvent(e.target.value)}
               className="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
               <option value="">Geen event</option>
-              {events.map(ev => <option key={ev} value={ev}>{ev}</option>)}
+              {events.map(ev => <option key={ev} value={ev}>{toTitleCase(ev)}</option>)}
             </select>
           </div>
           <div>

@@ -25,7 +25,7 @@ function EventItem({ code, index, isReorderOver, isDragging, onDragStartReorder,
     setTimeout(() => inputRef.current?.focus(), 0)
   }
   function commitEdit() {
-    const v = value.trim().toUpperCase()
+    const v = value.trim()
     if (v && v !== code) onRename(code, v)
     setEditing(false)
   }
@@ -132,7 +132,7 @@ function EventsList({ events, onReorder, onDelete, onAdd, onRename }) {
   function reset() { setDragIdx(null); setOverIdx(null); setAssignDragging(false) }
 
   function handleAdd() {
-    const v = newItem.trim().toUpperCase()
+    const v = newItem.trim()
     if (!v || events.includes(v)) return
     onAdd(v)
     setNewItem('')

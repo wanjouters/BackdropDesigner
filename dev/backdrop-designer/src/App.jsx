@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Agentation } from 'agentation'
 import { motion, AnimatePresence } from 'framer-motion'
 import './index.css'
 import allStaticFormats from './data/backdropFormats.json'
@@ -807,23 +808,11 @@ export default function App({ session: initialSession }) {
                   </button>
                 </div>
               )}
-              {/* Silhouette 3-way toggle: Off / Persoon / Stoel — only in preview */}
+              {/* Silhouette toggle: Persoon / Stoel — click active to deactivate */}
               {view === 'preview' && (
                 <div className="bg-white border border-gray-200 rounded-xl p-1 flex gap-1">
                   <button
-                    onClick={() => setActiveOverlay(null)}
-                    title="Geen silhouet"
-                    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                      activeOverlay === null ? 'bg-gray-200 text-gray-500' : 'text-gray-400 hover:bg-gray-100'
-                    }`}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                      <line x1="1.5" y1="1.5" x2="8.5" y2="8.5"/>
-                      <line x1="8.5" y1="1.5" x2="1.5" y2="8.5"/>
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setActiveOverlay('person')}
+                    onClick={() => setActiveOverlay(prev => prev === 'person' ? null : 'person')}
                     title="Referentiepersoon (180 cm)"
                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
                       activeOverlay === 'person' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
@@ -835,7 +824,7 @@ export default function App({ session: initialSession }) {
                     </svg>
                   </button>
                   <button
-                    onClick={() => setActiveOverlay('chair')}
+                    onClick={() => setActiveOverlay(prev => prev === 'chair' ? null : 'chair')}
                     title="Referentiestoel"
                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
                       activeOverlay === 'chair' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-100'
@@ -974,6 +963,7 @@ export default function App({ session: initialSession }) {
         />
       )}
 
+      {import.meta.env.DEV && <Agentation endpoint="http://localhost:4747" />}
 
     </div>
   )

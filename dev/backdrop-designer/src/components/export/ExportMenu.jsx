@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { exportJpeg } from '../../utils/exportJpeg'
 
 export default function ExportMenu({ format, slots, customLogos, onImportJson }) {
@@ -90,23 +91,29 @@ export default function ExportMenu({ format, slots, customLogos, onImportJson })
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(v => !v)}
         title="Exporteren"
-        className="flex items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white font-semibold text-sm px-3 py-2.5 rounded-lg transition-colors shadow-sm"
+        className="flex items-center gap-1 bg-gray-700 hover:bg-gray-800 text-white font-semibold text-sm px-3 py-2 rounded-lg transition-colors shadow-sm"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M7 1v8M4 6l3 3 3-3M2 11h10"/>
         </svg>
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+          className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>
           <path d="M2 3.5l3 3 3-3"/>
         </svg>
       </button>
+      <AnimatePresence>
       {open && (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 50, minWidth: 160 }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl py-1">
+        <motion.div
+          initial={{ opacity: 0, y: -4, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -4, scale: 0.97 }}
+          transition={{ duration: 0.12 }}
+          className="absolute right-0 top-full mt-1 z-50 min-w-[160px] bg-white border border-gray-200 rounded-xl shadow-xl py-1"
+        >
           <button onClick={handleJpeg}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -145,8 +152,9 @@ export default function ExportMenu({ format, slots, customLogos, onImportJson })
             <span className="ml-auto text-xs text-gray-400">importeer</span>
           </button>
           <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportFile} />
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }

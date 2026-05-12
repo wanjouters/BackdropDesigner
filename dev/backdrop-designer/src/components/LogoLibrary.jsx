@@ -162,7 +162,7 @@ export default function LogoLibrary({
           <input
             type="text" value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Zoek sponsor..."
-            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+            className="w-full text-sm px-3 py-1.5 pr-7 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400"
           />
           {query && (
             <button
